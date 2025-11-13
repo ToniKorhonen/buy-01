@@ -1,13 +1,15 @@
-package service.product;
+package service.media;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.data.mongodb.repository.config.EnableMongoRepositories;
 
 @SpringBootApplication
-public class ProductServiceApplication {
+@EnableMongoRepositories(basePackages = "service.media.mongo_repo")
+public class MediaServiceApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(ProductServiceApplication.class, args);
+        SpringApplication.run(MediaServiceApplication.class, args);
     }
 
 }

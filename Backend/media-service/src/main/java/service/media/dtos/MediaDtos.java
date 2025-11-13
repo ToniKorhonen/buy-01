@@ -18,4 +18,8 @@ public class MediaDtos {
             String message,
             String downloadUrl
     ) {}
+
+    public record MessageResponse(
+            String message
+    ) {}
 }
