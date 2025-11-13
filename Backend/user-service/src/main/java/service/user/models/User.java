@@ -1,4 +1,5 @@
 package service.user.models;
+
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
@@ -11,7 +12,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 public class User {
 
     @Id
-    private final String id;
+    private String id;
     @NotBlank
     private String name;
 
@@ -28,17 +29,7 @@ public class User {
     private String password;
     private Role role;
 
-
     private String avatar; //optional field for user avatar URL
-
-    public User(String id, String name, String email) {
-        this.id = id;
-        this.name = name;
-        this.email = email;
-        this.password = "";
-        this.role = Role.CLIENT;
-        this.avatar = "";
-    }
 
     public String getId() {
         return id;
@@ -64,4 +55,27 @@ public class User {
         return avatar;
     }
 
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    public void setEmail(@NotBlank @Email String email) {
+        this.email = email;
+    }
+
+    public void setName(@NotBlank String name) {
+        this.name = name;
+    }
+
+    public void setPassword(@NotBlank @Size(min = 8) String password) {
+        this.password = password;
+    }
+
+    public void setRole(Role role) {
+        this.role = role;
+    }
+
+    public void setAvatar(String avatar) {
+        this.avatar = avatar;
+    }
 }
