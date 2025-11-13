@@ -27,12 +27,6 @@ public class MediaController {
         this.mediaService = mediaService;
     }
 
-    /**
-     * Upload a new media file (picture)
-     * @param file The picture file to upload
-     * @param uploaderId Optional uploader ID (for tracking who uploaded)
-     * @return Upload response with file details
-     */
     @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> uploadMedia(
             @RequestParam("file") MultipartFile file,
@@ -54,10 +48,7 @@ public class MediaController {
         }
     }
 
-    /**
-     * Get all uploaded media files
-     * @return List of all media metadata
-     */
+
     @GetMapping
     public ResponseEntity<List<MediaResponse>> getAllMedia() {
         try {
@@ -70,11 +61,7 @@ public class MediaController {
         }
     }
 
-    /**
-     * Get media files by uploader ID
-     * @param uploaderId The ID of the uploader
-     * @return List of media uploaded by this user
-     */
+
     @GetMapping("/uploader/{uploaderId}")
     public ResponseEntity<List<MediaResponse>> getMediaByUploaderId(@PathVariable String uploaderId) {
         try {
@@ -87,11 +74,7 @@ public class MediaController {
         }
     }
 
-    /**
-     * Get media metadata by ID
-     * @param id The media ID
-     * @return Media metadata
-     */
+
     @GetMapping("/{id}/info")
     public ResponseEntity<?> getMediaInfo(@PathVariable String id) {
         try {
@@ -106,11 +89,7 @@ public class MediaController {
         }
     }
 
-    /**
-     * Download/view the actual media file
-     * @param id The media ID
-     * @return The file content
-     */
+
     @GetMapping("/{id}")
     public ResponseEntity<?> getMediaFile(@PathVariable String id) {
         try {
@@ -136,11 +115,7 @@ public class MediaController {
         }
     }
 
-    /**
-     * Delete a media file
-     * @param id The media ID to delete
-     * @return Success message
-     */
+
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteMedia(@PathVariable String id) {
         try {

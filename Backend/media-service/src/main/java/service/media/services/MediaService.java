@@ -10,7 +10,6 @@ import service.media.dtos.MediaDtos.*;
 import service.media.models.Media;
 import service.media.mongo_repo.MediaRepository;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -23,19 +22,24 @@ import java.util.stream.Collectors;
 @Service
 public class MediaService {
     private static final Logger log = LoggerFactory.getLogger(MediaService.class);
+    private static final long MAX_FILE_SIZE = 2 * 1024 * 1024;
 
     private final MediaRepository mediaRepository;
     private final Path storageLocation;
+    private final List<String> allowedTypes;
 
     @Autowired
     public MediaService(MediaRepository mediaRepository,
-                       @Value("${media.storage.path:./uploads}") String storagePath) {
+                       @Value("${media.storage.path:./uploads}") String storagePath,
+                       @Value("${media.allowed.types:image/png,image/jpeg,image/gif}") String allowedTypesStr) {
         this.mediaRepository = mediaRepository;
         this.storageLocation = Paths.get(storagePath).toAbsolutePath().normalize();
+        this.allowedTypes = List.of(allowedTypesStr.split(","));
 
         try {
             Files.createDirectories(this.storageLocation);
             log.info("Storage directory created at: {}", this.storageLocation);
+            log.info("Allowed file types: {}", this.allowedTypes);
         } catch (IOException e) {
             log.error("Could not create storage directory", e);
             throw new RuntimeException("Could not create storage directory", e);
@@ -45,6 +49,15 @@ public class MediaService {
     public MediaUploadResponse uploadMedia(MultipartFile file, String uploaderId) {
         if (file.isEmpty()) {
             throw new IllegalArgumentException("Cannot upload empty file");
+        }
+
+        if (file.getSize() > MAX_FILE_SIZE) {
+            throw new IllegalArgumentException("File size exceeds maximum allowed size of 2MB");
+        }
+
+        String contentType = file.getContentType();
+        if (contentType == null || !allowedTypes.contains(contentType.toLowerCase())) {
+            throw new IllegalArgumentException("File type not allowed. Only PNG, JPG, and GIF images are accepted");
         }
 
         try {

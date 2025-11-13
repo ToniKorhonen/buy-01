@@ -25,6 +25,35 @@ h2 {
   margin-bottom: 30px;
 }
 
+.file-restrictions {
+  background: #f0f8ff;
+  border-left: 4px solid #2196F3;
+  padding: 15px;
+  margin-bottom: 20px;
+  border-radius: 4px;
+}
+
+.file-restrictions p {
+  margin: 0 0 10px 0;
+  color: #333;
+  font-size: 14px;
+}
+
+.file-restrictions ul {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.file-restrictions li {
+  color: #666;
+  font-size: 14px;
+  margin: 5px 0;
+}
+
+.file-restrictions strong {
+  color: #2196F3;
+}
+
 .upload-form {
   max-width: 600px;
 }

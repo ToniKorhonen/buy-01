@@ -20,6 +20,10 @@ export class MediaGalleryComponent implements OnInit {
   uploadSuccess: boolean = false;
   previewUrl: string | null = null;
 
+  private readonly MAX_FILE_SIZE = 2 * 1024 * 1024;
+  private readonly ALLOWED_TYPES = ['image/png', 'image/jpeg', 'image/gif'];
+  private readonly ALLOWED_EXTENSIONS = ['.png', '.jpg', '.jpeg', '.gif'];
+
   constructor(private mediaService: MediaService) {}
 
   ngOnInit(): void {
@@ -29,7 +33,29 @@ export class MediaGalleryComponent implements OnInit {
   onFileSelected(event: any): void {
     const file = event.target.files[0];
     if (file) {
+      // Validate file type
+      if (!this.ALLOWED_TYPES.includes(file.type.toLowerCase())) {
+        this.uploadMessage = '❌ Invalid file type. Only PNG, JPG, and GIF images are allowed.';
+        this.uploadSuccess = false;
+        this.selectedFile = null;
+        this.previewUrl = null;
+        event.target.value = ''; // Reset file input
+        return;
+      }
+
+      // Validate file size
+      if (file.size > this.MAX_FILE_SIZE) {
+        this.uploadMessage = `❌ File size exceeds 2MB limit. Your file is ${this.formatBytes(file.size)}.`;
+        this.uploadSuccess = false;
+        this.selectedFile = null;
+        this.previewUrl = null;
+        event.target.value = ''; // Reset file input
+        return;
+      }
+
+      // File is valid
       this.selectedFile = file;
+      this.uploadMessage = ''; // Clear any previous error messages
 
       // Create preview for images
       if (file.type.startsWith('image/')) {

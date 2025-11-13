@@ -5,13 +5,21 @@
   <div class="upload-section">
     <h2>📤 Upload Picture</h2>
 
+    <div class="file-restrictions">
+      <p><strong>File Requirements:</strong></p>
+      <ul>
+        <li>Maximum size: <strong>2MB</strong></li>
+        <li>Allowed formats: <strong>PNG, JPG, GIF</strong></li>
+      </ul>
+    </div>
+
     <div class="upload-form">
       <div class="form-group">
         <label for="fileInput">Select a picture:</label>
         <input
           type="file"
           id="fileInput"
-          accept="image/*"
+          accept=".png,.jpg,.jpeg,.gif,image/png,image/jpeg,image/gif"
           (change)="onFileSelected($event)"
           class="file-input"
         >
