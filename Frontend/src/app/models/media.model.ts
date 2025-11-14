@@ -1,10 +1,6 @@
 export interface Media {
   id: string;
-  filename: string;
-  contentType: string;
-  fileSize: number;
   uploaderId: string;
-  uploadDate: string;
   downloadUrl: string;
 }
 

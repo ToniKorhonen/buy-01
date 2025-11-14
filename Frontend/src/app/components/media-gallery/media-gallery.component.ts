@@ -22,7 +22,6 @@ export class MediaGalleryComponent implements OnInit {
 
   private readonly MAX_FILE_SIZE = 2 * 1024 * 1024;
   private readonly ALLOWED_TYPES = ['image/png', 'image/jpeg', 'image/gif'];
-  private readonly ALLOWED_EXTENSIONS = ['.png', '.jpg', '.jpeg', '.gif'];
 
   constructor(private mediaService: MediaService) {}
 
@@ -143,14 +142,6 @@ export class MediaGalleryComponent implements OnInit {
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
-  }
-
-  formatDate(dateString: string): string {
-    return new Date(dateString).toLocaleString();
-  }
-
-  isImage(contentType: string): boolean {
-    return !!(contentType && contentType.startsWith('image/'));
   }
 }
 

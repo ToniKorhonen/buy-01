@@ -75,9 +75,6 @@ public class MediaService {
             // Save metadata to database
             Media media = new Media(
                 null,
-                originalFilename,
-                file.getContentType(),
-                file.getSize(),
                 uniqueFilename,
                 uploaderId
             );
@@ -149,11 +146,7 @@ public class MediaService {
         String downloadUrl = "/api/media/" + media.getId();
         return new MediaResponse(
             media.getId(),
-            media.getFilename(),
-            media.getContentType(),
-            media.getFileSize(),
             media.getUploaderId(),
-            media.getUploadDate(),
             downloadUrl
         );
     }

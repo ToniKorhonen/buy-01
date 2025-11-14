@@ -78,23 +78,14 @@
       <div *ngFor="let media of mediaList" class="media-card">
         <div class="media-image-container">
           <img
-            *ngIf="isImage(media.contentType)"
             [src]="getMediaUrl(media)"
-            [alt]="media.filename"
+            [alt]="'Media ' + media.id"
             class="media-image"
           >
-          <div *ngIf="!isImage(media.contentType)" class="media-placeholder">
-            <span>📄 {{ media.contentType }}</span>
-          </div>
         </div>
 
         <div class="media-info">
-          <p class="media-filename" [title]="media.filename">
-            <strong>{{ media.filename }}</strong>
-          </p>
-          <p><strong>Size:</strong> {{ formatBytes(media.fileSize) }}</p>
           <p><strong>Uploader:</strong> {{ media.uploaderId }}</p>
-          <p><strong>Uploaded:</strong> {{ formatDate(media.uploadDate) }}</p>
           <p class="media-id"><strong>ID:</strong> {{ media.id }}</p>
 
           <div class="media-actions">

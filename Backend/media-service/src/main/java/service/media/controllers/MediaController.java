@@ -93,14 +93,25 @@ public class MediaController {
     @GetMapping("/{id}")
     public ResponseEntity<?> getMediaFile(@PathVariable String id) {
         try {
-            MediaResponse mediaInfo = mediaService.getMediaById(id);
             byte[] fileContent = mediaService.getMediaFile(id);
 
+            String contentType = "application/octet-stream";
+
+            if (fileContent.length > 4) {
+                if (fileContent[0] == (byte)0x89 && fileContent[1] == (byte)0x50 &&
+                    fileContent[2] == (byte)0x4E && fileContent[3] == (byte)0x47) {
+                    contentType = "image/png";
+                } else if (fileContent[0] == (byte)0xFF && fileContent[1] == (byte)0xD8) {
+                    contentType = "image/jpeg";
+                } else if (fileContent[0] == (byte)0x47 && fileContent[1] == (byte)0x49 &&
+                          fileContent[2] == (byte)0x46) {
+                    contentType = "image/gif";
+                }
+            }
+
             HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.parseMediaType(mediaInfo.contentType()));
+            headers.setContentType(MediaType.parseMediaType(contentType));
             headers.setContentLength(fileContent.length);
-            headers.set(HttpHeaders.CONTENT_DISPOSITION,
-                "inline; filename=\"" + mediaInfo.filename() + "\"");
 
             return ResponseEntity.ok()
                 .headers(headers)
