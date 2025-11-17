@@ -23,6 +23,7 @@ public class ProductDtos {
             String name,
             String description,
             double price,
+            int quantity,
             String userId
     ) {}
 }

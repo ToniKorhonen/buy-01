@@ -72,7 +72,7 @@ public class ProductService {
     }
 
     private ProductResponse toResponse(Product p) {
-        return new ProductResponse(p.getId(), p.getName(), p.getDescription(), p.getPrice(), p.getUserId());
+        return new ProductResponse(p.getId(), p.getName(), p.getDescription(), p.getPrice(), p.getQuantity(), p.getUserId());
     }
 
     private String s(String v) {
