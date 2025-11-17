@@ -57,6 +57,19 @@
         align-items: center;
         gap: 12px;
 
+        .user-avatar {
+          width: 32px;
+          height: 32px;
+          border-radius: 50%;
+          object-fit: cover;
+          border: 2px solid #f8f9fa;
+        }
+
+        .user-avatar-placeholder {
+          font-size: 24px;
+          line-height: 1;
+        }
+
         .user-name {
           color: #f8f9fa;
           font-weight: 500;

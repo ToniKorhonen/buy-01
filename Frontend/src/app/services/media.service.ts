@@ -2,19 +2,23 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Media, MediaUploadResponse } from '../models/media.model';
+import { environment } from '../environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class MediaService {
-  private apiUrl = 'http://localhost:8083/api/media';
+  private apiUrl = `${environment.apiBaseUrl}/media`;
 
   constructor(private http: HttpClient) {}
 
-  uploadMedia(file: File, uploaderId?: string): Observable<MediaUploadResponse> {
+  uploadMedia(file: File, uploaderId?: string, productId?: string): Observable<MediaUploadResponse> {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('uploaderId', uploaderId || 'anonymous');
+    if (productId) {
+      formData.append('productId', productId);
+    }
 
     return this.http.post<MediaUploadResponse>(`${this.apiUrl}/upload`, formData);
   }
@@ -25,6 +29,14 @@ export class MediaService {
 
   getMediaByUploaderId(uploaderId: string): Observable<Media[]> {
     return this.http.get<Media[]>(`${this.apiUrl}/uploader/${uploaderId}`);
+  }
+
+  getMediaByProductId(productId: string): Observable<Media[]> {
+    return this.http.get<Media[]>(`${this.apiUrl}/product/${productId}`);
+  }
+
+  getMediaInfo(mediaId: string): Observable<Media> {
+    return this.http.get<Media>(`${this.apiUrl}/${mediaId}/info`);
   }
 
   getMediaUrl(mediaId: string): string {

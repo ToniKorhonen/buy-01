@@ -52,6 +52,19 @@
     select.form-control {
       cursor: pointer;
     }
+
+    .avatar-preview {
+      margin-top: 10px;
+      text-align: center;
+
+      img {
+        max-width: 150px;
+        max-height: 150px;
+        border-radius: 50%;
+        border: 2px solid #ddd;
+        object-fit: cover;
+      }
+    }
   }
 
   .success {
@@ -71,6 +84,16 @@
     border-radius: 4px;
     margin-bottom: 20px;
     font-size: 14px;
+  }
+
+  .info {
+    background-color: #d1ecf1;
+    color: #0c5460;
+    padding: 10px;
+    border-radius: 4px;
+    margin-bottom: 20px;
+    font-size: 14px;
+    border: 1px solid #bee5eb;
   }
 
   .btn {

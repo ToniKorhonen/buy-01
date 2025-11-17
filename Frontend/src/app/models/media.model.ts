@@ -1,6 +1,7 @@
 export interface Media {
   id: string;
-  uploaderId: string;
+  uploaderId?: string;
+  productId?: string;
   downloadUrl: string;
 }
 

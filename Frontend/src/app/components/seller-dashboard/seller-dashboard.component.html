@@ -68,9 +68,25 @@
         </div>
       </div>
 
+      <div class="form-group">
+        <label for="image">Product Image (Optional)</label>
+        <input
+          type="file"
+          id="image"
+          name="image"
+          (change)="onFileSelected($event)"
+          accept="image/*"
+          class="form-control">
+        <div class="image-preview" *ngIf="imagePreview">
+          <img [src]="imagePreview" alt="Product image preview">
+        </div>
+      </div>
+
+      <div class="info" *ngIf="uploadingImage">Uploading image...</div>
+
       <div class="form-actions">
         <button type="button" (click)="closeForm()" class="btn btn-secondary">Cancel</button>
-        <button type="submit" [disabled]="!productForm.form.valid" class="btn btn-primary">
+        <button type="submit" [disabled]="!productForm.form.valid || uploadingImage" class="btn btn-primary">
           {{ editingProduct ? 'Update' : 'Create' }} Product
         </button>
       </div>
@@ -82,6 +98,12 @@
 
   <div class="products-list" *ngIf="!loading">
     <div class="product-item" *ngFor="let product of products">
+      <div class="product-image" *ngIf="product.imageUrl">
+        <img [src]="product.imageUrl" [alt]="product.name">
+      </div>
+      <div class="product-image placeholder" *ngIf="!product.imageUrl">
+        <span>📦</span>
+      </div>
       <div class="product-info">
         <h3>{{ product.name }}</h3>
         <p class="description">{{ product.description }}</p>

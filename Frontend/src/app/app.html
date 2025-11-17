@@ -14,7 +14,9 @@
       <span class="nav-divider" *ngIf="isAuthenticated">|</span>
       <a routerLink="/seller/dashboard" routerLinkActive="active" *ngIf="isSeller">Dashboard</a>
       <span class="user-info" *ngIf="isAuthenticated && currentUser">
-c        <span class="user-name">{{ currentUser!.name }}</span>
+        <img *ngIf="avatarUrl" [src]="avatarUrl" alt="User avatar" class="user-avatar">
+        <span class="user-avatar-placeholder" *ngIf="!avatarUrl">👤</span>
+        <span class="user-name">{{ currentUser!.name }}</span>
         <button (click)="logout()" class="logout-btn">Logout</button>
       </span>
     </div>

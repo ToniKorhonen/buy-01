@@ -54,6 +54,22 @@
         </select>
       </div>
 
+      <div class="form-group" *ngIf="model.role === 'SELLER'">
+        <label for="avatar">Avatar (Optional)</label>
+        <input
+          type="file"
+          id="avatar"
+          name="avatar"
+          (change)="onFileSelected($event)"
+          accept="image/*"
+          [disabled]="loading"
+          class="form-control">
+        <div class="avatar-preview" *ngIf="avatarPreview">
+          <img [src]="avatarPreview" alt="Avatar preview">
+        </div>
+      </div>
+
+      <div class="info" *ngIf="uploadingAvatar">Uploading avatar...</div>
       <div class="success" *ngIf="message">{{ message }}</div>
       <div class="error" *ngIf="error">{{ error }}</div>
 

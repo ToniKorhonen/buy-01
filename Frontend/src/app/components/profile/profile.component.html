@@ -10,8 +10,9 @@
   </div>
 
   <div *ngIf="user && !loading" class="profile-content">
-    <div class="profile-avatar" *ngIf="user.avatar">
-      <img [src]="user.avatar" [alt]="user.name" />
+    <div class="profile-avatar">
+      <img *ngIf="avatarUrl" [src]="avatarUrl" [alt]="user.name" />
+      <div *ngIf="!avatarUrl" class="avatar-placeholder">👤</div>
     </div>
 
     <div class="profile-info">

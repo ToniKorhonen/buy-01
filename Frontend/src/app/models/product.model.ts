@@ -4,7 +4,6 @@ export interface ProductRequest {
   price: number;
   quantity: number;
   userId: string;
-  image?: string;
 }
 
 export interface ProductResponse {
@@ -14,5 +13,10 @@ export interface ProductResponse {
   price: number;
   quantity: number;
   userId: string;
-  image?: string;
+}
+
+// Extended interface with media for display purposes
+export interface ProductWithMedia extends ProductResponse {
+  imageUrl?: string; // URL of the first media item for this product
+  mediaItems?: string[]; // All media URLs for this product
 }

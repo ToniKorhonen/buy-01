@@ -24,15 +24,13 @@ export class UserService {
           name: res.user.name,
           email: res.user.email,
           role: res.user.role,
-          avatar: undefined
+          avatarId: res.user.avatarId
         };
         this.currentUser = user;
         localStorage.setItem('current_user', JSON.stringify(user));
 
-        // Fetch full user profile to get avatar if seller
-        if (res.user.role === 'SELLER') {
-          this.fetchUserProfile();
-        }
+        // Fetch full user profile to get avatarId if available
+        this.fetchUserProfile();
       })
     );
   }

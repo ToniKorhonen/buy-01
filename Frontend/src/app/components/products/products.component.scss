@@ -42,6 +42,13 @@
         display: flex;
         align-items: center;
         justify-content: center;
+        overflow: hidden;
+
+        img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+        }
 
         .placeholder-image {
           font-size: 64px;
@@ -68,6 +75,12 @@
           color: #007bff;
           font-size: 20px;
           font-weight: bold;
+          margin: 0 0 5px 0;
+        }
+
+        .stock {
+          color: #666;
+          font-size: 13px;
           margin: 0;
         }
       }

@@ -3,7 +3,7 @@ export interface RegisterRequest {
   email: string;
   password: string;
   role?: 'CLIENT' | 'SELLER';
-  avatar?: string;
+  avatarId?: string;
 }
 
 export interface UserResponse {
@@ -11,7 +11,7 @@ export interface UserResponse {
   name: string;
   email: string;
   role: 'CLIENT' | 'SELLER';
-  avatar?: string;
+  avatarId?: string;
 }
 
 export interface LoginRequest {
@@ -26,6 +26,7 @@ export interface LoginResponse {
     name: string;
     email: string;
     role: 'CLIENT' | 'SELLER';
+    avatarId?: string;
   };
 }
 
