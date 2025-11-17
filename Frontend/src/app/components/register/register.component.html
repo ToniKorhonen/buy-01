@@ -1,31 +1,73 @@
-<h2>Register</h2>
-<form (ngSubmit)="submit()" #f="ngForm">
-  <label>
-    Name
-    <input type="text" name="name" [(ngModel)]="model.name" required />
-  </label>
-  <br />
-  <label>
-    Email
-    <input type="email" name="email" [(ngModel)]="model.email" required />
-  </label>
-  <br />
-  <label>
-    Password
-    <input type="password" name="password" [(ngModel)]="model.password" required minlength="8" />
-  </label>
-  <br />
-  <label>
-    Role
-    <select name="role" [(ngModel)]="model.role">
-      <option value="CLIENT">Client</option>
-      <option value="SELLER">Seller</option>
-    </select>
-  </label>
-  <br />
-  <button type="submit" [disabled]="loading || !f.form.valid">Register</button>
-</form>
+<div class="register-container">
+  <div class="register-card">
+    <h2>Create Account</h2>
 
-<p *ngIf="message" style="color: green">{{ message }}</p>
-<p *ngIf="error" style="color: red">{{ error }}</p>
+    <form (ngSubmit)="submit()" #registerForm="ngForm">
+      <div class="form-group">
+        <label for="name">Name</label>
+        <input
+          type="text"
+          id="name"
+          name="name"
+          [(ngModel)]="model.name"
+          required
+          [disabled]="loading"
+          class="form-control">
+      </div>
+
+      <div class="form-group">
+        <label for="email">Email</label>
+        <input
+          type="email"
+          id="email"
+          name="email"
+          [(ngModel)]="model.email"
+          required
+          email
+          [disabled]="loading"
+          class="form-control">
+      </div>
+
+      <div class="form-group">
+        <label for="password">Password (minimum 8 characters)</label>
+        <input
+          type="password"
+          id="password"
+          name="password"
+          [(ngModel)]="model.password"
+          required
+          minlength="8"
+          [disabled]="loading"
+          class="form-control">
+      </div>
+
+      <div class="form-group">
+        <label for="role">Account Type</label>
+        <select
+          id="role"
+          name="role"
+          [(ngModel)]="model.role"
+          [disabled]="loading"
+          class="form-control">
+          <option value="CLIENT">Client</option>
+          <option value="SELLER">Seller</option>
+        </select>
+      </div>
+
+      <div class="success" *ngIf="message">{{ message }}</div>
+      <div class="error" *ngIf="error">{{ error }}</div>
+
+      <button
+        type="submit"
+        [disabled]="!registerForm.form.valid || loading"
+        class="btn btn-primary">
+        {{ loading ? 'Creating Account...' : 'Register' }}
+      </button>
+    </form>
+
+    <div class="login-link">
+      Already have an account? <a routerLink="/login">Login here</a>
+    </div>
+  </div>
+</div>
 

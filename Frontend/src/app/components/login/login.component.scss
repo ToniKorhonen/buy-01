@@ -1,4 +1,4 @@
-.register-container {
+.login-container {
   display: flex;
   justify-content: center;
   align-items: center;
@@ -6,13 +6,13 @@
   padding: 20px;
 }
 
-.register-card {
+.login-card {
   background: white;
   padding: 40px;
   border-radius: 8px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
   width: 100%;
-  max-width: 450px;
+  max-width: 400px;
 
   h2 {
     margin: 0 0 30px 0;
@@ -48,20 +48,6 @@
         cursor: not-allowed;
       }
     }
-
-    select.form-control {
-      cursor: pointer;
-    }
-  }
-
-  .success {
-    background-color: #d4edda;
-    color: #155724;
-    padding: 10px;
-    border-radius: 4px;
-    margin-bottom: 20px;
-    font-size: 14px;
-    border: 1px solid #c3e6cb;
   }
 
   .error {
@@ -97,7 +83,7 @@
     }
   }
 
-  .login-link {
+  .register-link {
     margin-top: 20px;
     text-align: center;
     font-size: 14px;

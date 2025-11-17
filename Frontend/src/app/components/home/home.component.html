@@ -1,22 +1,44 @@
-<h2>Home</h2>
-<form (ngSubmit)="login()" #f="ngForm">
-  <label>
-    Email
-    <input type="email" name="email" [(ngModel)]="model.email" required />
-  </label>
-  <br />
-  <label>
-    Password
-    <input type="password" name="password" [(ngModel)]="model.password" required />
-  </label>
-  <br />
-  <button type="submit" [disabled]="!f.form.valid">Login</button>
-  <button type="button" (click)="logout()">Logout</button>
-</form>
+<div class="home-container">
+  <div class="hero">
+    <h1>Welcome to Buy-01</h1>
+    <p class="tagline">Your marketplace for buying and selling products</p>
+  </div>
 
+  <div class="user-status" *ngIf="isAuthenticated && currentUser">
+    <p>Welcome back, <strong>{{ currentUser.name }}</strong>!</p>
+    <p class="role">Role: {{ currentUser.role }}</p>
+  </div>
 
-<p *ngIf="message" style="color: green">{{ message }}</p>
-<p *ngIf="error" style="color: red">{{ error }}</p>
+  <div class="navigation-cards">
+    <div class="card">
+      <h2>Browse Products</h2>
+      <p>View all available products from our sellers</p>
+      <a routerLink="/products" class="btn btn-primary">View Products</a>
+    </div>
 
-<p *ngIf="token">Token: {{ token }}</p>
+    <div class="card" *ngIf="!isAuthenticated">
+      <h2>Login</h2>
+      <p>Already have an account? Sign in here</p>
+      <a routerLink="/login" class="btn btn-primary">Login</a>
+    </div>
+
+    <div class="card" *ngIf="!isAuthenticated">
+      <h2>Register</h2>
+      <p>Create a new account as a client or seller</p>
+      <a routerLink="/register" class="btn btn-primary">Register</a>
+    </div>
+
+    <div class="card" *ngIf="isSeller">
+      <h2>Seller Dashboard</h2>
+      <p>Manage your products and inventory</p>
+      <a routerLink="/seller/dashboard" class="btn btn-primary">Go to Dashboard</a>
+    </div>
+
+    <div class="card" *ngIf="isAuthenticated">
+      <h2>Logout</h2>
+      <p>Sign out of your account</p>
+      <button (click)="logout()" class="btn btn-secondary">Logout</button>
+    </div>
+  </div>
+</div>
 

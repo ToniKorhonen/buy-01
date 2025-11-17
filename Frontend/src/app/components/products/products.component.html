@@ -1,0 +1,24 @@
+<div class="products-container">
+  <h1>All Products</h1>
+
+  <div class="loading" *ngIf="loading">Loading products...</div>
+  <div class="error" *ngIf="error">{{ error }}</div>
+
+  <div class="products-grid" *ngIf="!loading && !error">
+    <div class="product-card" *ngFor="let product of products">
+      <div class="product-image">
+        <div class="placeholder-image">📦</div>
+      </div>
+      <div class="product-details">
+        <h3>{{ product.name }}</h3>
+        <p class="description">{{ product.description }}</p>
+        <p class="price">${{ product.price.toFixed(2) }}</p>
+      </div>
+    </div>
+
+    <div class="no-products" *ngIf="products.length === 0">
+      No products available yet.
+    </div>
+  </div>
+</div>
+

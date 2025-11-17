@@ -1,7 +1,24 @@
-<nav>
-  <a routerLink="/">Home</a> |
-  <a routerLink="/register">Register</a>
+<nav class="navbar">
+  <div class="nav-container">
+    <div class="nav-brand">
+      <a routerLink="/">Buy-01</a>
+    </div>
+    <div class="nav-links">
+      <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">Home</a>
+      <a routerLink="/products" routerLinkActive="active">Products</a>
+
+      <span class="nav-divider" *ngIf="!isAuthenticated">|</span>
+      <a routerLink="/login" routerLinkActive="active" *ngIf="!isAuthenticated">Login</a>
+      <a routerLink="/register" routerLinkActive="active" *ngIf="!isAuthenticated">Register</a>
+
+      <span class="nav-divider" *ngIf="isAuthenticated">|</span>
+      <a routerLink="/seller/dashboard" routerLinkActive="active" *ngIf="isSeller">Dashboard</a>
+      <span class="user-info" *ngIf="isAuthenticated && currentUser">
+        <span class="user-name">{{ currentUser.name }}</span>
+        <button (click)="logout()" class="logout-btn">Logout</button>
+      </span>
+    </div>
+  </div>
 </nav>
-<hr />
 <router-outlet />
 
