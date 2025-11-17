@@ -1,0 +1,44 @@
+<div class="profile-container">
+  <h2>Profile</h2>
+
+  <div *ngIf="loading" class="loading">
+    Loading profile...
+  </div>
+
+  <div *ngIf="error" class="error">
+    {{ error }}
+  </div>
+
+  <div *ngIf="user && !loading" class="profile-content">
+    <div class="profile-avatar" *ngIf="user.avatar">
+      <img [src]="user.avatar" [alt]="user.name" />
+    </div>
+
+    <div class="profile-info">
+      <div class="info-item">
+        <label>Name:</label>
+        <span>{{ user.name }}</span>
+      </div>
+
+      <div class="info-item">
+        <label>Email:</label>
+        <span>{{ user.email }}</span>
+      </div>
+
+      <div class="info-item">
+        <label>Role:</label>
+        <span>{{ user.role }}</span>
+      </div>
+
+      <div class="info-item" *ngIf="user.id">
+        <label>ID:</label>
+        <span>{{ user.id }}</span>
+      </div>
+    </div>
+
+    <div class="profile-actions">
+      <button (click)="logout()" class="btn-logout">Logout</button>
+    </div>
+  </div>
+</div>
+

@@ -39,3 +39,9 @@ spring:
             - Path=/api/auth/**
           filters:
             - RewritePath=/api/auth/(?<segment>.*), /auth/${segment}
+        - id: profile-service
+          uri: http://localhost:8081
+          predicates:
+            - Path=/api/profile/**
+          filters:
+            - RewritePath=/api/profile/(?<segment>.*), /profile/${segment}

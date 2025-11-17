@@ -1,0 +1,26 @@
+<div class="navigation">
+  <a routerLink="/register">Register</a> |
+  <a routerLink="/media">Media Gallery</a>
+</div>
+
+<h2>Login</h2>
+<form (ngSubmit)="login()" #f="ngForm">
+  <label>
+    Email
+    <input type="email" name="email" [(ngModel)]="model.email" required />
+  </label>
+  <br />
+  <label>
+    Password
+    <input type="password" name="password" [(ngModel)]="model.password" required />
+  </label>
+  <br />
+  <button type="submit" [disabled]="!f.form.valid">Login</button>
+  <button type="button" (click)="logout()">Logout</button>
+</form>
+
+<p *ngIf="message" style="color: green">{{ message }}</p>
+<p *ngIf="error" style="color: red">{{ error }}</p>
+
+<p *ngIf="token">Token: {{ token }}</p>
+
