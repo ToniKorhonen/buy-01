@@ -1,32 +1,24 @@
 import { Component, inject } from '@angular/core';
-import { RouterOutlet, RouterModule } from '@angular/router';
+import { RouterOutlet, RouterModule, RouterLink, RouterLinkActive } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { UserService } from './services/user.service';
-import { Component, signal } from '@angular/core';
-import { RouterOutlet, RouterLink } from '@angular/router';
-
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, RouterModule, CommonModule],
-  imports: [RouterOutlet, RouterLink],
+  imports: [RouterOutlet, RouterModule, RouterLink, RouterLinkActive, CommonModule],
   templateUrl: './app.html',
   styleUrl: './app.scss'
 })
 export class App {
   protected readonly userService = inject(UserService);
-
   get isAuthenticated() {
     return this.userService.isAuthenticated();
   }
-
   get currentUser() {
     return this.userService.getCurrentUser();
   }
-
   get isSeller() {
     return this.userService.isSeller();
   }
-
   logout() {
     this.userService.logout();
   }

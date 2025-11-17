@@ -21,6 +21,11 @@ export interface LoginRequest {
 
 export interface LoginResponse {
   token: string;
-  user: UserResponse;
+  user: {
+    id: string;
+    name: string;
+    email: string;
+    role: 'CLIENT' | 'SELLER';
+  };
 }
 

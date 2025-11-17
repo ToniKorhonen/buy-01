@@ -13,10 +13,7 @@ export const routes: Routes = [
   { path: 'register', component: RegisterComponent },
   { path: 'login', component: LoginComponent },
   { path: 'products', component: ProductsComponent },
-  { path: 'seller/dashboard', component: SellerDashboardComponent, canActivate: [sellerGuard] }
-  { path: '', component: LoginComponent },
-  { path: 'home', component: HomeComponent },
-  { path: 'register', component: RegisterComponent },
+  { path: 'seller/dashboard', component: SellerDashboardComponent, canActivate: [sellerGuard] },
   { path: 'media', component: MediaGalleryComponent },
   { path: 'profile', component: ProfileComponent }
 ];

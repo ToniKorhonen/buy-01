@@ -27,7 +27,7 @@ export class ProfileComponent implements OnInit {
     this.loading = true;
     this.error = '';
 
-    this.userService.getCurrentUser().subscribe({
+    this.userService.getProfile().subscribe({
       next: (user) => {
         this.user = user;
         this.loading = false;

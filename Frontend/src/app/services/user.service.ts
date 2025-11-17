@@ -18,8 +18,21 @@ export class UserService {
     return this.http.post<LoginResponse>(`${this.base}/auth/login`, body).pipe(
       tap((res) => {
         localStorage.setItem('auth_token', res.token);
-        this.currentUser = res.user;
-        localStorage.setItem('current_user', JSON.stringify(res.user));
+        // Convert the login user response to UserResponse format
+        const user: UserResponse = {
+          id: res.user.id,
+          name: res.user.name,
+          email: res.user.email,
+          role: res.user.role,
+          avatar: undefined
+        };
+        this.currentUser = user;
+        localStorage.setItem('current_user', JSON.stringify(user));
+
+        // Fetch full user profile to get avatar if seller
+        if (res.user.role === 'SELLER') {
+          this.fetchUserProfile();
+        }
       })
     );
   }
@@ -30,7 +43,7 @@ export class UserService {
     this.currentUser = null;
   }
 
-  getCurrentUser(): Observable<UserResponse> {
+  getProfile(): Observable<UserResponse> {
     return this.http.get<UserResponse>(`${this.base}/profile/me`);
   }
 
@@ -42,32 +55,17 @@ export class UserService {
     return !!this.token;
   }
 
-  // Decode JWT to get email (userId)
-  getUserIdFromToken(): string | null {
-    const token = this.token;
-    if (!token) return null;
+  // Fetch current user details from the backend to get avatar
+  fetchUserProfile(): void {
+    if (!this.token) return;
 
-    try {
-      const decoded = atob(token);
-      const parts = decoded.split(':');
-      return parts[0]; // email is the userId
-    } catch (e) {
-      return null;
-    }
-  }
-
-  // Fetch current user details from the backend
-  fetchCurrentUser(): void {
-    const userId = this.getUserIdFromToken();
-    if (!userId) return;
-
-    this.http.get<UserResponse>(`${this.base}/users/me`).subscribe({
+    this.http.get<UserResponse>(`${this.base}/profile/me`).subscribe({
       next: (user) => {
         this.currentUser = user;
         localStorage.setItem('current_user', JSON.stringify(user));
       },
       error: () => {
-        this.currentUser = null;
+        // Keep existing user data on error
       }
     });
   }

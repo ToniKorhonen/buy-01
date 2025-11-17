@@ -4,6 +4,7 @@ export interface ProductRequest {
   price: number;
   quantity: number;
   userId: string;
+  image?: string;
 }
 
 export interface ProductResponse {
@@ -13,4 +14,5 @@ export interface ProductResponse {
   price: number;
   quantity: number;
   userId: string;
+  image?: string;
 }

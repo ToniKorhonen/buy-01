@@ -30,7 +30,8 @@ export class SellerDashboardComponent implements OnInit {
     description: '',
     price: 0,
     quantity: 0,
-    userId: ''
+    userId: '',
+    image: undefined
   };
 
   ngOnInit() {
@@ -50,8 +51,9 @@ export class SellerDashboardComponent implements OnInit {
     this.productService.getAllProducts().subscribe({
       next: (products) => {
         // Filter to show only seller's own products
-        const userId = this.userService.getCurrentUser()?.id;
-        this.products = products.filter(p => p.userId === userId);
+        // Backend stores email as userId (from JWT authentication)
+        const userEmail = this.userService.getCurrentUser()?.email;
+        this.products = products.filter(p => p.userId === userEmail);
         this.loading = false;
       },
       error: (err) => {
@@ -70,7 +72,8 @@ export class SellerDashboardComponent implements OnInit {
       description: '',
       price: 0,
       quantity: 0,
-      userId: user?.id || ''
+      userId: user?.id || '',
+      image: undefined
     };
   }
 
@@ -82,7 +85,8 @@ export class SellerDashboardComponent implements OnInit {
       description: product.description,
       price: product.price,
       quantity: product.quantity,
-      userId: product.userId
+      userId: product.userId,
+      image: product.image
     };
   }
 
@@ -102,7 +106,8 @@ export class SellerDashboardComponent implements OnInit {
           this.loadProducts();
         },
         error: (err) => {
-          this.error = 'Failed to update product';
+          console.error('Error updating product:', err);
+          this.error = err?.error?.message || 'Failed to update product';
         }
       });
     } else {
@@ -113,7 +118,8 @@ export class SellerDashboardComponent implements OnInit {
           this.loadProducts();
         },
         error: (err) => {
-          this.error = 'Failed to create product';
+          console.error('Error creating product:', err);
+          this.error = err?.error?.message || err?.error || 'Failed to create product';
         }
       });
     }

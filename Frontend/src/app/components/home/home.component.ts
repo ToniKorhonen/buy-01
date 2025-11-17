@@ -6,8 +6,6 @@ import { UserService } from '../../services/user.service';
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [CommonModule],
-  templateUrl: './home.component.html'
   imports: [CommonModule, RouterModule],
   templateUrl: './home.component.html',
   styleUrls: ['./home.component.scss']
@@ -28,11 +26,13 @@ export class HomeComponent {
     this.userService.logout();
     this.router.navigate(['/']);
   }
+
   get isSeller() {
     return this.userService.isSeller();
   }
+
   goToProfile() {
-    // TODO: Implement profile navigation
+    this.router.navigate(['/profile']);
   }
 }
 
