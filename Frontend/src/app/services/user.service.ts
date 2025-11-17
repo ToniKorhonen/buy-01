@@ -30,6 +30,10 @@ export class UserService {
     this.currentUser = null;
   }
 
+  getCurrentUser(): Observable<UserResponse> {
+    return this.http.get<UserResponse>(`${this.base}/profile/me`);
+  }
+
   get token(): string | null {
     return localStorage.getItem('auth_token');
   }

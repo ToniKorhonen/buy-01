@@ -1,0 +1,104 @@
+<div class="media-gallery-container">
+  <h1>🖼️ Media Gallery</h1>
+
+  <!-- Upload Section -->
+  <div class="upload-section">
+    <h2>📤 Upload Picture</h2>
+
+    <div class="file-restrictions">
+      <p><strong>File Requirements:</strong></p>
+      <ul>
+        <li>Maximum size: <strong>2MB</strong></li>
+        <li>Allowed formats: <strong>PNG, JPG, GIF</strong></li>
+      </ul>
+    </div>
+
+    <div class="upload-form">
+      <div class="form-group">
+        <label for="fileInput">Select a picture:</label>
+        <input
+          type="file"
+          id="fileInput"
+          accept=".png,.jpg,.jpeg,.gif,image/png,image/jpeg,image/gif"
+          (change)="onFileSelected($event)"
+          class="file-input"
+        >
+      </div>
+
+      <div class="form-group" *ngIf="previewUrl">
+        <label>Preview:</label>
+        <div class="preview-container">
+          <img [src]="previewUrl" alt="Preview" class="preview-image">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="uploaderId">Uploader ID (optional):</label>
+        <input
+          type="text"
+          id="uploaderId"
+          [(ngModel)]="uploaderId"
+          placeholder="Enter your ID or leave empty"
+          class="text-input"
+        >
+      </div>
+
+      <button
+        (click)="uploadMedia()"
+        [disabled]="!selectedFile || isLoading"
+        class="btn btn-primary"
+      >
+        {{ isLoading ? 'Uploading...' : 'Upload Picture' }}
+      </button>
+
+      <div *ngIf="uploadMessage" [class]="uploadSuccess ? 'message success' : 'message error'">
+        {{ uploadMessage }}
+      </div>
+    </div>
+  </div>
+
+  <!-- Gallery Section -->
+  <div class="gallery-section">
+    <div class="gallery-header">
+      <h2>🖼️ All Uploaded Pictures</h2>
+      <button (click)="loadMedia()" class="btn btn-secondary">
+        🔄 Refresh
+      </button>
+    </div>
+
+    <div *ngIf="isLoading" class="loading">
+      Loading pictures...
+    </div>
+
+    <div *ngIf="!isLoading && mediaList.length === 0" class="empty-state">
+      No pictures uploaded yet. Upload your first picture above!
+    </div>
+
+    <div *ngIf="!isLoading && mediaList.length > 0" class="media-grid">
+      <div *ngFor="let media of mediaList" class="media-card">
+        <div class="media-image-container">
+          <img
+            [src]="getMediaUrl(media)"
+            [alt]="'Media ' + media.id"
+            class="media-image"
+          >
+        </div>
+
+        <div class="media-info">
+          <p><strong>Uploader:</strong> {{ media.uploaderId }}</p>
+          <p class="media-id"><strong>ID:</strong> {{ media.id }}</p>
+
+          <div class="media-actions">
+            <a [href]="getMediaUrl(media)" target="_blank" class="btn btn-link">
+              View Full Size
+            </a>
+            <button (click)="deleteMedia(media.id)" class="btn btn-danger">
+              🗑️ Delete
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
