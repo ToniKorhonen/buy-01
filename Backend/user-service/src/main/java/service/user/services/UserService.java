@@ -35,7 +35,7 @@ public class UserService {
         u.setPassword(encoder.encode((req.password())));
         Role role = req.role() == null ? Role.CLIENT : req.role();
         u.setRole(role);
-        u.setAvatar(req.avatar());
+        u.setAvatarId(req.avatarId());
         repo.save(u);
         return toResponse(u);
     }
@@ -45,7 +45,7 @@ public class UserService {
                 u.getName(),
                 u.getEmail(),
                 u.getRole(),
-                u.getAvatar()
+                u.getAvatarId()
         );
     }
 

@@ -16,7 +16,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/media")
-@CrossOrigin(origins = "*")
 public class MediaController {
     private static final Logger log = LoggerFactory.getLogger(MediaController.class);
 
@@ -30,12 +29,13 @@ public class MediaController {
     @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> uploadMedia(
             @RequestParam("file") MultipartFile file,
-            @RequestParam(value = "uploaderId", required = false, defaultValue = "anonymous") String uploaderId) {
+            @RequestParam(value = "uploaderId", required = false, defaultValue = "anonymous") String uploaderId,
+            @RequestParam(value = "productId", required = false) String productId) {
         try {
-            log.info("Uploading file: {}, size: {} bytes, uploader: {}",
-                file.getOriginalFilename(), file.getSize(), uploaderId);
+            log.info("Uploading file: {}, size: {} bytes, uploader: {}, productId: {}",
+                file.getOriginalFilename(), file.getSize(), uploaderId, productId);
 
-            MediaUploadResponse response = mediaService.uploadMedia(file, uploaderId);
+            MediaUploadResponse response = mediaService.uploadMedia(file, uploaderId, productId);
             return ResponseEntity.ok(response);
 
         } catch (IllegalArgumentException e) {
@@ -61,15 +61,14 @@ public class MediaController {
         }
     }
 
-
-    @GetMapping("/uploader/{uploaderId}")
-    public ResponseEntity<List<MediaResponse>> getMediaByUploaderId(@PathVariable String uploaderId) {
+    @GetMapping("/product/{productId}")
+    public ResponseEntity<List<MediaResponse>> getMediaByProductId(@PathVariable String productId) {
         try {
-            List<MediaResponse> mediaList = mediaService.getMediaByUploaderId(uploaderId);
-            log.info("Retrieved {} media files for uploader: {}", mediaList.size(), uploaderId);
+            List<MediaResponse> mediaList = mediaService.getMediaByProductId(productId);
+            log.info("Retrieved {} media files for product: {}", mediaList.size(), productId);
             return ResponseEntity.ok(mediaList);
         } catch (Exception e) {
-            log.error("Error retrieving media for uploader: {}", uploaderId, e);
+            log.error("Error retrieving media for product: {}", productId, e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }

@@ -1,0 +1,6 @@
+/home/student/ZONE01/JAVA/buy-01/Backend/media-service/src/main/java/service/media/MediaServiceApplication.java
+/home/student/ZONE01/JAVA/buy-01/Backend/media-service/src/main/java/service/media/controllers/MediaController.java
+/home/student/ZONE01/JAVA/buy-01/Backend/media-service/src/main/java/service/media/dtos/MediaDtos.java
+/home/student/ZONE01/JAVA/buy-01/Backend/media-service/src/main/java/service/media/models/Media.java
+/home/student/ZONE01/JAVA/buy-01/Backend/media-service/src/main/java/service/media/mongo_repo/MediaRepository.java
+/home/student/ZONE01/JAVA/buy-01/Backend/media-service/src/main/java/service/media/services/MediaService.java

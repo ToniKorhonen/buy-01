@@ -29,7 +29,7 @@ public class User {
     private String password;
     private Role role;
 
-    private String avatar; //optional field for user avatar URL
+    private String avatarId; // ID of the Media entity for user avatar
 
     public String getId() {
         return id;
@@ -51,8 +51,8 @@ public class User {
         return role;
     }
 
-    public String getAvatar() {
-        return avatar;
+    public String getAvatarId() {
+        return avatarId;
     }
 
     public void setId(String id) {
@@ -75,7 +75,7 @@ public class User {
         this.role = role;
     }
 
-    public void setAvatar(String avatar) {
-        this.avatar = avatar;
+    public void setAvatarId(String avatarId) {
+        this.avatarId = avatarId;
     }
 }

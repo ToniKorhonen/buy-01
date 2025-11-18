@@ -12,17 +12,20 @@ public class Media {
     @NotBlank(message = "File path is required")
     private String filePath;
 
-    private String uploaderId;
+    private String uploaderId; // Optional field - who uploaded the file
 
-    // Constructor for creating new Media (used by MediaService)
-    public Media(String id, String filePath, String uploaderId) {
-        this.id = id;
-        this.filePath = filePath;
-        this.uploaderId = uploaderId;
-    }
+    private String productId; // Optional field to link media to a product
 
     // Default constructor for MongoDB deserialization
     public Media() {
+    }
+
+    // Constructor with all fields
+    public Media(String id, String filePath, String uploaderId, String productId) {
+        this.id = id;
+        this.filePath = filePath;
+        this.uploaderId = uploaderId;
+        this.productId = productId;
     }
 
     public String getId() {
@@ -32,7 +35,6 @@ public class Media {
     public void setId(String id) {
         this.id = id;
     }
-
 
     public String getFilePath() {
         return filePath;
@@ -50,5 +52,12 @@ public class Media {
         this.uploaderId = uploaderId;
     }
 
+    public String getProductId() {
+        return productId;
+    }
+
+    public void setProductId(String productId) {
+        this.productId = productId;
+    }
 }
 

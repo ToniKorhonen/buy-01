@@ -27,26 +27,30 @@ public class MediaService {
     private final MediaRepository mediaRepository;
     private final Path storageLocation;
     private final List<String> allowedTypes;
+    private final String baseUrl;
 
     @Autowired
     public MediaService(MediaRepository mediaRepository,
                        @Value("${media.storage.path:./uploads}") String storagePath,
-                       @Value("${media.allowed.types:image/png,image/jpeg,image/gif}") String allowedTypesStr) {
+                       @Value("${media.allowed.types:image/png,image/jpeg,image/gif}") String allowedTypesStr,
+                       @Value("${media.base.url:http://localhost:8080}") String baseUrl) {
         this.mediaRepository = mediaRepository;
         this.storageLocation = Paths.get(storagePath).toAbsolutePath().normalize();
         this.allowedTypes = List.of(allowedTypesStr.split(","));
+        this.baseUrl = baseUrl;
 
         try {
             Files.createDirectories(this.storageLocation);
             log.info("Storage directory created at: {}", this.storageLocation);
             log.info("Allowed file types: {}", this.allowedTypes);
+            log.info("Base URL for media: {}", this.baseUrl);
         } catch (IOException e) {
             log.error("Could not create storage directory", e);
             throw new RuntimeException("Could not create storage directory", e);
         }
     }
 
-    public MediaUploadResponse uploadMedia(MultipartFile file, String uploaderId) {
+    public MediaUploadResponse uploadMedia(MultipartFile file, String uploaderId, String productId) {
         if (file.isEmpty()) {
             throw new IllegalArgumentException("Cannot upload empty file");
         }
@@ -68,21 +72,22 @@ public class MediaService {
                 : "";
             String uniqueFilename = UUID.randomUUID().toString() + fileExtension;
 
-            // Save file to disk
             Path targetLocation = this.storageLocation.resolve(uniqueFilename);
             Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
 
-            // Save metadata to database
             Media media = new Media(
                 null,
                 uniqueFilename,
-                uploaderId
+                uploaderId,
+                productId
             );
 
             Media savedMedia = mediaRepository.save(media);
-            log.info("Media uploaded successfully: id={}, filename={}", savedMedia.getId(), originalFilename);
 
-            String downloadUrl = "/api/media/" + savedMedia.getId();
+            log.info("Media uploaded successfully: id={}, filename={}, productId={}",
+                savedMedia.getId(), originalFilename, productId);
+
+            String downloadUrl = baseUrl + "/api/media/" + savedMedia.getId();
 
             return new MediaUploadResponse(
                 savedMedia.getId(),
@@ -98,6 +103,12 @@ public class MediaService {
 
     public List<MediaResponse> getAllMedia() {
         return mediaRepository.findAll().stream()
+            .map(this::toResponse)
+            .collect(Collectors.toList());
+    }
+
+    public List<MediaResponse> getMediaByProductId(String productId) {
+        return mediaRepository.findByProductId(productId).stream()
             .map(this::toResponse)
             .collect(Collectors.toList());
     }
@@ -143,7 +154,7 @@ public class MediaService {
     }
 
     private MediaResponse toResponse(Media media) {
-        String downloadUrl = "/api/media/" + media.getId();
+        String downloadUrl = baseUrl + "/api/media/" + media.getId();
         return new MediaResponse(
             media.getId(),
             media.getUploaderId(),

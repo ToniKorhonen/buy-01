@@ -1,0 +1,9 @@
+service/media/services/MediaService.class
+service/media/controllers/MediaController.class
+service/media/dtos/MediaDtos$MediaResponse.class
+service/media/dtos/MediaDtos$MessageResponse.class
+service/media/dtos/MediaDtos.class
+service/media/dtos/MediaDtos$MediaUploadResponse.class
+service/media/mongo_repo/MediaRepository.class
+service/media/MediaServiceApplication.class
+service/media/models/Media.class

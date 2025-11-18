@@ -11,7 +11,7 @@ public class UserDtos {
             @NotBlank @Email String email,
             @NotBlank @Size(min = 8) String password,
             Role role,
-            String avatar
+            String avatarId
     ) {}
 
     // New DTO to update the user's own profile
@@ -21,7 +21,7 @@ public class UserDtos {
             @Pattern(regexp = "^(?=.*[0-9])(?=.*[!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>\\/?]).*$",
                     message = "Password must contain at least one number and one special character")
             String password,
-            String avatar
+            String avatarId
     ) {}
 
     public record UserResponse(
@@ -29,6 +29,6 @@ public class UserDtos {
             String name,
             String email,
             Role role,
-            String avatar
+            String avatarId
     ) {}
 }
