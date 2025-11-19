@@ -50,7 +50,7 @@ public class MediaService {
         }
     }
 
-    public MediaUploadResponse uploadMedia(MultipartFile file, String uploaderId, String productId) {
+    public MediaUploadResponse uploadMedia(MultipartFile file, String productId) {
         if (file.isEmpty()) {
             throw new IllegalArgumentException("Cannot upload empty file");
         }
@@ -78,7 +78,6 @@ public class MediaService {
             Media media = new Media(
                 null,
                 uniqueFilename,
-                uploaderId,
                 productId
             );
 
@@ -109,12 +108,6 @@ public class MediaService {
 
     public List<MediaResponse> getMediaByProductId(String productId) {
         return mediaRepository.findByProductId(productId).stream()
-            .map(this::toResponse)
-            .collect(Collectors.toList());
-    }
-
-    public List<MediaResponse> getMediaByUploaderId(String uploaderId) {
-        return mediaRepository.findByUploaderId(uploaderId).stream()
             .map(this::toResponse)
             .collect(Collectors.toList());
     }
@@ -157,7 +150,7 @@ public class MediaService {
         String downloadUrl = baseUrl + "/api/media/" + media.getId();
         return new MediaResponse(
             media.getId(),
-            media.getUploaderId(),
+            media.getProductId(),
             downloadUrl
         );
     }

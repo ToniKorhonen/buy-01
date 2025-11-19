@@ -29,13 +29,12 @@ public class MediaController {
     @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> uploadMedia(
             @RequestParam("file") MultipartFile file,
-            @RequestParam(value = "uploaderId", required = false, defaultValue = "anonymous") String uploaderId,
             @RequestParam(value = "productId", required = false) String productId) {
         try {
-            log.info("Uploading file: {}, size: {} bytes, uploader: {}, productId: {}",
-                file.getOriginalFilename(), file.getSize(), uploaderId, productId);
+            log.info("Uploading file: {}, size: {} bytes, productId: {}",
+                file.getOriginalFilename(), file.getSize(), productId);
 
-            MediaUploadResponse response = mediaService.uploadMedia(file, uploaderId, productId);
+            MediaUploadResponse response = mediaService.uploadMedia(file, productId);
             return ResponseEntity.ok(response);
 
         } catch (IllegalArgumentException e) {
