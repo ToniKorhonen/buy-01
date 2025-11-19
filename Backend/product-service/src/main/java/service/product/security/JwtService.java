@@ -20,17 +20,40 @@ public class JwtService {
         try {
             String decoded = new String(Base64.getUrlDecoder().decode(token), StandardCharsets.UTF_8);
             String[] parts = decoded.split(":");
-            if (parts.length >= 3) {
-                String payload = parts[0] + ":" + parts[1];
-                String signature = parts[2];
+            if (parts.length >= 4) {
+                String payload = parts[0] + ":" + parts[1] + ":" + parts[2];
+                String signature = parts[3];
                 String expectedSignature = hmacSha256(payload, secret);
                 if (signature.equals(expectedSignature)) {
                     // Validate expiration
-                    long expirationTimestamp = Long.parseLong(parts[1]);
+                    long expirationTimestamp = Long.parseLong(parts[2]);
                     if (System.currentTimeMillis() > expirationTimestamp) {
                         return null; // Token expired
                     }
                     return parts[0]; // email is the first part
+                }
+            }
+            return null;
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    public String extractRole(String token) {
+        try {
+            String decoded = new String(Base64.getUrlDecoder().decode(token), StandardCharsets.UTF_8);
+            String[] parts = decoded.split(":");
+            if (parts.length >= 4) {
+                String payload = parts[0] + ":" + parts[1] + ":" + parts[2];
+                String signature = parts[3];
+                String expectedSignature = hmacSha256(payload, secret);
+                if (signature.equals(expectedSignature)) {
+                    // Validate expiration
+                    long expirationTimestamp = Long.parseLong(parts[2]);
+                    if (System.currentTimeMillis() > expirationTimestamp) {
+                        return null; // Token expired
+                    }
+                    return parts[1]; // role is the second part
                 }
             }
             return null;

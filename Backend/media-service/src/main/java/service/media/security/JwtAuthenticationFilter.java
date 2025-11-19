@@ -1,4 +1,4 @@
-package service.product.security;
+package service.media.security;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

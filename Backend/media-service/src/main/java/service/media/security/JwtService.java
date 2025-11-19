@@ -1,7 +1,5 @@
-package service.user.security;
+package service.media.security;
 
-
-import service.user.models.User;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -17,14 +15,6 @@ public class JwtService {
 
     @Value("${jwt.expiration}")
     private long expirationTime;
-
-    public String generateToken(User user) {
-        long expirationTimestamp = System.currentTimeMillis() + expirationTime;
-        String payload = user.getEmail() + ":" + user.getRole() + ":" + expirationTimestamp;
-        String signature = hmacSha256(payload, secret);
-        String token = payload + ":" + signature;
-        return Base64.getUrlEncoder().withoutPadding().encodeToString(token.getBytes(StandardCharsets.UTF_8));
-    }
 
     public String extractEmail(String token) {
         try {
@@ -79,7 +69,8 @@ public class JwtService {
             byte[] rawHmac = mac.doFinal(data.getBytes(StandardCharsets.UTF_8));
             return Base64.getUrlEncoder().withoutPadding().encodeToString(rawHmac);
         } catch (Exception e) {
-            throw new RuntimeException("Error generating token", e);
+            throw new RuntimeException("Error validating token", e);
         }
     }
 }
+

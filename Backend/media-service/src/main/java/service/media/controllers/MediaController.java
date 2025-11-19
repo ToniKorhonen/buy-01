@@ -7,6 +7,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import service.media.dtos.MediaDtos.*;
@@ -26,6 +27,7 @@ public class MediaController {
         this.mediaService = mediaService;
     }
 
+    @PreAuthorize("hasRole('SELLER')")
     @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> uploadMedia(
             @RequestParam("file") MultipartFile file,
@@ -124,6 +126,7 @@ public class MediaController {
     }
 
 
+    @PreAuthorize("hasRole('SELLER')")
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteMedia(@PathVariable String id) {
         try {
