@@ -3,7 +3,7 @@ package service.media.dtos;
 public class MediaDtos {
     public record MediaResponse(
             String id,
-            String productId,
+            String uploaderId,
             String downloadUrl
     ) {}
 

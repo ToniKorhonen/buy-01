@@ -123,7 +123,14 @@ public class MediaService {
             .orElseThrow(() -> new RuntimeException("Media not found with id: " + id));
 
         try {
-            Path filePath = this.storageLocation.resolve(media.getFilePath());
+            Path filePath = this.storageLocation.resolve(media.getFilePath()).normalize();
+
+            // Path traversal protection: ensure the file is within the storage directory
+            if (!filePath.startsWith(this.storageLocation)) {
+                log.error("Path traversal attempt detected for media id: {}, filePath: {}", id, media.getFilePath());
+                throw new SecurityException("Invalid file path");
+            }
+
             return Files.readAllBytes(filePath);
         } catch (IOException e) {
             log.error("Failed to read file for media id: {}", id, e);
@@ -136,7 +143,14 @@ public class MediaService {
             .orElseThrow(() -> new RuntimeException("Media not found with id: " + id));
 
         try {
-            Path filePath = this.storageLocation.resolve(media.getFilePath());
+            Path filePath = this.storageLocation.resolve(media.getFilePath()).normalize();
+
+            // Path traversal protection: ensure the file is within the storage directory
+            if (!filePath.startsWith(this.storageLocation)) {
+                log.error("Path traversal attempt detected for media id: {}, filePath: {}", id, media.getFilePath());
+                throw new SecurityException("Invalid file path");
+            }
+
             Files.deleteIfExists(filePath);
             mediaRepository.delete(media);
             log.info("Media deleted successfully: id={}", id);
