@@ -8,7 +8,8 @@
   <link rel="icon" type="image/x-icon" href="favicon.ico">
 
   <!-- Security meta tags (HTTP headers take precedence when available) -->
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: http://localhost:8080 http://localhost:8083; font-src 'self' data:; connect-src 'self' http://localhost:8080 http://localhost:8081 http://localhost:8082 http://localhost:8083 ws://localhost:4200; media-src 'self'; worker-src 'self'; child-src 'self'; manifest-src 'self'; frame-ancestors 'self'; form-action 'self'; base-uri 'self'; object-src 'none';">
+  <!-- Note: frame-ancestors directive is ignored in meta tags and only works in HTTP headers -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: http://localhost:8080 http://localhost:8083; font-src 'self' data:; connect-src 'self' http://localhost:8080 http://localhost:8081 http://localhost:8082 http://localhost:8083 https://localhost:4443 ws://localhost:4200 wss://localhost:4443; media-src 'self'; worker-src 'self'; child-src 'self'; manifest-src 'self'; form-action 'self'; base-uri 'self'; object-src 'none';">
   <meta http-equiv="X-Content-Type-Options" content="nosniff">
 </head>
 <body>

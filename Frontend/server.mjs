@@ -1,4 +1,6 @@
 import express from 'express';
+import https from 'https';
+import fs from 'fs';
 import { createProxyMiddleware } from 'http-proxy-middleware';
 import { spawn } from 'child_process';
 import path from 'path';
@@ -9,6 +11,13 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = 4200;
+const HTTPS_PORT = 4443;
+
+// Load SSL certificate
+const sslOptions = {
+  key: fs.readFileSync(path.join(__dirname, 'certs', 'key.pem')),
+  cert: fs.readFileSync(path.join(__dirname, 'certs', 'cert.pem'))
+};
 
 // Disable X-Powered-By header to prevent information leakage
 app.disable('x-powered-by');
@@ -40,7 +49,7 @@ const applySecurityHeaders = (headers) => {
       "style-src 'self' 'unsafe-inline'; " +
       "img-src 'self' data: http://localhost:8080 http://localhost:8083; " +
       "font-src 'self' data:; " +
-      "connect-src 'self' http://localhost:8080 http://localhost:8081 http://localhost:8082 http://localhost:8083 ws://localhost:4200; " +
+      "connect-src 'self' http://localhost:8080 http://localhost:8081 http://localhost:8082 http://localhost:8083 https://localhost:4443 ws://localhost:4200 wss://localhost:4443; " +
       "media-src 'self'; " +
       "worker-src 'self'; " +
       "child-src 'self'; " +
@@ -143,7 +152,7 @@ app.use((req, res, next) => {
     "style-src 'self' 'unsafe-inline'; " +
     "img-src 'self' data: http://localhost:8080 http://localhost:8083; " +
     "font-src 'self' data:; " +
-    "connect-src 'self' http://localhost:8080 http://localhost:8081 http://localhost:8082 http://localhost:8083 ws://localhost:4200; " +
+    "connect-src 'self' http://localhost:8080 http://localhost:8081 http://localhost:8082 http://localhost:8083 https://localhost:4443 ws://localhost:4200 wss://localhost:4443; " +
     "media-src 'self'; " +
     "worker-src 'self'; " +
     "child-src 'self'; " +
@@ -233,7 +242,7 @@ app.use('/', createProxyMiddleware({
           "style-src 'self' 'unsafe-inline'; " +
           "img-src 'self' data: http://localhost:8080 http://localhost:8083; " +
           "font-src 'self' data:; " +
-          "connect-src 'self' http://localhost:8080 http://localhost:8081 http://localhost:8082 http://localhost:8083 ws://localhost:4200; " +
+          "connect-src 'self' http://localhost:8080 http://localhost:8081 http://localhost:8082 http://localhost:8083 https://localhost:4443 ws://localhost:4200 wss://localhost:4443; " +
           "media-src 'self'; " +
           "worker-src 'self'; " +
           "child-src 'self'; " +
@@ -263,12 +272,26 @@ app.use('/', createProxyMiddleware({
   }
 }));
 
-// Start the security proxy server
-app.listen(PORT, () => {
-  console.log(`\n🔒 Security proxy server running on http://localhost:${PORT}`);
+// Create HTTP to HTTPS redirect server
+const redirectApp = express();
+redirectApp.use((req, res) => {
+  res.redirect(301, `https://localhost:${HTTPS_PORT}${req.url}`);
+});
+
+redirectApp.listen(PORT, () => {
+  console.log(`\n🔀 HTTP redirect server running on http://localhost:${PORT}`);
+  console.log(`   Redirecting all traffic to https://localhost:${HTTPS_PORT}`);
+});
+
+// Start the HTTPS security proxy server
+https.createServer(sslOptions, app).listen(HTTPS_PORT, () => {
+  console.log(`\n🔒 HTTPS security proxy server running on https://localhost:${HTTPS_PORT}`);
   console.log('📡 Proxying Angular dev server from port 4201');
-  console.log('🔐 All security headers are being applied\n');
+  console.log('🔐 All security headers are being applied');
+  console.log('🔐 SSL/TLS encryption enabled');
   console.log('✅ X-Powered-By header disabled');
+  console.log(`\n💡 Access the application at: https://localhost:${HTTPS_PORT}`);
+  console.log(`   (HTTP requests to port ${PORT} will be redirected to HTTPS)\n`);
 });
 
 // Handle graceful shutdown
