@@ -13,19 +13,22 @@ import reactor.core.publisher.Mono;
  * This addresses security concerns identified by ZAP scanning:
  * - Content Security Policy with frame-ancestors and form-action directives
  * - Additional security headers for defense-in-depth
+ *
+ * Uses .set() instead of .add() to prevent duplicate headers from backend services
  */
 @Component
 public class SecurityHeadersFilter implements GlobalFilter, Ordered {
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
-        return chain.filter(exchange).then(Mono.fromRunnable(() -> {
+        // Add headers before the response is committed
+        exchange.getResponse().beforeCommit(() -> {
             HttpHeaders headers = exchange.getResponse().getHeaders();
 
             // Content Security Policy - comprehensive policy including required directives
             // frame-ancestors: prevents clickjacking attacks
             // form-action: restricts where forms can be submitted
-            headers.add("Content-Security-Policy",
+            headers.set("Content-Security-Policy",
                 "default-src 'self'; " +
                 "script-src 'self' 'unsafe-inline' 'unsafe-eval'; " +
                 "style-src 'self' 'unsafe-inline'; " +
@@ -39,19 +42,19 @@ public class SecurityHeadersFilter implements GlobalFilter, Ordered {
             );
 
             // X-Frame-Options - legacy protection against clickjacking (backup for older browsers)
-            headers.add("X-Frame-Options", "SAMEORIGIN");
+            headers.set("X-Frame-Options", "SAMEORIGIN");
 
             // X-Content-Type-Options - prevents MIME type sniffing
-            headers.add("X-Content-Type-Options", "nosniff");
+            headers.set("X-Content-Type-Options", "nosniff");
 
             // X-XSS-Protection - enables XSS filter in older browsers
-            headers.add("X-XSS-Protection", "1; mode=block");
+            headers.set("X-XSS-Protection", "1; mode=block");
 
             // Referrer-Policy - controls referrer information
-            headers.add("Referrer-Policy", "strict-origin-when-cross-origin");
+            headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
 
             // Permissions-Policy - restricts browser features
-            headers.add("Permissions-Policy",
+            headers.set("Permissions-Policy",
                 "geolocation=(), " +
                 "microphone=(), " +
                 "camera=(), " +
@@ -61,7 +64,11 @@ public class SecurityHeadersFilter implements GlobalFilter, Ordered {
                 "gyroscope=(), " +
                 "accelerometer=()"
             );
-        }));
+
+            return Mono.empty();
+        });
+
+        return chain.filter(exchange);
     }
 
     @Override
