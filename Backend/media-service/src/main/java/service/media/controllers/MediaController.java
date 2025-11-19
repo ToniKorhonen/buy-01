@@ -33,7 +33,6 @@ public class MediaController {
         try {
             log.info("Uploading file: {}, size: {} bytes, productId: {}",
                 file.getOriginalFilename(), file.getSize(), productId);
-
             MediaUploadResponse response = mediaService.uploadMedia(file, productId);
             return ResponseEntity.ok(response);
 

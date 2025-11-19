@@ -1,10 +1,3 @@
-<h2>Home</h2>
-<p>Welcome to your home page!</p>
-
-<div>
-  <button type="button" (click)="logout()">Logout</button>
-  <button type="button" (click)="goToProfile()">Profile</button>
-</div>
 <div class="home-container">
   <div class="hero">
     <h1>Welcome to Buy-01</h1>
@@ -33,6 +26,12 @@
       <h2>Register</h2>
       <p>Create a new account as a client or seller</p>
       <a routerLink="/register" class="btn btn-primary">Register</a>
+    </div>
+
+    <div class="card" *ngIf="isAuthenticated">
+      <h2>My Profile</h2>
+      <p>View and manage your account information</p>
+      <button (click)="goToProfile()" class="btn btn-primary">Go to Profile</button>
     </div>
 
     <div class="card" *ngIf="isSeller">
