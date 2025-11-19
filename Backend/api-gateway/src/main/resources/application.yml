@@ -20,7 +20,6 @@ spring:
               - OPTIONS
             allowedHeaders: "*"
             exposedHeaders: "*"
-            allowCredentials: true
             maxAge: 3600
       routes:
         - id: user-service
@@ -35,20 +34,19 @@ spring:
             - Path=/api/products,/api/products/**
           filters:
             - RewritePath=/api/products(?<segment>.*), /${segment}
-        - id: media-service
-          uri: http://localhost:8083
-          predicates:
-            - Path=/api/media,/api/media/**
         - id: auth-service
           uri: http://localhost:8081
           predicates:
             - Path=/api/auth,/api/auth/**
           filters:
-            - RewritePath=/api/auth/(?<segment>.*), /auth/${segment}
+            - RewritePath=/api/auth(?<segment>.*), /auth${segment}
+        - id: media-service
+          uri: http://localhost:8083
+          predicates:
+            - Path=/api/media,/api/media/**
         - id: profile-service
           uri: http://localhost:8081
           predicates:
             - Path=/api/profile/**
           filters:
             - RewritePath=/api/profile/(?<segment>.*), /profile/${segment}
-            - RewritePath=/api/auth(?<segment>.*), /auth${segment}

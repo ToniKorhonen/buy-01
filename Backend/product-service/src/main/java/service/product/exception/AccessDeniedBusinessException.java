@@ -5,3 +5,4 @@ public class AccessDeniedBusinessException extends RuntimeException {
         super(message);
     }
 }
+

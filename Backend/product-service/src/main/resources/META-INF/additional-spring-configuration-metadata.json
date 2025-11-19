@@ -1,0 +1,15 @@
+{
+  "properties": [
+    {
+      "name": "jwt.secret",
+      "type": "java.lang.String",
+      "description": "Secret key used for JWT token generation and validation. Should be a strong random string. Can be set via JWT_SECRET environment variable."
+    },
+    {
+      "name": "jwt.expiration",
+      "type": "java.lang.Long",
+      "description": "JWT token expiration time in milliseconds. Default is 3600000 (1 hour). Can be set via JWT_EXPIRATION environment variable.",
+      "defaultValue": 3600000
+    }
+  ]
+}

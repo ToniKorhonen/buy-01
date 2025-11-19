@@ -2,6 +2,7 @@ package service.user.security;
 
 
 import service.user.models.User;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.Mac;
@@ -11,11 +12,16 @@ import java.util.Base64;
 
 @Service
 public class JwtService {
-    private static final String SECRET = "SuperSecretKeyForJwtGeneration123456!";
+    @Value("${jwt.secret}")
+    private String secret;
+
+    @Value("${jwt.expiration}")
+    private long expirationTime;
 
     public String generateToken(User user) {
-        String payload = user.getEmail() + ":" + System.currentTimeMillis();
-        String signature = hmacSha256(payload, SECRET);
+        long expirationTimestamp = System.currentTimeMillis() + expirationTime;
+        String payload = user.getEmail() + ":" + expirationTimestamp;
+        String signature = hmacSha256(payload, secret);
         String token = payload + ":" + signature;
         return Base64.getUrlEncoder().withoutPadding().encodeToString(token.getBytes(StandardCharsets.UTF_8));
     }
@@ -27,8 +33,13 @@ public class JwtService {
             if (parts.length >= 3) {
                 String payload = parts[0] + ":" + parts[1];
                 String signature = parts[2];
-                String expectedSignature = hmacSha256(payload, SECRET);
+                String expectedSignature = hmacSha256(payload, secret);
                 if (signature.equals(expectedSignature)) {
+                    // Validate expiration
+                    long expirationTimestamp = Long.parseLong(parts[1]);
+                    if (System.currentTimeMillis() > expirationTimestamp) {
+                        return null; // Token expired
+                    }
                     return parts[0]; // email is the first part
                 }
             }
