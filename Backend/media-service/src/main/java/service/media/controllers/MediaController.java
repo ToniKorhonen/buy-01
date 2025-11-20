@@ -27,24 +27,24 @@ public class MediaController {
         this.mediaService = mediaService;
     }
 
-    @PreAuthorize("hasRole('SELLER')")
     @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> uploadMedia(
             @RequestParam("file") MultipartFile file,
+            @RequestParam(value = "uploaderId", required = false) String uploaderId,
             @RequestParam(value = "productId", required = false) String productId) {
         try {
-            log.info("Uploading file: {}, size: {} bytes, productId: {}",
-                file.getOriginalFilename(), file.getSize(), productId);
+            log.info("Uploading file: {}, size: {} bytes, uploaderId: {}, productId: {}",
+                file.getOriginalFilename(), file.getSize(), uploaderId, productId);
             MediaUploadResponse response = mediaService.uploadMedia(file, productId);
             return ResponseEntity.ok(response);
 
         } catch (IllegalArgumentException e) {
             log.warn("Invalid file upload request: {}", e.getMessage());
-            return ResponseEntity.badRequest().body(e.getMessage());
+            return ResponseEntity.badRequest().body(new MessageResponse(e.getMessage()));
         } catch (Exception e) {
             log.error("Error uploading file", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body("Failed to upload file: " + e.getMessage());
+                .body(new MessageResponse("Failed to upload file: " + e.getMessage()));
         }
     }
 

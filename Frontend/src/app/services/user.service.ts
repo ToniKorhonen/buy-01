@@ -45,6 +45,23 @@ export class UserService {
     return this.http.get<UserResponse>(`${this.base}/profile/me`);
   }
 
+  updateProfile(updates: Partial<{ name: string; email: string; password: string; avatarId: string }>): Observable<UserResponse> {
+    return this.http.put<UserResponse>(`${this.base}/profile/me`, updates).pipe(
+      tap((user) => {
+        this.currentUser = user;
+        localStorage.setItem('current_user', JSON.stringify(user));
+      })
+    );
+  }
+
+  deleteAccount(): Observable<void> {
+    return this.http.delete<void>(`${this.base}/profile/me`).pipe(
+      tap(() => {
+        this.logout();
+      })
+    );
+  }
+
   get token(): string | null {
     return localStorage.getItem('auth_token');
   }

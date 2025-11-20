@@ -5,7 +5,7 @@
     Loading profile...
   </div>
 
-  <div *ngIf="error" class="error">
+  <div *ngIf="error && !updating" class="error">
     {{ error }}
   </div>
 
@@ -15,7 +15,8 @@
       <div *ngIf="!avatarUrl" class="avatar-placeholder">👤</div>
     </div>
 
-    <div class="profile-info">
+    <!-- View Mode -->
+    <div *ngIf="!isEditing" class="profile-info">
       <div class="info-item">
         <label>Name:</label>
         <span>{{ user.name }}</span>
@@ -37,8 +38,118 @@
       </div>
     </div>
 
+    <!-- Edit Mode -->
+    <div *ngIf="isEditing" class="profile-edit-form">
+      <div class="form-group">
+        <label for="editName">Name:</label>
+        <input
+          type="text"
+          id="editName"
+          [(ngModel)]="editName"
+          placeholder="Enter your name"
+          [disabled]="updating"
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="editEmail">Email:</label>
+        <input
+          type="email"
+          id="editEmail"
+          [(ngModel)]="editEmail"
+          placeholder="Enter your email"
+          [disabled]="updating"
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="editPassword">New Password (optional):</label>
+        <input
+          type="password"
+          id="editPassword"
+          [(ngModel)]="editPassword"
+          placeholder="Leave blank to keep current password"
+          [disabled]="updating"
+        />
+        <small>Must be at least 8 characters with uppercase, lowercase, number and special character</small>
+      </div>
+
+      <div class="form-group" *ngIf="editPassword">
+        <label for="editPasswordConfirm">Confirm New Password:</label>
+        <input
+          type="password"
+          id="editPasswordConfirm"
+          [(ngModel)]="editPasswordConfirm"
+          placeholder="Re-enter your new password"
+          [disabled]="updating"
+        />
+      </div>
+
+      <div *ngIf="error" class="error">
+        {{ error }}
+      </div>
+
+      <div class="form-actions">
+        <button
+          (click)="saveProfile()"
+          class="btn-save"
+          [disabled]="updating"
+        >
+          {{ updating ? 'Saving...' : 'Save Changes' }}
+        </button>
+        <button
+          (click)="cancelEdit()"
+          class="btn-cancel"
+          [disabled]="updating"
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
     <div class="profile-actions">
-      <button (click)="logout()" class="btn-logout">Logout</button>
+      <button
+        *ngIf="!isEditing"
+        (click)="startEdit()"
+        class="btn-edit"
+        [disabled]="updating"
+      >
+        ✏️ Edit Profile
+      </button>
+
+      <button (click)="logout()" class="btn-logout" [disabled]="updating">
+        Logout
+      </button>
+
+      <button
+        *ngIf="!isEditing"
+        (click)="confirmDelete()"
+        class="btn-delete"
+        [disabled]="updating"
+      >
+        🗑️ Delete Account
+      </button>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div *ngIf="showDeleteConfirm" class="modal-overlay" (click)="cancelDelete()">
+      <div class="modal-content" (click)="$event.stopPropagation()">
+        <h3>⚠️ Delete Account</h3>
+        <p>Are you absolutely sure you want to delete your account?</p>
+        <p class="warning-text">
+          This action is <strong>permanent</strong> and cannot be undone.
+          All your data will be lost forever.
+        </p>
+        <div class="modal-actions">
+          <button (click)="deleteAccount()" class="btn-confirm-delete" [disabled]="updating">
+            {{ updating ? 'Deleting...' : 'Yes, Delete My Account' }}
+          </button>
+          <button (click)="cancelDelete()" class="btn-cancel-delete" [disabled]="updating">
+            Cancel
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 </div>

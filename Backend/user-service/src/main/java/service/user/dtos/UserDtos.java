@@ -34,6 +34,10 @@ public class UserDtos {
             @Pattern(regexp = "^[a-zA-Z\\s'-]+$", message = "Name can only contain letters, spaces, hyphens and apostrophes")
             String name,
 
+            @Email(message = "Email must be valid")
+            @Size(max = 255, message = "Email is too long")
+            String email,
+
             @Size(min = 8, max = 128, message = "Password must be between 8 and 128 characters")
             @Pattern(regexp = "^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>\\/?]).*$",
                     message = "Password must contain at least one uppercase letter, one lowercase letter, one number and one special character")

@@ -61,14 +61,16 @@
           id="avatar"
           name="avatar"
           (change)="onFileSelected($event)"
-          accept="image/*"
+          accept="image/png,image/jpeg,image/jpg,image/gif"
           [disabled]="loading"
           class="form-control">
+        <small class="form-text">Maximum file size: 2MB. Accepted formats: PNG, JPG, GIF</small>
         <div class="avatar-preview" *ngIf="avatarPreview">
           <img [src]="avatarPreview" alt="Avatar preview">
         </div>
       </div>
 
+      <div class="warning" *ngIf="warning">{{ warning }}</div>
       <div class="info" *ngIf="uploadingAvatar">Uploading avatar...</div>
       <div class="success" *ngIf="message">{{ message }}</div>
       <div class="error" *ngIf="error">{{ error }}</div>
