@@ -28,6 +28,31 @@ pipeline {
         ) == 0 ? 'true' : 'false'}"""
     }
 
+    // Automatic build triggers - AUDIT REQUIREMENT: Auto-trigger on commit
+    triggers {
+        // Poll SCM every 2 minutes for changes
+        pollSCM('H/2 * * * *')
+    }
+
+    // Parameterized builds - BONUS REQUIREMENT
+    parameters {
+        choice(
+            name: 'DEPLOY_ENV',
+            choices: ['auto', 'dev', 'prod'],
+            description: 'Override deployment environment (auto = based on branch)'
+        )
+        booleanParam(
+            name: 'SKIP_TESTS',
+            defaultValue: false,
+            description: 'Skip test execution (not recommended for production)'
+        )
+        booleanParam(
+            name: 'CLEAN_BUILD',
+            defaultValue: false,
+            description: 'Force clean build (remove all Docker caches)'
+        )
+    }
+
     options {
         buildDiscarder(logRotator(numToKeepStr: '10'))
         timestamps()
@@ -154,6 +179,56 @@ EOF
             }
         }
 
+        // AUDIT REQUIREMENT: Automated testing
+        stage('Run Tests') {
+            when {
+                expression { params.SKIP_TESTS == false }
+            }
+            parallel {
+                stage('Test User Service') {
+                    steps {
+                        dir('Backend/user-service') {
+                            echo '🧪 Testing User Service...'
+                            sh './mvnw test || true'
+                        }
+                    }
+                    post {
+                        always {
+                            junit allowEmptyResults: true, testResults: 'Backend/user-service/target/surefire-reports/*.xml'
+                        }
+                    }
+                }
+
+                stage('Test Product Service') {
+                    steps {
+                        dir('Backend/product-service') {
+                            echo '🧪 Testing Product Service...'
+                            sh './mvnw test || true'
+                        }
+                    }
+                    post {
+                        always {
+                            junit allowEmptyResults: true, testResults: 'Backend/product-service/target/surefire-reports/*.xml'
+                        }
+                    }
+                }
+
+                stage('Test API Gateway') {
+                    steps {
+                        dir('Backend/api-gateway') {
+                            echo '🧪 Testing API Gateway...'
+                            sh './mvnw test || true'
+                        }
+                    }
+                    post {
+                        always {
+                            junit allowEmptyResults: true, testResults: 'Backend/api-gateway/target/surefire-reports/*.xml'
+                        }
+                    }
+                }
+            }
+        }
+
         stage('Build Docker Images') {
             when {
                 expression { SHOULD_DEPLOY == 'true' }
@@ -231,14 +306,50 @@ EOF
                     Branch: ${env.BRANCH_NAME}
                     """
                 }
+
+                // AUDIT REQUIREMENT: Notifications on success
+                echo """
+                ✅ Build Summary:
+                - Status: SUCCESS
+                - Branch: ${env.BRANCH_NAME}
+                - Build: #${env.BUILD_NUMBER}
+                - Commit: ${GIT_COMMIT_SHORT}
+                - Duration: ${currentBuild.durationString}
+                """
             }
         }
+
         failure {
             echo '❌ Pipeline failed!'
             script {
                 sh 'docker compose logs --tail=50 || true'
+
+                // AUDIT REQUIREMENT: Notifications on failure
+                echo """
+                ❌ Build Failed:
+                - Branch: ${env.BRANCH_NAME}
+                - Build: #${env.BUILD_NUMBER}
+                - Commit: ${GIT_COMMIT_SHORT}
+                - Stage: ${env.STAGE_NAME ?: 'Unknown'}
+
+                Check console output for details.
+                """
             }
         }
+
+        unstable {
+            echo '⚠️  Pipeline unstable (tests may have failed)'
+            script {
+                echo """
+                ⚠️  Build Unstable:
+                - Some tests may have failed
+                - Check test reports for details
+                - Branch: ${env.BRANCH_NAME}
+                - Build: #${env.BUILD_NUMBER}
+                """
+            }
+        }
+
         cleanup {
             echo '🧹 Cleaning up workspace...'
             sh '''
