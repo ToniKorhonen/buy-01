@@ -52,12 +52,15 @@ pipeline {
             steps {
                 script {
                     echo '🔧 Setting up environment...'
-                    // Create .env from template with Jenkins credentials
-                    withCredentials([
-                        string(credentialsId: 'JWT_SECRET', variable: 'JWT_SECRET')
-                    ]) {
-                        sh '''
-                            cat > .env << EOF
+
+                    if (SHOULD_DEPLOY == 'true') {
+                        // For deployment branches (main/dev): use Jenkins credentials
+                        echo '📦 Creating .env with Jenkins credentials for deployment...'
+                        withCredentials([
+                            string(credentialsId: 'JWT_SECRET', variable: 'JWT_SECRET')
+                        ]) {
+                            sh '''
+                                cat > .env << EOF
 # JWT Configuration (from Jenkins credentials)
 JWT_SECRET=${JWT_SECRET}
 JWT_EXPIRATION=3600000
@@ -71,7 +74,28 @@ USER_DB_NAME=buy01_users
 PRODUCT_DB_NAME=buy01_products
 MEDIA_DB_NAME=media_db
 EOF
-                            echo "✅ .env file created"
+                                echo "✅ .env file created with Jenkins credentials"
+                            '''
+                        }
+                    } else {
+                        // For non-deployment branches: use dummy JWT for build testing
+                        echo '🔨 Creating .env with test credentials for build-only...'
+                        sh '''
+                            cat > .env << EOF
+# JWT Configuration (test credentials - not for production)
+JWT_SECRET=test-jwt-secret-for-build-only-not-for-deployment-12345
+JWT_EXPIRATION=3600000
+
+# MongoDB Configuration
+MONGODB_HOST=mongodb
+MONGODB_PORT=27017
+
+# Database Names
+USER_DB_NAME=buy01_users
+PRODUCT_DB_NAME=buy01_products
+MEDIA_DB_NAME=media_db
+EOF
+                            echo "✅ .env file created with test credentials (build-only)"
                         '''
                     }
                 }
