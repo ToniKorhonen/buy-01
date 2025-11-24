@@ -14,7 +14,7 @@ pipeline {
         SHOULD_DEPLOY = """${sh(
             returnStatus: true,
             script: '''
-                if [ "${BRANCH_NAME}" = "main" ] || [ "${BRANCH_NAME}" = "dev" ]; then
+                if [ "${BRANCH_NAME}" = "main" ] || [ "${BRANCH_NAME}" = "master" ] || [ "${BRANCH_NAME}" = "dev" ]; then
                     exit 0
                 else
                     exit 1
@@ -24,7 +24,7 @@ pipeline {
 
         NEEDS_APPROVAL = """${sh(
             returnStatus: true,
-            script: 'test "${BRANCH_NAME}" = "main"'
+            script: 'test "${BRANCH_NAME}" = "main" || test "${BRANCH_NAME}" = "master"'
         ) == 0 ? 'true' : 'false'}"""
     }
 
