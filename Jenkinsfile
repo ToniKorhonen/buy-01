@@ -138,8 +138,8 @@ EOF
                 script {
                     echo '🐳 Building Docker images...'
                     sh """
-                        # Build all images with docker-compose
-                        docker-compose build --parallel
+                        # Build all images with docker compose
+                        docker compose build --parallel
 
                         # Tag images with build number
                         docker tag buy01-user-service:latest buy01-user-service:${IMAGE_TAG}
@@ -212,7 +212,7 @@ EOF
         failure {
             echo '❌ Pipeline failed!'
             script {
-                sh 'docker-compose logs --tail=50 || true'
+                sh 'docker compose logs --tail=50 || true'
             }
         }
         cleanup {
