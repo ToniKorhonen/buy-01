@@ -1,0 +1,14 @@
+node_modules
+dist
+.angular
+*.log
+npm-debug.log*
+.DS_Store
+Thumbs.db
+.git
+.gitignore
+*.md
+.vscode
+.idea
+coverage
+.nyc_output
