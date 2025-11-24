@@ -7,3 +7,20 @@ uploads
 .env
 .env.local
 .env.*.local
+
+# Jenkins workspace artifacts
+target/
+node_modules/
+dist/
+*.log
+
+# Build artifacts
+Backend/*/target/
+Frontend/dist/
+Frontend/node_modules/
+
+# IDE files
+*.iml
+.vscode/
+.DS_Store
+

@@ -59,6 +59,43 @@ For development with hot-reload and debugging:
 
 Access at: https://localhost:4443
 
+## 🔄 CI/CD with Jenkins
+
+This project includes a complete Jenkins pipeline for automated building, testing, and deployment.
+
+### Quick Jenkins Setup
+
+1. **Add JWT Secret to Jenkins**:
+   ```bash
+   # Generate secret
+   openssl rand -base64 64
+   
+   # Add to Jenkins: Manage Jenkins → Credentials → Add Secret Text
+   # ID: JWT_SECRET
+   ```
+
+2. **Create Pipeline Job**:
+   - New Item → Multibranch Pipeline
+   - Repository: `/home/student/ZONE01/JAVA/buy-01`
+   - Build Configuration: by Jenkinsfile
+
+3. **Branch Strategy**:
+   - `main` → Build + Manual Approval + Deploy
+   - `dev` → Build + Auto-Deploy
+   - `jenkins` / feature branches → Build Only
+
+### Pipeline Features
+
+- ✅ Parallel builds for all microservices
+- ✅ Docker image creation and tagging
+- ✅ Automated health checks
+- ✅ Auto-rollback on deployment failure
+- ✅ Branch-aware deployment strategy
+
+📚 **Full Documentation**: 
+- [Quick Start Guide](docs/JENKINS_QUICK_START.md)
+- [Complete Setup](docs/JENKINS_SETUP.md)
+
 ## 📋 Prerequisites
 
 ### For Docker Deployment
@@ -224,4 +261,3 @@ docker compose down
 ## 📄 License
 
 This project is for educational purposes.
-
