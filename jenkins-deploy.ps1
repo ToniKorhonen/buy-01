@@ -1,7 +1,12 @@
 # Jenkins Deployment Script for Windows
 # PowerShell equivalent of jenkins-deploy.sh
 
-$ErrorActionPreference = "Stop"
+# Set UTF-8 encoding for proper character display
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+$OutputEncoding = [System.Text.Encoding]::UTF8
+
+# Don't stop on errors - we'll handle them manually
+$ErrorActionPreference = "Continue"
 
 Write-Host "🚀 Jenkins Deployment Script (Windows)" -ForegroundColor Cyan
 Write-Host "==============================" -ForegroundColor Cyan
@@ -25,11 +30,17 @@ function Test-ServiceHealth {
 
     while ($attempt -le $maxAttempts) {
         try {
-            $connection = Test-NetConnection -ComputerName localhost -Port $Port -WarningAction SilentlyContinue -ErrorAction SilentlyContinue
-            if ($connection.TcpTestSucceeded) {
+            $tcpClient = New-Object System.Net.Sockets.TcpClient
+            $connect = $tcpClient.BeginConnect("localhost", $Port, $null, $null)
+            $wait = $connect.AsyncWaitHandle.WaitOne(1000, $false)
+
+            if ($wait -and $tcpClient.Connected) {
+                $tcpClient.Close()
                 Write-Host "✅ $ServiceName is healthy" -ForegroundColor Green
                 return $true
             }
+
+            $tcpClient.Close()
         } catch {
             # Connection failed, continue waiting
         }
@@ -49,25 +60,32 @@ function Test-ServiceHealth {
 
 # Function to rollback on failure
 function Invoke-Rollback {
+    Write-Host ""
     Write-Host "🔄 Deployment failed! Rolling back..." -ForegroundColor Red
-    docker compose down
+    try {
+        docker compose down 2>&1 | Out-Null
+    } catch {
+        Write-Host "Warning: Could not stop containers during rollback" -ForegroundColor Yellow
+    }
     Write-Host "❌ Rollback complete. Please check the logs." -ForegroundColor Red
     exit 1
 }
 
+# Main deployment logic
 try {
     Write-Host "📋 Step 1: Stopping existing containers..."
-    docker compose down 2>$null
-    if ($LASTEXITCODE -ne 0) {
-        Write-Host "   (No existing containers to stop)"
-    }
+    $downResult = docker compose down 2>&1
+    Write-Host "   (Stopped any existing containers)"
 
     Write-Host ""
     Write-Host "🐳 Step 2: Starting services with Docker Compose..."
-    docker compose up -d --build
+    $upResult = docker compose up -d --build 2>&1
     if ($LASTEXITCODE -ne 0) {
-        throw "Docker compose failed to start services"
+        Write-Host "Docker compose failed with exit code: $LASTEXITCODE" -ForegroundColor Red
+        Write-Host $upResult -ForegroundColor Red
+        Invoke-Rollback
     }
+    Write-Host "   Services started successfully"
 
     Write-Host ""
     Write-Host "🏥 Step 3: Running health checks..."
@@ -123,8 +141,12 @@ try {
     Write-Host ""
     Write-Host "🎉 All services are running!" -ForegroundColor Green
 
+    # Exit successfully
+    exit 0
+
 } catch {
-    Write-Host "Error during deployment: $_" -ForegroundColor Red
+    Write-Host ""
+    Write-Host "Error during deployment: $($_.Exception.Message)" -ForegroundColor Red
     Invoke-Rollback
 }
 
