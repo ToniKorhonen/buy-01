@@ -55,8 +55,8 @@ pipeline {
 
                     try {
                         if (isUnix()) {
-                            buildTimestamp = sh(script: "date +%Y%m%d-%H%M%S", returnStdout: true).trim()
-                            gitCommitShort = sh(script: "git rev-parse --short HEAD", returnStdout: true).trim()
+                            buildTimestamp = sh(script: 'date +%Y%m%d-%H%M%S', returnStdout: true).trim()
+                            gitCommitShort = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
                         } else {
                             // Windows: Use PowerShell with explicit output encoding
                             buildTimestamp = powershell(
@@ -75,6 +75,10 @@ pipeline {
                         gitCommitShort = "unknown"
                     }
 
+                    // Debug: Print local variables
+                    echo "DEBUG: buildTimestamp = ${buildTimestamp}"
+                    echo "DEBUG: gitCommitShort = ${gitCommitShort}"
+
                     // Set environment variables with proper null handling
                     env.BUILD_TIMESTAMP = buildTimestamp ?: "unknown-${env.BUILD_NUMBER}"
                     env.GIT_COMMIT_SHORT = gitCommitShort ?: "unknown"
@@ -84,8 +88,8 @@ pipeline {
                     def deployBranches = ['main', 'master', 'dev']
                     def approvalBranches = ['main', 'master']
 
-                    env.SHOULD_DEPLOY = deployBranches.contains(env.BRANCH_NAME) ? 'true' : 'false'
-                    env.NEEDS_APPROVAL = approvalBranches.contains(env.BRANCH_NAME) ? 'true' : 'false'
+                    env.SHOULD_DEPLOY = (deployBranches.contains(env.BRANCH_NAME)) ? 'true' : 'false'
+                    env.NEEDS_APPROVAL = (approvalBranches.contains(env.BRANCH_NAME)) ? 'true' : 'false'
 
                     echo "🔍 Building branch: ${env.BRANCH_NAME}"
                     echo "📦 Build number: ${env.BUILD_NUMBER}"
