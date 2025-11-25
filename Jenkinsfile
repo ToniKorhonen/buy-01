@@ -235,6 +235,10 @@ MEDIA_DB_NAME=media_db
             when {
                 expression { params.SKIP_TESTS == false }
             }
+            environment {
+                // Set JWT_SECRET for tests - use test value that won't be used in production
+                JWT_SECRET = 'test-jwt-secret-for-testing-only-do-not-use-in-production-12345678901234567890'
+            }
             parallel {
                 stage('Test User Service') {
                     steps {
@@ -242,9 +246,15 @@ MEDIA_DB_NAME=media_db
                             echo '🧪 Testing User Service...'
                             script {
                                 if (isUnix()) {
-                                    sh './mvnw test || true'
+                                    sh '''
+                                        export JWT_SECRET="${JWT_SECRET}"
+                                        ./mvnw test || true
+                                    '''
                                 } else {
-                                    bat 'mvnw.cmd test || exit /b 0'
+                                    bat '''
+                                        set JWT_SECRET=%JWT_SECRET%
+                                        mvnw.cmd test || exit /b 0
+                                    '''
                                 }
                             }
                         }
@@ -262,9 +272,15 @@ MEDIA_DB_NAME=media_db
                             echo '🧪 Testing Product Service...'
                             script {
                                 if (isUnix()) {
-                                    sh './mvnw test || true'
+                                    sh '''
+                                        export JWT_SECRET="${JWT_SECRET}"
+                                        ./mvnw test || true
+                                    '''
                                 } else {
-                                    bat 'mvnw.cmd test || exit /b 0'
+                                    bat '''
+                                        set JWT_SECRET=%JWT_SECRET%
+                                        mvnw.cmd test || exit /b 0
+                                    '''
                                 }
                             }
                         }
@@ -282,9 +298,15 @@ MEDIA_DB_NAME=media_db
                             echo '🧪 Testing API Gateway...'
                             script {
                                 if (isUnix()) {
-                                    sh './mvnw test || true'
+                                    sh '''
+                                        export JWT_SECRET="${JWT_SECRET}"
+                                        ./mvnw test || true
+                                    '''
                                 } else {
-                                    bat 'mvnw.cmd test || exit /b 0'
+                                    bat '''
+                                        set JWT_SECRET=%JWT_SECRET%
+                                        mvnw.cmd test || exit /b 0
+                                    '''
                                 }
                             }
                         }
