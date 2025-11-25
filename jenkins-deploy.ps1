@@ -63,7 +63,7 @@ function Invoke-Rollback {
     Write-Host ""
     Write-Host "🔄 Deployment failed! Rolling back..." -ForegroundColor Red
     try {
-        docker compose down 2>&1 | Out-Null
+        $null = & docker compose down 2>&1
     } catch {
         Write-Host "Warning: Could not stop containers during rollback" -ForegroundColor Yellow
     }
@@ -74,15 +74,17 @@ function Invoke-Rollback {
 # Main deployment logic
 try {
     Write-Host "📋 Step 1: Stopping existing containers..."
-    $downResult = docker compose down 2>&1
+    # Properly capture docker output to prevent PowerShell from interpreting it as commands
+    $null = & docker compose down 2>&1
     Write-Host "   (Stopped any existing containers)"
 
     Write-Host ""
     Write-Host "🐳 Step 2: Starting services with Docker Compose..."
-    $upResult = docker compose up -d --build 2>&1
+    # Use call operator & to properly execute docker command
+    $upOutput = & docker compose up -d --build 2>&1 | Out-String
     if ($LASTEXITCODE -ne 0) {
         Write-Host "Docker compose failed with exit code: $LASTEXITCODE" -ForegroundColor Red
-        Write-Host $upResult -ForegroundColor Red
+        Write-Host $upOutput -ForegroundColor Red
         Invoke-Rollback
     }
     Write-Host "   Services started successfully"
@@ -137,7 +139,7 @@ try {
     Write-Host "   - API Gateway:      http://localhost:8080"
     Write-Host ""
     Write-Host "📊 Service Status:"
-    docker compose ps
+    & docker compose ps
     Write-Host ""
     Write-Host "🎉 All services are running!" -ForegroundColor Green
 
