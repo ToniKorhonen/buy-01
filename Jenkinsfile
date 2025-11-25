@@ -54,8 +54,8 @@ pipeline {
                         env.BUILD_TIMESTAMP = sh(script: "date +%Y%m%d-%H%M%S", returnStdout: true).trim()
                         env.GIT_COMMIT_SHORT = sh(script: "git rev-parse --short HEAD", returnStdout: true).trim()
                     } else {
-                        env.BUILD_TIMESTAMP = bat(script: "@echo off && powershell -Command \"Get-Date -Format 'yyyyMMdd-HHmmss'\"", returnStdout: true).trim()
-                        env.GIT_COMMIT_SHORT = bat(script: "@git rev-parse --short HEAD", returnStdout: true).trim()
+                        env.BUILD_TIMESTAMP = powershell(script: "Get-Date -Format 'yyyyMMdd-HHmmss'", returnStdout: true).trim()
+                        env.GIT_COMMIT_SHORT = powershell(script: "git rev-parse --short HEAD", returnStdout: true).trim()
                     }
 
                     env.IMAGE_TAG = "${env.BUILD_NUMBER}-${env.GIT_COMMIT_SHORT}"
@@ -82,7 +82,7 @@ pipeline {
                 script {
                     echo '🔧 Setting up environment...'
 
-                    if (SHOULD_DEPLOY == 'true') {
+                    if (env.SHOULD_DEPLOY == 'true') {
                         // For deployment branches (main/dev): use Jenkins credentials
                         echo '📦 Creating .env with Jenkins credentials for deployment...'
                         withCredentials([
@@ -282,7 +282,7 @@ MEDIA_DB_NAME=media_db
 
         stage('Build Docker Images') {
             when {
-                expression { SHOULD_DEPLOY == 'true' }
+                expression { env.SHOULD_DEPLOY == 'true' }
             }
             steps {
                 script {
@@ -325,8 +325,8 @@ MEDIA_DB_NAME=media_db
         stage('Deployment Approval') {
             when {
                 allOf {
-                    expression { SHOULD_DEPLOY == 'true' }
-                    expression { NEEDS_APPROVAL == 'true' }
+                    expression { env.SHOULD_DEPLOY == 'true' }
+                    expression { env.NEEDS_APPROVAL == 'true' }
                 }
             }
             steps {
@@ -343,7 +343,7 @@ MEDIA_DB_NAME=media_db
 
         stage('Deploy') {
             when {
-                expression { SHOULD_DEPLOY == 'true' }
+                expression { env.SHOULD_DEPLOY == 'true' }
             }
             steps {
                 script {
@@ -369,7 +369,7 @@ MEDIA_DB_NAME=media_db
         success {
             echo '✅ Pipeline completed successfully!'
             script {
-                if (SHOULD_DEPLOY == 'true') {
+                if (env.SHOULD_DEPLOY == 'true') {
                     echo """
                     🎉 Deployment successful!
 
