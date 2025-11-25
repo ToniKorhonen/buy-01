@@ -50,22 +50,40 @@ pipeline {
 
                 script {
                     // Initialize environment variables in a cross-platform way
-                    if (isUnix()) {
-                        env.BUILD_TIMESTAMP = sh(script: "date +%Y%m%d-%H%M%S", returnStdout: true).trim()
-                        env.GIT_COMMIT_SHORT = sh(script: "git rev-parse --short HEAD", returnStdout: true).trim()
-                    } else {
-                        env.BUILD_TIMESTAMP = powershell(script: "Get-Date -Format 'yyyyMMdd-HHmmss'", returnStdout: true).trim()
-                        env.GIT_COMMIT_SHORT = powershell(script: "git rev-parse --short HEAD", returnStdout: true).trim()
+                    try {
+                        if (isUnix()) {
+                            env.BUILD_TIMESTAMP = sh(script: "date +%Y%m%d-%H%M%S", returnStdout: true).trim()
+                            env.GIT_COMMIT_SHORT = sh(script: "git rev-parse --short HEAD", returnStdout: true).trim()
+                        } else {
+                            // Windows: Use PowerShell with explicit output encoding
+                            def timestamp = powershell(
+                                script: '[Console]::OutputEncoding = [System.Text.Encoding]::UTF8; Get-Date -Format "yyyyMMdd-HHmmss"',
+                                returnStdout: true
+                            ).trim()
+
+                            def commit = powershell(
+                                script: '[Console]::OutputEncoding = [System.Text.Encoding]::UTF8; git rev-parse --short HEAD',
+                                returnStdout: true
+                            ).trim()
+
+                            env.BUILD_TIMESTAMP = timestamp ?: "unknown-${env.BUILD_NUMBER}"
+                            env.GIT_COMMIT_SHORT = commit ?: "unknown"
+                        }
+                    } catch (Exception e) {
+                        echo "⚠️  Warning: Could not retrieve git info: ${e.message}"
+                        env.BUILD_TIMESTAMP = "unknown-${env.BUILD_NUMBER}"
+                        env.GIT_COMMIT_SHORT = "unknown"
                     }
 
-                    env.IMAGE_TAG = "${env.BUILD_NUMBER}-${env.GIT_COMMIT_SHORT}"
+                    // Safely build IMAGE_TAG
+                    env.IMAGE_TAG = "${env.BUILD_NUMBER}-${env.GIT_COMMIT_SHORT ?: 'unknown'}"
 
                     // Determine deployment flags based on branch
                     def deployBranches = ['main', 'master', 'dev']
                     def approvalBranches = ['main', 'master']
 
-                    env.SHOULD_DEPLOY = deployBranches.contains(env.BRANCH_NAME) ? 'true' : 'false'
-                    env.NEEDS_APPROVAL = approvalBranches.contains(env.BRANCH_NAME) ? 'true' : 'false'
+                    env.SHOULD_DEPLOY = (deployBranches.contains(env.BRANCH_NAME)) ? 'true' : 'false'
+                    env.NEEDS_APPROVAL = (approvalBranches.contains(env.BRANCH_NAME)) ? 'true' : 'false'
 
                     echo "🔍 Building branch: ${env.BRANCH_NAME}"
                     echo "📦 Build number: ${env.BUILD_NUMBER}"
@@ -226,7 +244,7 @@ MEDIA_DB_NAME=media_db
                                 if (isUnix()) {
                                     sh './mvnw test || true'
                                 } else {
-                                    bat 'mvnw.cmd test || exit 0'
+                                    bat 'mvnw.cmd test || exit /b 0'
                                 }
                             }
                         }
@@ -246,7 +264,7 @@ MEDIA_DB_NAME=media_db
                                 if (isUnix()) {
                                     sh './mvnw test || true'
                                 } else {
-                                    bat 'mvnw.cmd test || exit 0'
+                                    bat 'mvnw.cmd test || exit /b 0'
                                 }
                             }
                         }
@@ -266,7 +284,7 @@ MEDIA_DB_NAME=media_db
                                 if (isUnix()) {
                                     sh './mvnw test || true'
                                 } else {
-                                    bat 'mvnw.cmd test || exit 0'
+                                    bat 'mvnw.cmd test || exit /b 0'
                                 }
                             }
                         }
@@ -288,17 +306,19 @@ MEDIA_DB_NAME=media_db
                 script {
                     echo '🐳 Building Docker images...'
 
+                    def imageTag = env.IMAGE_TAG ?: "${env.BUILD_NUMBER}-unknown"
+
                     if (isUnix()) {
                         sh """
                             # Build all images with docker compose
                             docker compose build --parallel
 
                             # Tag images with build number
-                            docker tag buy01-user-service:latest buy01-user-service:${IMAGE_TAG}
-                            docker tag buy01-product-service:latest buy01-product-service:${IMAGE_TAG}
-                            docker tag buy01-media-service:latest buy01-media-service:${IMAGE_TAG}
-                            docker tag buy01-api-gateway:latest buy01-api-gateway:${IMAGE_TAG}
-                            docker tag buy01-frontend:latest buy01-frontend:${IMAGE_TAG}
+                            docker tag buy01-user-service:latest buy01-user-service:${imageTag}
+                            docker tag buy01-product-service:latest buy01-product-service:${imageTag}
+                            docker tag buy01-media-service:latest buy01-media-service:${imageTag}
+                            docker tag buy01-api-gateway:latest buy01-api-gateway:${imageTag}
+                            docker tag buy01-frontend:latest buy01-frontend:${imageTag}
 
                             echo "✅ Docker images built and tagged"
                         """
@@ -309,13 +329,13 @@ MEDIA_DB_NAME=media_db
                             docker compose build --parallel
 
                             echo Tagging images with build number
-                            docker tag buy01-user-service:latest buy01-user-service:${IMAGE_TAG}
-                            docker tag buy01-product-service:latest buy01-product-service:${IMAGE_TAG}
-                            docker tag buy01-media-service:latest buy01-media-service:${IMAGE_TAG}
-                            docker tag buy01-api-gateway:latest buy01-api-gateway:${IMAGE_TAG}
-                            docker tag buy01-frontend:latest buy01-frontend:${IMAGE_TAG}
+                            docker tag buy01-user-service:latest buy01-user-service:${imageTag}
+                            docker tag buy01-product-service:latest buy01-product-service:${imageTag}
+                            docker tag buy01-media-service:latest buy01-media-service:${imageTag}
+                            docker tag buy01-api-gateway:latest buy01-api-gateway:${imageTag}
+                            docker tag buy01-frontend:latest buy01-frontend:${imageTag}
 
-                            echo ✅ Docker images built and tagged
+                            echo Docker images built and tagged
                         """
                     }
                 }
@@ -379,7 +399,7 @@ MEDIA_DB_NAME=media_db
                     - API Gateway: http://localhost:8080
 
                     Build: ${env.BUILD_NUMBER}
-                    Tag: ${env.IMAGE_TAG}
+                    Tag: ${env.IMAGE_TAG ?: 'unknown'}
                     Branch: ${env.BRANCH_NAME}
                     """
                 }
@@ -390,7 +410,7 @@ MEDIA_DB_NAME=media_db
                 - Status: SUCCESS
                 - Branch: ${env.BRANCH_NAME}
                 - Build: #${env.BUILD_NUMBER}
-                - Commit: ${env.GIT_COMMIT_SHORT}
+                - Commit: ${env.GIT_COMMIT_SHORT ?: 'unknown'}
                 - Duration: ${currentBuild.durationString}
                 """
             }
@@ -404,7 +424,7 @@ MEDIA_DB_NAME=media_db
                     if (isUnix()) {
                         sh 'docker compose logs --tail=50 || true'
                     } else {
-                        bat 'docker compose logs --tail=50 || exit 0'
+                        bat 'docker compose logs --tail=50 || exit /b 0'
                     }
                 } catch (Exception e) {
                     echo "Could not retrieve docker logs: ${e.message}"
@@ -415,7 +435,7 @@ MEDIA_DB_NAME=media_db
                 ❌ Build Failed:
                 - Branch: ${env.BRANCH_NAME}
                 - Build: #${env.BUILD_NUMBER}
-                - Commit: ${env.GIT_COMMIT_SHORT}
+                - Commit: ${env.GIT_COMMIT_SHORT ?: 'unknown'}
                 - Stage: ${env.STAGE_NAME ?: 'Unknown'}
 
                 Check console output for details.
