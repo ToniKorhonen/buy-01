@@ -4,12 +4,7 @@ pipeline {
     environment {
         // Build configuration
         COMPOSE_PROJECT_NAME = 'buy01'
-        // Platform-agnostic variables - set in first stage
-        BUILD_TIMESTAMP = ''
-        GIT_COMMIT_SHORT = ''
-        IMAGE_TAG = ''
-        SHOULD_DEPLOY = ''
-        NEEDS_APPROVAL = ''
+        // Platform-agnostic variables - set dynamically in Checkout stage
     }
 
     // Automatic build triggers - AUDIT REQUIREMENT: Auto-trigger on commit
