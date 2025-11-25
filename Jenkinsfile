@@ -50,40 +50,42 @@ pipeline {
 
                 script {
                     // Initialize environment variables in a cross-platform way
+                    def buildTimestamp = ''
+                    def gitCommitShort = ''
+
                     try {
                         if (isUnix()) {
-                            env.BUILD_TIMESTAMP = sh(script: "date +%Y%m%d-%H%M%S", returnStdout: true).trim()
-                            env.GIT_COMMIT_SHORT = sh(script: "git rev-parse --short HEAD", returnStdout: true).trim()
+                            buildTimestamp = sh(script: "date +%Y%m%d-%H%M%S", returnStdout: true).trim()
+                            gitCommitShort = sh(script: "git rev-parse --short HEAD", returnStdout: true).trim()
                         } else {
                             // Windows: Use PowerShell with explicit output encoding
-                            def timestamp = powershell(
+                            buildTimestamp = powershell(
                                 script: '[Console]::OutputEncoding = [System.Text.Encoding]::UTF8; Get-Date -Format "yyyyMMdd-HHmmss"',
                                 returnStdout: true
                             ).trim()
 
-                            def commit = powershell(
+                            gitCommitShort = powershell(
                                 script: '[Console]::OutputEncoding = [System.Text.Encoding]::UTF8; git rev-parse --short HEAD',
                                 returnStdout: true
                             ).trim()
-
-                            env.BUILD_TIMESTAMP = timestamp ?: "unknown-${env.BUILD_NUMBER}"
-                            env.GIT_COMMIT_SHORT = commit ?: "unknown"
                         }
                     } catch (Exception e) {
                         echo "⚠️  Warning: Could not retrieve git info: ${e.message}"
-                        env.BUILD_TIMESTAMP = "unknown-${env.BUILD_NUMBER}"
-                        env.GIT_COMMIT_SHORT = "unknown"
+                        buildTimestamp = "unknown"
+                        gitCommitShort = "unknown"
                     }
 
-                    // Safely build IMAGE_TAG
-                    env.IMAGE_TAG = "${env.BUILD_NUMBER}-${env.GIT_COMMIT_SHORT ?: 'unknown'}"
+                    // Set environment variables with proper null handling
+                    env.BUILD_TIMESTAMP = buildTimestamp ?: "unknown-${env.BUILD_NUMBER}"
+                    env.GIT_COMMIT_SHORT = gitCommitShort ?: "unknown"
+                    env.IMAGE_TAG = "${env.BUILD_NUMBER}-${env.GIT_COMMIT_SHORT}"
 
                     // Determine deployment flags based on branch
                     def deployBranches = ['main', 'master', 'dev']
                     def approvalBranches = ['main', 'master']
 
-                    env.SHOULD_DEPLOY = (deployBranches.contains(env.BRANCH_NAME)) ? 'true' : 'false'
-                    env.NEEDS_APPROVAL = (approvalBranches.contains(env.BRANCH_NAME)) ? 'true' : 'false'
+                    env.SHOULD_DEPLOY = deployBranches.contains(env.BRANCH_NAME) ? 'true' : 'false'
+                    env.NEEDS_APPROVAL = approvalBranches.contains(env.BRANCH_NAME) ? 'true' : 'false'
 
                     echo "🔍 Building branch: ${env.BRANCH_NAME}"
                     echo "📦 Build number: ${env.BUILD_NUMBER}"
