@@ -64,7 +64,7 @@ function Invoke-Rollback {
     Write-Host "🔄 Deployment failed! Rolling back..." -ForegroundColor Red
     try {
         # Redirect all output to null to prevent PowerShell from interpreting docker output as commands
-        docker compose down *>&1 | Out-Null
+        $null = docker compose down 2>&1
     } catch {
         Write-Host "Warning: Could not stop containers during rollback" -ForegroundColor Yellow
     }
@@ -76,7 +76,7 @@ function Invoke-Rollback {
 try {
     Write-Host "📋 Step 1: Stopping existing containers..."
     # Redirect all output to null to prevent PowerShell from interpreting docker output as commands
-    docker compose down *>&1 | Out-Null
+    $null = docker compose down 2>&1
     Write-Host "   ✅ Stopped any existing containers"
 
     Write-Host ""
@@ -140,7 +140,9 @@ try {
     Write-Host "   - API Gateway:      http://localhost:8080"
     Write-Host ""
     Write-Host "📊 Service Status:"
-    docker compose ps
+    # Properly capture and display docker compose output
+    $psOutput = docker compose ps 2>&1 | Out-String
+    Write-Host $psOutput
     Write-Host ""
     Write-Host "🎉 All services are running!" -ForegroundColor Green
 
