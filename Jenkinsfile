@@ -107,8 +107,12 @@ pipeline {
                         withCredentials([
                             string(credentialsId: 'JWT_SECRET', variable: 'JWT_SECRET')
                         ]) {
-                            def envContent = """# JWT Configuration (from Jenkins credentials)
-JWT_SECRET=${env.JWT_SECRET}
+                            // Use shell/bat to write file securely without exposing secret in logs
+                            if (isUnix()) {
+                                sh '''
+cat > .env << 'EOF'
+# JWT Configuration (from Jenkins credentials)
+JWT_SECRET=${JWT_SECRET}
 JWT_EXPIRATION=3600000
 
 # MongoDB Configuration
@@ -119,14 +123,36 @@ MONGODB_PORT=27017
 USER_DB_NAME=buy01_users
 PRODUCT_DB_NAME=buy01_products
 MEDIA_DB_NAME=media_db
-"""
-                            writeFile file: '.env', text: envContent
+EOF
+                                '''
+                            } else {
+                                bat '''
+@echo off
+(
+echo # JWT Configuration (from Jenkins credentials^)
+echo JWT_SECRET=%JWT_SECRET%
+echo JWT_EXPIRATION=3600000
+echo.
+echo # MongoDB Configuration
+echo MONGODB_HOST=mongodb
+echo MONGODB_PORT=27017
+echo.
+echo # Database Names
+echo USER_DB_NAME=buy01_users
+echo PRODUCT_DB_NAME=buy01_products
+echo MEDIA_DB_NAME=media_db
+) > .env
+                                '''
+                            }
                             echo "✅ .env file created with Jenkins credentials"
                         }
                     } else {
                         // For non-deployment branches: use dummy JWT for build testing
                         echo '🔨 Creating .env with test credentials for build-only...'
-                        def envContent = """# JWT Configuration (test credentials - not for production)
+                        if (isUnix()) {
+                            sh '''
+cat > .env << 'EOF'
+# JWT Configuration (test credentials - not for production)
 JWT_SECRET=test-jwt-secret-for-build-only-not-for-deployment-12345
 JWT_EXPIRATION=3600000
 
@@ -138,8 +164,27 @@ MONGODB_PORT=27017
 USER_DB_NAME=buy01_users
 PRODUCT_DB_NAME=buy01_products
 MEDIA_DB_NAME=media_db
-"""
-                        writeFile file: '.env', text: envContent
+EOF
+                            '''
+                        } else {
+                            bat '''
+@echo off
+(
+echo # JWT Configuration (test credentials - not for production^)
+echo JWT_SECRET=test-jwt-secret-for-build-only-not-for-deployment-12345
+echo JWT_EXPIRATION=3600000
+echo.
+echo # MongoDB Configuration
+echo MONGODB_HOST=mongodb
+echo MONGODB_PORT=27017
+echo.
+echo # Database Names
+echo USER_DB_NAME=buy01_users
+echo PRODUCT_DB_NAME=buy01_products
+echo MEDIA_DB_NAME=media_db
+) > .env
+                            '''
+                        }
                         echo "✅ .env file created with test credentials (build-only)"
                     }
                 }
