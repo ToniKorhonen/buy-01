@@ -1,22 +1,27 @@
-# Jenkins Deployment Script for Windows
-# PowerShell equivalent of jenkins-deploy.sh
+#!/usr/bin/env pwsh
+# Cross-platform Jenkins Deployment Script (Windows + Linux)
 
-# Set UTF-8 encoding for proper character display
+# Force UTF-8 everywhere (important in Jenkins)
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 $OutputEncoding = [System.Text.Encoding]::UTF8
 
-# Don't stop on errors - we'll handle them manually
-$ErrorActionPreference = "Continue"
+$ErrorActionPreference = "Stop"
 
-Write-Host "🚀 Jenkins Deployment Script (Windows)" -ForegroundColor Cyan
-Write-Host "==============================" -ForegroundColor Cyan
+Write-Host "🚀 Jenkins Deployment Script (Cross-Platform)"
+Write-Host "==========================================="
 Write-Host ""
 
-# Configuration
-$MAX_WAIT = 300  # 5 minutes max wait for health checks
+# Detect platform
+$IS_WINDOWS = $PSVersionTable.OS -match "Windows"
+
+# Config
+$MAX_WAIT = 300
 $HEALTH_CHECK_INTERVAL = 10
 
-# Function to check service health
+
+# ---------------------------------------------------------
+# Health Check Function (Cross-platform TCP test)
+# ---------------------------------------------------------
 function Test-ServiceHealth {
     param(
         [string]$ServiceName,
@@ -24,25 +29,35 @@ function Test-ServiceHealth {
     )
 
     $maxAttempts = [math]::Floor($MAX_WAIT / $HEALTH_CHECK_INTERVAL)
-    $attempt = 1
 
-    Write-Host "⏳ Waiting for $ServiceName on port ${Port}..." -ForegroundColor Yellow
+    Write-Host "⏳ Waiting for $ServiceName on port $Port..." -ForegroundColor Yellow
 
-    while ($attempt -le $maxAttempts) {
+    for ($attempt = 1; $attempt -le $maxAttempts; $attempt++) {
+
         try {
-            $tcpClient = New-Object System.Net.Sockets.TcpClient
-            $connect = $tcpClient.BeginConnect("localhost", $Port, $null, $null)
-            $wait = $connect.AsyncWaitHandle.WaitOne(1000, $false)
-
-            if ($wait -and $tcpClient.Connected) {
-                $tcpClient.Close()
-                Write-Host "✅ $ServiceName is healthy" -ForegroundColor Green
-                return $true
+            # Windows has Test-NetConnection
+            if ($IS_WINDOWS -and (Get-Command Test-NetConnection -ErrorAction SilentlyContinue)) {
+                $result = Test-NetConnection -ComputerName "localhost" -Port $Port
+                if ($result.TcpTestSucceeded) {
+                    Write-Host "✅ $ServiceName is healthy" -ForegroundColor Green
+                    return $true
+                }
             }
+            else {
+                # Linux / MacOS / fallback
+                $client = New-Object System.Net.Sockets.TcpClient
+                $iar = $client.BeginConnect("localhost", $Port, $null, $null)
+                $connected = $iar.AsyncWaitHandle.WaitOne(1000, $false)
 
-            $tcpClient.Close()
+                if ($connected -and $client.Connected) {
+                    $client.Close()
+                    Write-Host "✅ $ServiceName is healthy" -ForegroundColor Green
+                    return $true
+                }
+                $client.Close()
+            }
         } catch {
-            # Connection failed, continue waiting
+            # ignore connection failure
         }
 
         if ($attempt -eq $maxAttempts) {
@@ -52,106 +67,80 @@ function Test-ServiceHealth {
 
         Write-Host "   Attempt $attempt/$maxAttempts - waiting ${HEALTH_CHECK_INTERVAL}s..."
         Start-Sleep -Seconds $HEALTH_CHECK_INTERVAL
-        $attempt++
     }
 
     return $false
 }
 
-# Function to rollback on failure
+# ---------------------------------------------------------
+# Rollback
+# ---------------------------------------------------------
 function Invoke-Rollback {
     Write-Host ""
     Write-Host "🔄 Deployment failed! Rolling back..." -ForegroundColor Red
     try {
-        # Redirect all output to null to prevent PowerShell from interpreting docker output as commands
-        $null = docker compose down 2>&1
+        docker compose down *>$null
     } catch {
         Write-Host "Warning: Could not stop containers during rollback" -ForegroundColor Yellow
     }
-    Write-Host "❌ Rollback complete. Please check the logs." -ForegroundColor Red
+    Write-Host "❌ Rollback complete. Please check logs." -ForegroundColor Red
     exit 1
 }
 
-# Main deployment logic
+
+# ---------------------------------------------------------
+# MAIN
+# ---------------------------------------------------------
 try {
+
     Write-Host "📋 Step 1: Stopping existing containers..."
-    # Redirect all output to null to prevent PowerShell from interpreting docker output as commands
-    $null = docker compose down 2>&1
-    Write-Host "   ✅ Stopped any existing containers"
+    docker compose down *>$null
+    Write-Host "   ✅ Containers stopped"
 
     Write-Host ""
     Write-Host "🐳 Step 2: Starting services with Docker Compose..."
-    # Capture output properly for error checking
     $upOutput = docker compose up -d --build 2>&1 | Out-String
+
     if ($LASTEXITCODE -ne 0) {
-        Write-Host "Docker compose failed with exit code: $LASTEXITCODE" -ForegroundColor Red
+        Write-Host "Docker compose error: $LASTEXITCODE" -ForegroundColor Red
         Write-Host $upOutput -ForegroundColor Red
         Invoke-Rollback
     }
-    Write-Host "   ✅ Services started successfully"
+    Write-Host "   ✅ Services started"
 
     Write-Host ""
     Write-Host "🏥 Step 3: Running health checks..."
     Write-Host ""
 
-    # Wait a bit for containers to initialize
     Start-Sleep -Seconds 5
 
-    # Check MongoDB first (foundational service)
-    if (-not (Test-ServiceHealth -ServiceName "MongoDB" -Port 27017)) {
-        Invoke-Rollback
-    }
-
-    # Check backend services
-    if (-not (Test-ServiceHealth -ServiceName "User Service" -Port 8081)) {
-        Invoke-Rollback
-    }
-
-    if (-not (Test-ServiceHealth -ServiceName "Product Service" -Port 8082)) {
-        Invoke-Rollback
-    }
-
-    if (-not (Test-ServiceHealth -ServiceName "Media Service" -Port 8083)) {
-        Invoke-Rollback
-    }
-
-    # Check API Gateway
-    if (-not (Test-ServiceHealth -ServiceName "API Gateway" -Port 8080)) {
-        Invoke-Rollback
-    }
-
-    # Check Frontend
-    if (-not (Test-ServiceHealth -ServiceName "Frontend (HTTP)" -Port 4200)) {
-        Invoke-Rollback
-    }
-
-    if (-not (Test-ServiceHealth -ServiceName "Frontend (HTTPS)" -Port 4443)) {
-        Invoke-Rollback
-    }
+    if (-not (Test-ServiceHealth "MongoDB" 27017)) { Invoke-Rollback }
+    if (-not (Test-ServiceHealth "User Service" 8081)) { Invoke-Rollback }
+    if (-not (Test-ServiceHealth "Product Service" 8082)) { Invoke-Rollback }
+    if (-not (Test-ServiceHealth "Media Service" 8083)) { Invoke-Rollback }
+    if (-not (Test-ServiceHealth "API Gateway" 8080)) { Invoke-Rollback }
+    if (-not (Test-ServiceHealth "Frontend HTTP" 4200)) { Invoke-Rollback }
+    if (-not (Test-ServiceHealth "Frontend HTTPS" 4443)) { Invoke-Rollback }
 
     Write-Host ""
-    Write-Host "==============================" -ForegroundColor Green
+    Write-Host "==========================================="
     Write-Host "✅ Deployment Successful!" -ForegroundColor Green
-    Write-Host "==============================" -ForegroundColor Green
+    Write-Host "==========================================="
+
     Write-Host ""
     Write-Host "🌐 Application URLs:"
-    Write-Host "   - Frontend (HTTPS): https://localhost:4443"
-    Write-Host "   - Frontend (HTTP):  http://localhost:4200"
-    Write-Host "   - API Gateway:      http://localhost:8080"
-    Write-Host ""
-    Write-Host "📊 Service Status:"
-    # Properly capture and display docker compose output
-    $psOutput = docker compose ps 2>&1 | Out-String
-    Write-Host $psOutput
-    Write-Host ""
-    Write-Host "🎉 All services are running!" -ForegroundColor Green
+    Write-Host "   - https://localhost:4443"
+    Write-Host "   - http://localhost:4200"
+    Write-Host "   - http://localhost:8080"
 
-    # Exit successfully
+    Write-Host ""
+    Write-Host "📊 Docker status:"
+    docker compose ps
+
     exit 0
-
-} catch {
+}
+catch {
     Write-Host ""
     Write-Host "Error during deployment: $($_.Exception.Message)" -ForegroundColor Red
     Invoke-Rollback
 }
-
