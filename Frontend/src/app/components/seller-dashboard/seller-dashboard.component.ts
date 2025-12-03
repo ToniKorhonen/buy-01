@@ -38,8 +38,7 @@ export class SellerDashboardComponent implements OnInit {
     name: '',
     description: '',
     price: 0,
-    quantity: 0,
-    userId: ''
+    quantity: 0
   };
 
   selectedFile: File | null = null;
@@ -52,7 +51,6 @@ export class SellerDashboardComponent implements OnInit {
       this.router.navigate(['/']);
       return;
     }
-    this.formModel.userId = user.email; // Use email as userId
     this.loadProducts();
   }
 
@@ -60,15 +58,10 @@ export class SellerDashboardComponent implements OnInit {
     this.loading = true;
     this.error = '';
 
-    this.productService.getAllProducts().subscribe({
+    this.productService.getMyProducts().subscribe({
       next: (products) => {
-        // Filter to show only seller's own products
-        // Backend stores email as userId (from JWT authentication)
-        const userEmail = this.userService.getCurrentUser()?.email;
-        const myProducts = products.filter(p => p.userId === userEmail);
-
         // Load media for each product
-        this.loadProductsWithMedia(myProducts);
+        this.loadProductsWithMedia(products);
       },
       error: (err) => {
         this.error = 'Failed to load products';
@@ -114,13 +107,11 @@ export class SellerDashboardComponent implements OnInit {
     this.editingProduct = null;
     this.selectedFile = null;
     this.imagePreview = null;
-    const user = this.userService.getCurrentUser();
     this.formModel = {
       name: '',
       description: '',
       price: 0,
-      quantity: 0,
-      userId: user?.email || ''
+      quantity: 0
     };
   }
 
@@ -146,8 +137,7 @@ export class SellerDashboardComponent implements OnInit {
       name: product.name,
       description: product.description,
       price: product.price,
-      quantity: product.quantity,
-      userId: product.userId
+      quantity: product.quantity
     };
   }
 

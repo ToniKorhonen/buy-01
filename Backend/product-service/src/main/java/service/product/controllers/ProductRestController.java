@@ -36,6 +36,14 @@ public class ProductRestController {
         return service.get(id);
     }
 
+    // Get current user's products
+    @PreAuthorize("isAuthenticated()")
+    @GetMapping("/my-products")
+    public List<ProductResponse> getMyProducts(Authentication auth) {
+        String userId = auth.getName();
+        return service.listByUserId(userId);
+    }
+
     @PreAuthorize("isAuthenticated()")
     @PostMapping
     public ResponseEntity<ProductResponse> create(@Valid @RequestBody CreateProductRequest req,

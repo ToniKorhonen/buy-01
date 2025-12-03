@@ -19,6 +19,11 @@ export class ProductService {
     return this.http.get<ProductResponse>(`${this.base}/products/${id}`);
   }
 
+  // Authenticated - get current user's products
+  getMyProducts(): Observable<ProductResponse[]> {
+    return this.http.get<ProductResponse[]>(`${this.base}/products/my-products`);
+  }
+
   // Authenticated - create product (seller only)
   createProduct(product: ProductRequest): Observable<ProductResponse> {
     return this.http.post<ProductResponse>(`${this.base}/products`, product);

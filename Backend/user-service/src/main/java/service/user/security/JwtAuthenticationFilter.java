@@ -23,17 +23,19 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
         String authHeader = request.getHeader("Authorization");
+
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             String token = authHeader.substring(7);
-            String email = jwtService.extractEmail(token);
+            String userId = jwtService.extractUserId(token);
             String role = jwtService.extractRole(token);
-            if (email != null && role != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                // Create authentication with email as principal and role as authority
+
+            if (userId != null && role != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                // Create authentication with userId as principal and role as authority
                 List<SimpleGrantedAuthority> authorities = Collections.singletonList(
                     new SimpleGrantedAuthority("ROLE_" + role.toUpperCase())
                 );
                 UsernamePasswordAuthenticationToken authentication =
-                    new UsernamePasswordAuthenticationToken(email, null, authorities);
+                    new UsernamePasswordAuthenticationToken(userId, null, authorities);
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             }
         }

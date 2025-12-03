@@ -38,6 +38,10 @@ public class ProductService {
         return repo.findAll().stream().map(this::toResponse).toList();
     }
 
+    public List<ProductResponse> listByUserId(String userId) {
+        return repo.findByUserId(userId).stream().map(this::toResponse).toList();
+    }
+
     public ProductResponse get(String id) {
         return toResponse(find(id));
     }
