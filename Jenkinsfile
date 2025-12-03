@@ -30,6 +30,11 @@ pipeline {
             defaultValue: false,
             description: 'Force clean build (remove all Docker caches)'
         )
+        string(
+            name: 'EMAIL_RECIPIENTS',
+            defaultValue: 'team@example.com',
+            description: 'Comma-separated email addresses for build notifications'
+        )
     }
 
     options {
@@ -457,6 +462,7 @@ echo MEDIA_DB_NAME=media_db
         success {
             echo '✅ Pipeline completed successfully!'
             script {
+                def deploymentInfo = ''
                 if (env.SHOULD_DEPLOY == 'true') {
                     echo """
                     🎉 Deployment successful!
@@ -470,6 +476,16 @@ echo MEDIA_DB_NAME=media_db
                     Tag: ${env.IMAGE_TAG ?: 'unknown'}
                     Branch: ${env.BRANCH_NAME}
                     """
+
+                    deploymentInfo = """
+                    <h3>🚀 Deployment Information</h3>
+                    <ul>
+                        <li><strong>Frontend (HTTPS):</strong> <a href="https://localhost:4443">https://localhost:4443</a></li>
+                        <li><strong>Frontend (HTTP):</strong> <a href="http://localhost:4200">http://localhost:4200</a></li>
+                        <li><strong>API Gateway:</strong> <a href="http://localhost:8080">http://localhost:8080</a></li>
+                        <li><strong>Image Tag:</strong> ${env.IMAGE_TAG ?: 'unknown'}</li>
+                    </ul>
+                    """
                 }
 
                 // AUDIT REQUIREMENT: Notifications on success
@@ -481,21 +497,62 @@ echo MEDIA_DB_NAME=media_db
                 - Commit: ${env.GIT_COMMIT_SHORT ?: 'unknown'}
                 - Duration: ${currentBuild.durationString}
                 """
+
+                // Email notification on success
+                emailext(
+                    subject: "✅ BUILD SUCCESS: ${env.JOB_NAME} #${env.BUILD_NUMBER} [${env.BRANCH_NAME}]",
+                    body: """
+                    <html>
+                    <body style="font-family: Arial, sans-serif;">
+                        <h2 style="color: #28a745;">✅ Build Successful</h2>
+
+                        <h3>📋 Build Details</h3>
+                        <table border="1" cellpadding="5" cellspacing="0" style="border-collapse: collapse;">
+                            <tr><td><strong>Project</strong></td><td>${env.JOB_NAME}</td></tr>
+                            <tr><td><strong>Build Number</strong></td><td>#${env.BUILD_NUMBER}</td></tr>
+                            <tr><td><strong>Branch</strong></td><td>${env.BRANCH_NAME}</td></tr>
+                            <tr><td><strong>Commit</strong></td><td>${env.GIT_COMMIT_SHORT ?: 'unknown'}</td></tr>
+                            <tr><td><strong>Build Timestamp</strong></td><td>${env.BUILD_TIMESTAMP ?: 'unknown'}</td></tr>
+                            <tr><td><strong>Duration</strong></td><td>${currentBuild.durationString}</td></tr>
+                        </table>
+
+                        ${deploymentInfo}
+
+                        <h3>🔗 Links</h3>
+                        <ul>
+                            <li><a href="${env.BUILD_URL}">View Build Console Output</a></li>
+                            <li><a href="${env.BUILD_URL}testReport/">View Test Reports</a></li>
+                        </ul>
+
+                        <p style="color: #6c757d; font-size: 12px;">
+                            This is an automated notification from Jenkins CI/CD pipeline.
+                        </p>
+                    </body>
+                    </html>
+                    """,
+                    to: "${params.EMAIL_RECIPIENTS}",
+                    mimeType: 'text/html',
+                    attachLog: false
+                )
             }
         }
 
         failure {
             echo '❌ Pipeline failed!'
             script {
+                def dockerLogs = ''
                 // Show docker logs if available
                 try {
                     if (isUnix()) {
+                        dockerLogs = sh(script: 'docker compose logs --tail=50 2>&1 || echo "No docker logs available"', returnStdout: true).trim()
                         sh 'docker compose logs --tail=50 || true'
                     } else {
+                        dockerLogs = bat(script: '@echo off && docker compose logs --tail=50 2>&1 || echo No docker logs available', returnStdout: true).trim()
                         bat 'docker compose logs --tail=50 || exit /b 0'
                     }
                 } catch (Exception e) {
                     echo "Could not retrieve docker logs: ${e.message}"
+                    dockerLogs = "Could not retrieve docker logs: ${e.message}"
                 }
 
                 // AUDIT REQUIREMENT: Notifications on failure
@@ -508,6 +565,57 @@ echo MEDIA_DB_NAME=media_db
 
                 Check console output for details.
                 """
+
+                // Email notification on failure
+                emailext(
+                    subject: "❌ BUILD FAILED: ${env.JOB_NAME} #${env.BUILD_NUMBER} [${env.BRANCH_NAME}]",
+                    body: """
+                    <html>
+                    <body style="font-family: Arial, sans-serif;">
+                        <h2 style="color: #dc3545;">❌ Build Failed</h2>
+
+                        <h3>📋 Build Details</h3>
+                        <table border="1" cellpadding="5" cellspacing="0" style="border-collapse: collapse;">
+                            <tr><td><strong>Project</strong></td><td>${env.JOB_NAME}</td></tr>
+                            <tr><td><strong>Build Number</strong></td><td>#${env.BUILD_NUMBER}</td></tr>
+                            <tr><td><strong>Branch</strong></td><td>${env.BRANCH_NAME}</td></tr>
+                            <tr><td><strong>Commit</strong></td><td>${env.GIT_COMMIT_SHORT ?: 'unknown'}</td></tr>
+                            <tr><td><strong>Failed Stage</strong></td><td style="color: #dc3545;"><strong>${env.STAGE_NAME ?: 'Unknown'}</strong></td></tr>
+                            <tr><td><strong>Build Timestamp</strong></td><td>${env.BUILD_TIMESTAMP ?: 'unknown'}</td></tr>
+                            <tr><td><strong>Duration</strong></td><td>${currentBuild.durationString}</td></tr>
+                        </table>
+
+                        <h3>🔍 Troubleshooting</h3>
+                        <ul>
+                            <li><a href="${env.BUILD_URL}console">View Full Console Output</a></li>
+                            <li><a href="${env.BUILD_URL}testReport/">View Test Reports</a></li>
+                            <li>Check the failed stage: <strong>${env.STAGE_NAME ?: 'Unknown'}</strong></li>
+                        </ul>
+
+                        <h3>🐳 Docker Logs (Last 50 lines)</h3>
+                        <pre style="background-color: #f4f4f4; padding: 10px; border: 1px solid #ddd; overflow: auto; max-height: 300px;">
+${dockerLogs.take(5000)}
+                        </pre>
+
+                        <h3>⚡ Quick Actions</h3>
+                        <ul>
+                            <li>Review the console output for detailed error messages</li>
+                            <li>Check if all required services are running</li>
+                            <li>Verify JWT_SECRET credential is configured</li>
+                            <li>Ensure Docker daemon is running</li>
+                            <li>Check for port conflicts (4200, 4443, 8080, 27017)</li>
+                        </ul>
+
+                        <p style="color: #6c757d; font-size: 12px;">
+                            This is an automated notification from Jenkins CI/CD pipeline.
+                        </p>
+                    </body>
+                    </html>
+                    """,
+                    to: "${params.EMAIL_RECIPIENTS}",
+                    mimeType: 'text/html',
+                    attachLog: true
+                )
             }
         }
 
@@ -521,6 +629,51 @@ echo MEDIA_DB_NAME=media_db
                 - Branch: ${env.BRANCH_NAME}
                 - Build: #${env.BUILD_NUMBER}
                 """
+
+                // Email notification on unstable build
+                emailext(
+                    subject: "⚠️ BUILD UNSTABLE: ${env.JOB_NAME} #${env.BUILD_NUMBER} [${env.BRANCH_NAME}]",
+                    body: """
+                    <html>
+                    <body style="font-family: Arial, sans-serif;">
+                        <h2 style="color: #ffc107;">⚠️ Build Unstable</h2>
+                        <p>The build completed, but some tests may have failed or the build is unstable.</p>
+
+                        <h3>📋 Build Details</h3>
+                        <table border="1" cellpadding="5" cellspacing="0" style="border-collapse: collapse;">
+                            <tr><td><strong>Project</strong></td><td>${env.JOB_NAME}</td></tr>
+                            <tr><td><strong>Build Number</strong></td><td>#${env.BUILD_NUMBER}</td></tr>
+                            <tr><td><strong>Branch</strong></td><td>${env.BRANCH_NAME}</td></tr>
+                            <tr><td><strong>Commit</strong></td><td>${env.GIT_COMMIT_SHORT ?: 'unknown'}</td></tr>
+                            <tr><td><strong>Build Timestamp</strong></td><td>${env.BUILD_TIMESTAMP ?: 'unknown'}</td></tr>
+                            <tr><td><strong>Duration</strong></td><td>${currentBuild.durationString}</td></tr>
+                        </table>
+
+                        <h3>🧪 Test Results</h3>
+                        <p>Please review the test reports to identify which tests failed:</p>
+                        <ul>
+                            <li><a href="${env.BUILD_URL}testReport/">View Detailed Test Reports</a></li>
+                            <li><a href="${env.BUILD_URL}console">View Console Output</a></li>
+                        </ul>
+
+                        <h3>💡 Possible Causes</h3>
+                        <ul>
+                            <li>Unit test failures in User Service, Product Service, or API Gateway</li>
+                            <li>Integration test failures</li>
+                            <li>Test timeouts or flaky tests</li>
+                            <li>Environment-specific test issues</li>
+                        </ul>
+
+                        <p style="color: #6c757d; font-size: 12px;">
+                            This is an automated notification from Jenkins CI/CD pipeline.
+                        </p>
+                    </body>
+                    </html>
+                    """,
+                    to: "${params.EMAIL_RECIPIENTS}",
+                    mimeType: 'text/html',
+                    attachLog: false
+                )
             }
         }
 

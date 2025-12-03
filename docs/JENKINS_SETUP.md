@@ -256,6 +256,154 @@ Edit `jenkins-deploy.sh`:
 MAX_WAIT=600  # 10 minutes
 ```
 
+---
+
+## 📧 Email Notification Configuration
+
+The pipeline now includes automatic email notifications for build success, failure, and unstable builds.
+
+### 1. Install Email Extension Plugin
+
+1. Navigate to **Manage Jenkins** → **Manage Plugins**
+2. Go to **Available** tab
+3. Search for **Email Extension Plugin** (also called `emailext`)
+4. Install and restart Jenkins if required
+
+### 2. Configure SMTP Server
+
+Navigate to **Manage Jenkins** → **Configure System** → **Extended E-mail Notification**
+
+#### Option A: Using Gmail
+
+**Prerequisites:**
+- Gmail account
+- 2-Factor Authentication enabled
+- App Password generated (not your regular password)
+
+**Generate Gmail App Password:**
+1. Go to Google Account → Security
+2. Enable 2-Step Verification if not enabled
+3. Go to **App passwords** (under 2-Step Verification)
+4. Create new app password for "Mail" → "Other (Custom name)" → "Jenkins"
+5. Copy the 16-character password
+
+**Jenkins Configuration:**
+```
+SMTP server: smtp.gmail.com
+SMTP port: 587
+Use SSL: Unchecked
+Use TLS: Checked
+SMTP Authentication:
+  - Username: your-email@gmail.com
+  - Password: [16-character app password]
+
+Default E-mail Suffix: @gmail.com
+Default Recipients: your-email@gmail.com
+Reply-To Address: noreply@gmail.com
+```
+
+#### Option B: Using Office 365 / Outlook
+
+```
+SMTP server: smtp.office365.com
+SMTP port: 587
+Use SSL: Unchecked
+Use TLS: Checked
+SMTP Authentication:
+  - Username: your-email@outlook.com (or your organization email)
+  - Password: [your password]
+
+Default E-mail Suffix: @outlook.com
+Default Recipients: your-email@outlook.com
+```
+
+#### Option C: Using Custom SMTP Server
+
+```
+SMTP server: mail.yourcompany.com
+SMTP port: 25 (or 587 for TLS, 465 for SSL)
+Use SSL/TLS: Based on your server
+SMTP Authentication: If required by your server
+
+Default Recipients: team@yourcompany.com
+```
+
+### 3. Configure Default Email Settings
+
+In **Manage Jenkins** → **Configure System**:
+
+**Extended E-mail Notification:**
+- Default Content Type: `HTML (text/html)`
+- Default Subject: `$PROJECT_NAME - Build # $BUILD_NUMBER - $BUILD_STATUS!`
+- Maximum Attachment Size: `10 MB` (for failure logs)
+
+**E-mail Notification (Optional fallback):**
+- SMTP server: Same as above
+- Test configuration by sending test e-mail
+
+### 4. Test Email Configuration
+
+1. In Extended E-mail Notification section, click **Test configuration by sending test e-mail**
+2. Enter your email address
+3. Click **Test configuration**
+4. Check your inbox for the test email
+
+### 5. Configure Pipeline Email Recipients
+
+When running a build, you can override the email recipients:
+
+1. Go to your Jenkins job
+2. Click **Build with Parameters**
+3. Set **EMAIL_RECIPIENTS** to your desired email addresses (comma-separated)
+   - Example: `dev1@example.com,dev2@example.com,team@example.com`
+4. Click **Build**
+
+**Default Recipients:**
+- The default is set to `team@example.com` in the Jenkinsfile
+- Update this in the pipeline parameter or override per build
+
+### 6. Email Notification Features
+
+The pipeline sends different emails based on build status:
+
+#### ✅ Success Notification
+- Sent when build completes successfully
+- Includes deployment URLs (if deployed)
+- Build summary with commit info
+- Links to console output and test reports
+
+#### ❌ Failure Notification
+- Sent when build fails
+- Includes failed stage name
+- Last 50 lines of Docker logs
+- Troubleshooting checklist
+- Console log attached
+
+#### ⚠️ Unstable Notification
+- Sent when tests fail but build succeeds
+- Links to detailed test reports
+- Suggestions for common test issues
+
+### 7. Troubleshooting Email Issues
+
+**Emails not sending:**
+1. Check Jenkins system log: **Manage Jenkins** → **System Log**
+2. Verify SMTP credentials are correct
+3. Test with simple SMTP test email
+4. Check firewall/network allows outbound SMTP traffic
+5. For Gmail: Ensure 2FA is enabled and App Password is used (not regular password)
+
+**Emails going to spam:**
+1. Add Jenkins email to your contacts
+2. Configure SPF/DKIM records if using custom domain
+3. Use Reply-To address from your domain
+
+**Emails not formatted correctly:**
+1. Ensure "HTML (text/html)" is set as Default Content Type
+2. Check email client supports HTML emails
+
+---
+
 ## 📚 Additional Resources
 
 - [Jenkins Pipeline Documentation](https://www.jenkins.io/doc/book/pipeline/)
@@ -270,5 +418,6 @@ MAX_WAIT=600  # 10 minutes
 3. **Static Code Analysis**: Add SonarQube integration
 4. **Container Registry**: Push images to Docker Hub or private registry
 5. **Multiple Environments**: Add staging environment
-6. **Slack Notifications**: Add Slack webhook for build notifications
+6. **Slack Notifications**: Add Slack webhook for build notifications (Email notifications ✅ implemented)
+7. **GitHub Commit Status**: Add GitHub status checks for PR validation
 
