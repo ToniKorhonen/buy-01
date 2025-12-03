@@ -202,35 +202,56 @@ withCredentials([
 
 ## 📊 Notifications
 
-### Current Implementation
-Notifications are logged in the console output:
+### ✅ Implemented: Email Notifications
+
+The pipeline now includes automatic email notifications for all build statuses.
+
+#### Email Features
+
+**Success Notifications (✅)**
+- Build summary with deployment URLs
+- Commit and branch information
+- Links to console output and test reports
+- HTML-formatted emails with color-coding
+
+**Failure Notifications (❌)**
+- Failed stage identification
+- Last 50 lines of Docker logs included
+- Troubleshooting checklist
+- Console log attached for detailed debugging
+- Quick action items
+
+**Unstable Notifications (⚠️)**
+- Test failure warnings
+- Links to detailed test reports
+- Suggestions for common test issues
+
+#### Configuration
+
+**Email Recipients:**
+- Default: `team@example.com` (update in build parameters)
+- Override per build using the `EMAIL_RECIPIENTS` parameter
+- Supports comma-separated email lists
+
+**SMTP Setup Required:**
+See [Jenkins Setup Guide](JENKINS_SETUP.md#-email-notification-configuration) for detailed SMTP configuration instructions.
+
+---
+
+### Console Notifications (Deprecated)
+
+Previously, notifications were only logged in the console output:
 
 - ✅ **Success notifications** - Build summary with deployment URLs
 - ✅ **Failure notifications** - Error details and troubleshooting info
 - ✅ **Unstable notifications** - Test failure warnings
 
+These console logs are still present but supplemented with email notifications.
+
+---
+
 ### Extending Notifications (Optional)
 
-#### Email Notifications
-Add to `post` section:
-```groovy
-post {
-    success {
-        emailext(
-            subject: "✅ Build SUCCESS: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
-            body: "Build completed successfully.",
-            to: 'team@example.com'
-        )
-    }
-    failure {
-        emailext(
-            subject: "❌ Build FAILED: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
-            body: "Build failed. Check console output.",
-            to: 'team@example.com'
-        )
-    }
-}
-```
 
 #### Slack Notifications
 Install Slack Notification plugin and add:
