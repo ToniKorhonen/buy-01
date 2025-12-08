@@ -65,4 +65,11 @@ public class ProductRestController {
         service.delete(id, auth.getName(), auth);
         return ResponseEntity.noContent().build();
     }
+
+    // Internal endpoint for user-service to delete all products when user is deleted
+    @DeleteMapping("/user/{userId}")
+    public ResponseEntity<Void> deleteAllByUserId(@PathVariable String userId) {
+        service.deleteAllByUserId(userId);
+        return ResponseEntity.noContent().build();
+    }
 }

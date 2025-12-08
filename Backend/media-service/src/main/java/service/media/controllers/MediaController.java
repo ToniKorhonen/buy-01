@@ -150,6 +150,20 @@ public class MediaController {
         }
     }
 
+    // Internal endpoint for product-service to delete all media when product is deleted
+    @DeleteMapping("/product/{productId}")
+    public ResponseEntity<?> deleteAllMediaByProductId(@PathVariable String productId) {
+        try {
+            mediaService.deleteAllMediaByProductId(productId);
+            log.info("All media deleted for product: {}", productId);
+            return ResponseEntity.ok(new MediaDtos.MessageResponse("All media deleted successfully"));
+        } catch (Exception e) {
+            log.error("Error deleting media for product: {}", productId, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new MediaDtos.MessageResponse("Failed to delete media"));
+        }
+    }
+
     private void checkSellerRole(Authentication auth) {
         if (auth == null || auth.getAuthorities() == null) {
             throw new AccessDeniedException("Only sellers can upload or delete media");

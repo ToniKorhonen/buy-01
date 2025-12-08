@@ -70,6 +70,12 @@ public class ProductService {
         repo.delete(p);
     }
 
+    @Transactional
+    public void deleteAllByUserId(String userId) {
+        List<Product> products = repo.findByUserId(userId);
+        repo.deleteAll(products);
+    }
+
     private Product find(String id) {
         return repo.findById(id).orElseThrow(() -> new ProductNotFoundException(id, "retrieval"));
     }

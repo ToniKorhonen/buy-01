@@ -3,7 +3,7 @@ export interface ProductRequest {
   description: string;
   price: number;
   quantity: number;
-  userId: string;
+  userId?: string;
 }
 
 export interface ProductResponse {
