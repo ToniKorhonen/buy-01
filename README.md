@@ -96,6 +96,41 @@ This project includes a complete Jenkins pipeline for automated building, testin
 - [Quick Start Guide](docs/JENKINS_QUICK_START.md)
 - [Complete Setup](docs/JENKINS_SETUP.md)
 
+## 🔍 Code Quality with SonarCloud
+
+Automated code quality analysis runs on every push using GitHub Actions.
+
+### Quick Setup (5 minutes)
+
+1. **Get SonarCloud Token**: https://sonarcloud.io → My Account → Security → Generate Token
+2. **Add GitHub Secrets**:
+   - `SONAR_TOKEN` - Your SonarCloud token
+   - `SONAR_ORGANIZATION` - Your SonarCloud organization key
+3. **Push to GitHub** - Analysis runs automatically!
+
+### What's Analyzed
+
+- ✅ All 4 backend microservices (user, product, media, gateway)
+- ✅ Frontend Angular application
+- ✅ Code coverage, bugs, vulnerabilities, code smells
+- ✅ Technical debt and maintainability metrics
+
+### View Results
+
+- **GitHub**: Actions tab → SonarCloud Analysis workflow
+- **SonarCloud**: https://sonarcloud.io → Your organization
+
+📚 **Documentation**: 
+- [Quick Start Guide](docs/GITHUB_ACTIONS_QUICK_START.md)
+- [Complete Guide](docs/GITHUB_ACTIONS_SONARCLOUD.md)
+
+### Jenkins vs GitHub Actions
+
+Both work together for comprehensive CI/CD:
+
+- **Jenkins**: Local builds, deployment, full control
+- **GitHub Actions**: Cloud-based analysis, PR checks, SonarCloud integration
+
 ## 📋 Prerequisites
 
 ### For Docker Deployment

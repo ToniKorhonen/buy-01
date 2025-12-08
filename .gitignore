@@ -19,6 +19,10 @@ Backend/*/target/
 Frontend/dist/
 Frontend/node_modules/
 
+# SonarQube/SonarCloud
+.scannerwork/
+**/.scannerwork/
+
 # IDE files
 *.iml
 .vscode/

@@ -371,6 +371,164 @@ echo MEDIA_DB_NAME=media_db
             }
         }
 
+        // AUDIT REQUIREMENT: Code Quality Analysis with SonarCloud
+        stage('SonarCloud Analysis') {
+            environment {
+                // SonarCloud uses SONAR_TOKEN from Jenkins credentials
+                SONAR_SCANNER_OPTS = '-Xmx512m'
+            }
+            parallel {
+                stage('Analyze User Service') {
+                    steps {
+                        dir('Backend/user-service') {
+                            echo '📊 Analyzing User Service with SonarCloud...'
+                            script {
+                                withSonarQubeEnv('SonarCloud') {
+                                    if (isUnix()) {
+                                        sh '''
+                                            ./mvnw clean verify sonar:sonar \
+                                                -Dsonar.organization=${SONAR_ORGANIZATION} \
+                                                -Dsonar.host.url=https://sonarcloud.io \
+                                                -Dsonar.projectKey=buy01-user-service || true
+                                        '''
+                                    } else {
+                                        bat '''
+                                            mvnw.cmd clean verify sonar:sonar ^
+                                                -Dsonar.organization=%SONAR_ORGANIZATION% ^
+                                                -Dsonar.host.url=https://sonarcloud.io ^
+                                                -Dsonar.projectKey=buy01-user-service || exit /b 0
+                                        '''
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                stage('Analyze Product Service') {
+                    steps {
+                        dir('Backend/product-service') {
+                            echo '📊 Analyzing Product Service with SonarCloud...'
+                            script {
+                                withSonarQubeEnv('SonarCloud') {
+                                    if (isUnix()) {
+                                        sh '''
+                                            ./mvnw clean verify sonar:sonar \
+                                                -Dsonar.organization=${SONAR_ORGANIZATION} \
+                                                -Dsonar.host.url=https://sonarcloud.io \
+                                                -Dsonar.projectKey=buy01-product-service || true
+                                        '''
+                                    } else {
+                                        bat '''
+                                            mvnw.cmd clean verify sonar:sonar ^
+                                                -Dsonar.organization=%SONAR_ORGANIZATION% ^
+                                                -Dsonar.host.url=https://sonarcloud.io ^
+                                                -Dsonar.projectKey=buy01-product-service || exit /b 0
+                                        '''
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                stage('Analyze Media Service') {
+                    steps {
+                        dir('Backend/media-service') {
+                            echo '📊 Analyzing Media Service with SonarCloud...'
+                            script {
+                                withSonarQubeEnv('SonarCloud') {
+                                    if (isUnix()) {
+                                        sh '''
+                                            ./mvnw clean verify sonar:sonar \
+                                                -Dsonar.organization=${SONAR_ORGANIZATION} \
+                                                -Dsonar.host.url=https://sonarcloud.io \
+                                                -Dsonar.projectKey=buy01-media-service || true
+                                        '''
+                                    } else {
+                                        bat '''
+                                            mvnw.cmd clean verify sonar:sonar ^
+                                                -Dsonar.organization=%SONAR_ORGANIZATION% ^
+                                                -Dsonar.host.url=https://sonarcloud.io ^
+                                                -Dsonar.projectKey=buy01-media-service || exit /b 0
+                                        '''
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                stage('Analyze API Gateway') {
+                    steps {
+                        dir('Backend/api-gateway') {
+                            echo '📊 Analyzing API Gateway with SonarCloud...'
+                            script {
+                                withSonarQubeEnv('SonarCloud') {
+                                    if (isUnix()) {
+                                        sh '''
+                                            ./mvnw clean verify sonar:sonar \
+                                                -Dsonar.organization=${SONAR_ORGANIZATION} \
+                                                -Dsonar.host.url=https://sonarcloud.io \
+                                                -Dsonar.projectKey=buy01-api-gateway || true
+                                        '''
+                                    } else {
+                                        bat '''
+                                            mvnw.cmd clean verify sonar:sonar ^
+                                                -Dsonar.organization=%SONAR_ORGANIZATION% ^
+                                                -Dsonar.host.url=https://sonarcloud.io ^
+                                                -Dsonar.projectKey=buy01-api-gateway || exit /b 0
+                                        '''
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                stage('Analyze Frontend') {
+                    steps {
+                        dir('Frontend') {
+                            echo '📊 Analyzing Frontend with SonarCloud...'
+                            script {
+                                withSonarQubeEnv('SonarCloud') {
+                                    if (isUnix()) {
+                                        sh '''
+                                            # Install sonar-scanner if not available
+                                            if ! command -v sonar-scanner &> /dev/null; then
+                                                echo "Installing sonar-scanner..."
+                                                npm install -g sonarqube-scanner
+                                            fi
+
+                                            # Run sonar-scanner
+                                            sonar-scanner \
+                                                -Dsonar.organization=${SONAR_ORGANIZATION} \
+                                                -Dsonar.host.url=https://sonarcloud.io \
+                                                -Dsonar.projectKey=buy-01-Frontend || true
+                                        '''
+                                    } else {
+                                        bat '''
+                                            @echo off
+                                            where sonar-scanner >nul 2>&1
+                                            if %ERRORLEVEL% NEQ 0 (
+                                                echo Installing sonar-scanner...
+                                                npm install -g sonarqube-scanner
+                                            )
+
+                                            sonar-scanner ^
+                                                -Dsonar.organization=%SONAR_ORGANIZATION% ^
+                                                -Dsonar.host.url=https://sonarcloud.io ^
+                                                -Dsonar.projectKey=buy-01-Frontend || exit /b 0
+                                        '''
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         stage('Build Docker Images') {
             when {
                 expression { env.SHOULD_DEPLOY == 'true' }
