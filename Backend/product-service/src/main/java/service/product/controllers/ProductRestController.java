@@ -49,20 +49,20 @@ public class ProductRestController {
     public ResponseEntity<ProductResponse> create(@Valid @RequestBody CreateProductRequest req,
                                                   Authentication auth) {
         String userId = auth.getName();
-        return ResponseEntity.status(201).body(service.create(req, userId));
+        return ResponseEntity.status(201).body(service.create(req, userId, auth));
     }
 
     @PreAuthorize("isAuthenticated()")
     @PutMapping("/{id}")
     public ProductResponse update(@PathVariable String id,
                                   @Valid @RequestBody UpdateProductRequest req,
-                                  Authentication auth) {return service.update(id, req, auth.getName());
+                                  Authentication auth) {return service.update(id, req, auth.getName(), auth);
     }
 
     @PreAuthorize("isAuthenticated()")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable String id, Authentication auth) {
-        service.delete(id, auth.getName());
+        service.delete(id, auth.getName(), auth);
         return ResponseEntity.noContent().build();
     }
 }

@@ -8,9 +8,12 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import service.media.dtos.MediaDtos.*;
+import service.media.dtos.MediaDtos;
+import service.media.exception.AccessDeniedException;
 import service.media.services.MediaService;
 
 import java.util.List;
@@ -27,32 +30,35 @@ public class MediaController {
         this.mediaService = mediaService;
     }
 
+    @PreAuthorize("hasRole('SELLER')")
     @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> uploadMedia(
             @RequestParam("file") MultipartFile file,
             @RequestParam(value = "uploaderId", required = false) String uploaderId,
-            @RequestParam(value = "productId", required = false) String productId) {
+            @RequestParam(value = "productId", required = false) String productId,
+            Authentication auth) {
         try {
+            checkSellerRole(auth);
             log.info("Uploading file: {}, size: {} bytes, uploaderId: {}, productId: {}",
                 file.getOriginalFilename(), file.getSize(), uploaderId, productId);
-            MediaUploadResponse response = mediaService.uploadMedia(file, productId);
+            MediaDtos.MediaUploadResponse response = mediaService.uploadMedia(file, productId);
             return ResponseEntity.ok(response);
 
         } catch (IllegalArgumentException e) {
             log.warn("Invalid file upload request: {}", e.getMessage());
-            return ResponseEntity.badRequest().body(new MessageResponse(e.getMessage()));
+            return ResponseEntity.badRequest().body(new MediaDtos.MessageResponse(e.getMessage()));
         } catch (Exception e) {
             log.error("Error uploading file", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(new MessageResponse("Failed to upload file: " + e.getMessage()));
+                .body(new MediaDtos.MessageResponse("Failed to upload file: " + e.getMessage()));
         }
     }
 
 
     @GetMapping
-    public ResponseEntity<List<MediaResponse>> getAllMedia() {
+    public ResponseEntity<List<MediaDtos.MediaResponse>> getAllMedia() {
         try {
-            List<MediaResponse> mediaList = mediaService.getAllMedia();
+            List<MediaDtos.MediaResponse> mediaList = mediaService.getAllMedia();
             log.info("Retrieved {} media files", mediaList.size());
             return ResponseEntity.ok(mediaList);
         } catch (Exception e) {
@@ -62,9 +68,9 @@ public class MediaController {
     }
 
     @GetMapping("/product/{productId}")
-    public ResponseEntity<List<MediaResponse>> getMediaByProductId(@PathVariable String productId) {
+    public ResponseEntity<List<MediaDtos.MediaResponse>> getMediaByProductId(@PathVariable String productId) {
         try {
-            List<MediaResponse> mediaList = mediaService.getMediaByProductId(productId);
+            List<MediaDtos.MediaResponse> mediaList = mediaService.getMediaByProductId(productId);
             log.info("Retrieved {} media files for product: {}", mediaList.size(), productId);
             return ResponseEntity.ok(mediaList);
         } catch (Exception e) {
@@ -77,7 +83,7 @@ public class MediaController {
     @GetMapping("/{id}/info")
     public ResponseEntity<?> getMediaInfo(@PathVariable String id) {
         try {
-            MediaResponse media = mediaService.getMediaById(id);
+            MediaDtos.MediaResponse media = mediaService.getMediaById(id);
             return ResponseEntity.ok(media);
         } catch (RuntimeException e) {
             log.warn("Media not found: {}", id);
@@ -128,18 +134,33 @@ public class MediaController {
 
     @PreAuthorize("hasRole('SELLER')")
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteMedia(@PathVariable String id) {
+    public ResponseEntity<?> deleteMedia(@PathVariable String id, Authentication auth) {
         try {
+            checkSellerRole(auth);
             mediaService.deleteMedia(id);
             log.info("Media deleted: {}", id);
-            return ResponseEntity.ok(new MessageResponse("Media deleted successfully"));
+            return ResponseEntity.ok(new MediaDtos.MessageResponse("Media deleted successfully"));
         } catch (RuntimeException e) {
             log.warn("Media not found for deletion: {}", id);
             return ResponseEntity.notFound().build();
         } catch (Exception e) {
             log.error("Error deleting media: {}", id, e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(new MessageResponse("Failed to delete media"));
+                .body(new MediaDtos.MessageResponse("Failed to delete media"));
+        }
+    }
+
+    private void checkSellerRole(Authentication auth) {
+        if (auth == null || auth.getAuthorities() == null) {
+            throw new AccessDeniedException("Only sellers can upload or delete media");
+        }
+
+        boolean isSeller = auth.getAuthorities().stream()
+            .map(GrantedAuthority::getAuthority)
+            .anyMatch(role -> role.equals("ROLE_SELLER"));
+
+        if (!isSeller) {
+            throw new AccessDeniedException("Only sellers can upload or delete media");
         }
     }
 }
