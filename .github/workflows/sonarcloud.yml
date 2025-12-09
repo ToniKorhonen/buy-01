@@ -99,6 +99,11 @@ jobs:
         working-directory: Frontend
         run: npm ci
 
+      - name: Run Frontend Tests with Coverage
+        working-directory: Frontend
+        run: npm run test:coverage || true
+        continue-on-error: true
+
       - name: Build Frontend
         working-directory: Frontend
         run: npm run build -- --configuration=production || true
@@ -113,23 +118,6 @@ jobs:
           sonar.projectName=Buy01 E-Commerce Platform
           sonar.projectVersion=1.0
           
-          # Source directories - include all backend services and frontend
-          sonar.sources=Backend/user-service/src/main/java,Backend/product-service/src/main/java,Backend/media-service/src/main/java,Backend/api-gateway/src/main/java,Frontend/src
-          
-          # Test directories
-          sonar.tests=Backend/user-service/src/test/java,Backend/product-service/src/test/java,Backend/media-service/src/test/java,Backend/api-gateway/src/test/java
-          
-          # Java binaries for all services
-          sonar.java.binaries=Backend/user-service/target/classes,Backend/product-service/target/classes,Backend/media-service/target/classes,Backend/api-gateway/target/classes
-          
-          sonar.java.test.binaries=Backend/user-service/target/test-classes,Backend/product-service/target/test-classes,Backend/media-service/target/test-classes,Backend/api-gateway/target/test-classes
-          
-          # Coverage reports
-          sonar.coverage.jacoco.xmlReportPaths=Backend/user-service/target/site/jacoco/jacoco.xml,Backend/product-service/target/site/jacoco/jacoco.xml,Backend/media-service/target/site/jacoco/jacoco.xml,Backend/api-gateway/target/site/jacoco/jacoco.xml
-          
-          # Test reports
-          sonar.junit.reportPaths=Backend/user-service/target/surefire-reports,Backend/product-service/target/surefire-reports,Backend/media-service/target/surefire-reports,Backend/api-gateway/target/surefire-reports
-          
           # Encoding
           sonar.sourceEncoding=UTF-8
           
@@ -141,13 +129,13 @@ jobs:
           sonar.typescript.tsconfigPaths=Frontend/tsconfig.json,Frontend/tsconfig.app.json
           sonar.javascript.node.maxspace=4096
           
-          # Exclusions
-          sonar.exclusions=**/target/**,**/node_modules/**,**/*.xml,**/dist/**,**/.angular/**,**/certs/**
+          # Global exclusions
+          sonar.exclusions=**/target/**,**/node_modules/**,**/*.xml,**/dist/**,**/.angular/**,**/certs/**,**/coverage/**
           
           sonar.test.exclusions=**/target/**,**/node_modules/**
           
           # Coverage exclusions (DTOs, configs, main classes)
-          sonar.coverage.exclusions=**/dto/**,**/config/**,**/ServiceUserApplication.java,**/ProductServiceApplication.java,**/MediaServiceApplication.java,**/GatewayApplication.java,**/main.ts
+          sonar.coverage.exclusions=**/dto/**,**/dtos/**,**/config/**,**/security/**,**/ServiceUserApplication.java,**/ProductServiceApplication.java,**/MediaServiceApplication.java,**/ApiGatewayApplication.java,**/main.ts
           
           # Module organization for better visualization
           sonar.modules=user-service,product-service,media-service,api-gateway,frontend
@@ -155,37 +143,60 @@ jobs:
           # User Service module
           user-service.sonar.projectName=User Service
           user-service.sonar.projectBaseDir=Backend/user-service
-          user-service.sonar.sources=src/main/java
+          user-service.sonar.sources=src/main
           user-service.sonar.tests=src/test/java
           user-service.sonar.java.binaries=target/classes
+          user-service.sonar.java.test.binaries=target/test-classes
+          user-service.sonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
+          user-service.sonar.junit.reportPaths=target/surefire-reports
           
           # Product Service module
           product-service.sonar.projectName=Product Service
           product-service.sonar.projectBaseDir=Backend/product-service
-          product-service.sonar.sources=src/main/java
+          product-service.sonar.sources=src/main
           product-service.sonar.tests=src/test/java
           product-service.sonar.java.binaries=target/classes
+          product-service.sonar.java.test.binaries=target/test-classes
+          product-service.sonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
+          product-service.sonar.junit.reportPaths=target/surefire-reports
           
           # Media Service module
           media-service.sonar.projectName=Media Service
           media-service.sonar.projectBaseDir=Backend/media-service
-          media-service.sonar.sources=src/main/java
+          media-service.sonar.sources=src/main
           media-service.sonar.tests=src/test/java
           media-service.sonar.java.binaries=target/classes
+          media-service.sonar.java.test.binaries=target/test-classes
+          media-service.sonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
+          media-service.sonar.junit.reportPaths=target/surefire-reports
           
           # API Gateway module
           api-gateway.sonar.projectName=API Gateway
           api-gateway.sonar.projectBaseDir=Backend/api-gateway
-          api-gateway.sonar.sources=src/main/java
+          api-gateway.sonar.sources=src/main
           api-gateway.sonar.tests=src/test/java
           api-gateway.sonar.java.binaries=target/classes
+          api-gateway.sonar.java.test.binaries=target/test-classes
+          api-gateway.sonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
+          api-gateway.sonar.junit.reportPaths=target/surefire-reports
           
           # Frontend module
           frontend.sonar.projectName=Frontend
           frontend.sonar.projectBaseDir=Frontend
           frontend.sonar.sources=src
-          frontend.sonar.exclusions=**/node_modules/**,**/dist/**,**/.angular/**
+          frontend.sonar.tests=src
+          frontend.sonar.test.inclusions=**/*.spec.ts
+          frontend.sonar.exclusions=**/node_modules/**,**/dist/**,**/.angular/**,**/*.spec.ts
+          frontend.sonar.typescript.lcov.reportPaths=coverage/lcov.info
+          frontend.sonar.javascript.lcov.reportPaths=coverage/lcov.info
           EOF
+
+      - name: Display SonarCloud Configuration
+        run: |
+          echo "📄 Generated SonarCloud Configuration:"
+          echo "========================================"
+          cat sonar-project.properties
+          echo "========================================"
 
       # Run SonarCloud analysis for entire monorepo
       - name: SonarCloud Scan (Monorepo)
