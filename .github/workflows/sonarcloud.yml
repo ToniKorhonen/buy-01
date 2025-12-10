@@ -216,7 +216,7 @@ jobs:
           SONAR_HOST_URL: https://sonarcloud.io
         with:
           args: >
-            -Dsonar.organization=${{ secrets.SONAR_ORGANIZATION }}
+            -Dsonar.organization=tonikorhonen
             -Dsonar.projectKey=ToniKorhonen_buy-01
             -Dsonar.verbose=true
 
