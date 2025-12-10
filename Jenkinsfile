@@ -518,7 +518,7 @@ echo MEDIA_DB_NAME=media_db
                                             sonar-scanner ^
                                                 -Dsonar.organization=%SONAR_ORGANIZATION% ^
                                                 -Dsonar.host.url=https://sonarcloud.io ^
-                                                -Dsonar.projectKey=buy-01-Frontend || exit /b 0
+                                                -Dsonar.projectKey=ToniKorhonen_buy-01 || exit /b 0
                                         '''
                                     }
                                 }

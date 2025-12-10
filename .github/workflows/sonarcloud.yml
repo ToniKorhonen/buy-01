@@ -20,27 +20,33 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # Security: Pinned to commit SHA to prevent supply chain attacks
+      # Version: v4.2.2 - Update by changing SHA and version comment
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           fetch-depth: 0  # Shallow clones should be disabled for better analysis
 
+      # Security: Pinned to commit SHA to prevent supply chain attacks
+      # Version: v4.5.0
       - name: Set up JDK 17
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@8df1039502a15bceb9433410b1a100fbe190c53b # v4.5.0
         with:
           java-version: '17'
           distribution: 'temurin'
           cache: 'maven'
 
+      # Security: Pinned to commit SHA v4.2.0
       - name: Cache SonarCloud packages
-        uses: actions/cache@v4
+        uses: actions/cache@1bd1e32a3bdc45362d1e726936510720a7c30a57 # v4.2.0
         with:
           path: ~/.sonar/cache
           key: ${{ runner.os }}-sonar
           restore-keys: ${{ runner.os }}-sonar
 
+      # Security: Pinned to commit SHA v4.2.0
       - name: Cache Maven packages
-        uses: actions/cache@v4
+        uses: actions/cache@1bd1e32a3bdc45362d1e726936510720a7c30a57 # v4.2.0
         with:
           path: ~/.m2
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
@@ -88,16 +94,18 @@ jobs:
           ./mvnw -B package -DskipTests
 
       # Build Frontend
+      # Security: Pinned to commit SHA v4.1.0
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af # v4.1.0
         with:
           node-version: '20'
           cache: 'npm'
           cache-dependency-path: Frontend/package-lock.json
 
+      # Security: Using --ignore-scripts to prevent execution of potentially malicious scripts during package installation
       - name: Install Frontend dependencies
         working-directory: Frontend
-        run: npm ci
+        run: npm ci --ignore-scripts
 
       - name: Run Frontend Tests with Coverage
         working-directory: Frontend
@@ -199,16 +207,28 @@ jobs:
           echo "========================================"
 
       # Run SonarCloud analysis for entire monorepo
+      # Security: Pinned to commit SHA v5.0.0
       - name: SonarCloud Scan (Monorepo)
-        uses: SonarSource/sonarcloud-github-action@master
+        uses: SonarSource/sonarqube-scan-action@0303d6b62e310685c0e34d0b9cde218036885c4d # v5.0.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: https://sonarcloud.io
         with:
           args: >
             -Dsonar.organization=${{ secrets.SONAR_ORGANIZATION }}
             -Dsonar.projectKey=buy-01
             -Dsonar.verbose=true
+
+      # Check the Quality Gate status
+      # Security: Pinned to commit SHA v1.1.0
+      - name: SonarCloud Quality Gate Check
+        uses: SonarSource/sonarqube-quality-gate-action@d304d050d930b02a896b0f85935344f023928496 # v1.1.0
+        timeout-minutes: 5
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: https://sonarcloud.io
+        continue-on-error: true
 
       - name: Summary
         if: always()
@@ -222,7 +242,7 @@ jobs:
           echo "  ✓ Backend/api-gateway (Java)"
           echo "  ✓ Frontend (TypeScript/Angular)"
           echo ""
-          echo "🔗 View results: https://sonarcloud.io/project/overview?id=buy-01"
+          echo "🔗 View results: https://sonarcloud.io/project/overview?id=ToniKorhonen_buy-01"
           echo ""
           echo "📈 Metrics available:"
           echo "  - Code coverage per service"
