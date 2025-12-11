@@ -373,6 +373,12 @@ echo MEDIA_DB_NAME=media_db
 
         // AUDIT REQUIREMENT: Code Quality Analysis with SonarCloud
         stage('SonarCloud Analysis') {
+            when {
+                expression {
+                    // Only run SonarCloud on deployment branches to save analysis quota
+                    return env.SHOULD_DEPLOY == 'true' || params.DEPLOY_ENV != 'auto'
+                }
+            }
             environment {
                 // SonarCloud uses SONAR_TOKEN from Jenkins credentials
                 SONAR_SCANNER_OPTS = '-Xmx512m'
@@ -382,39 +388,78 @@ echo MEDIA_DB_NAME=media_db
             steps {
                 echo '📊 Analyzing entire monorepo with SonarCloud...'
                 script {
-                    withSonarQubeEnv('SonarCloud') {
-                        if (isUnix()) {
-                            sh '''
-                                # Install sonar-scanner if not available
-                                if ! command -v sonar-scanner &> /dev/null; then
-                                    echo "Installing sonar-scanner..."
-                                    npm install -g sonarqube-scanner
-                                fi
+                    // Catch SonarCloud configuration errors gracefully
+                    try {
+                        withSonarQubeEnv('SonarCloud') {
+                            if (isUnix()) {
+                                sh '''
+                                    # Install sonar-scanner if not available
+                                    if ! command -v sonar-scanner &> /dev/null; then
+                                        echo "Installing sonar-scanner..."
+                                        npm install -g sonarqube-scanner
+                                    fi
 
-                                # Run sonar-scanner from project root using sonar-project.properties
-                                sonar-scanner \
-                                    -Dsonar.organization=${SONAR_ORGANIZATION} \
-                                    -Dsonar.host.url=https://sonarcloud.io \
-                                    -Dsonar.projectKey=${SONAR_PROJECT_KEY} \
-                                    -Dsonar.verbose=true || true
-                            '''
-                        } else {
-                            bat '''
-                                @echo off
-                                where sonar-scanner >nul 2>&1
-                                if %ERRORLEVEL% NEQ 0 (
-                                    echo Installing sonar-scanner...
-                                    npm install -g sonarqube-scanner
-                                )
+                                    # Prepare Java libraries paths for better analysis
+                                    USER_SERVICE_LIBS="Backend/user-service/target/classes:Backend/user-service/target/user-0.0.1-SNAPSHOT.jar"
+                                    PRODUCT_SERVICE_LIBS="Backend/product-service/target/classes:Backend/product-service/target/product-0.0.1-SNAPSHOT.jar"
+                                    MEDIA_SERVICE_LIBS="Backend/media-service/target/classes:Backend/media-service/target/media-0.0.1-SNAPSHOT.jar"
+                                    GATEWAY_LIBS="Backend/api-gateway/target/classes:Backend/api-gateway/target/gateway-0.0.1-SNAPSHOT.jar"
 
-                                REM Run sonar-scanner from project root using sonar-project.properties
-                                sonar-scanner ^
-                                    -Dsonar.organization=%SONAR_ORGANIZATION% ^
-                                    -Dsonar.host.url=https://sonarcloud.io ^
-                                    -Dsonar.projectKey=%SONAR_PROJECT_KEY% ^
-                                    -Dsonar.verbose=true || exit /b 0
-                            '''
+                                    # Collect all Maven dependencies
+                                    MAVEN_REPO="$HOME/.m2/repository"
+
+                                    # Run sonar-scanner from project root using sonar-project.properties
+                                    sonar-scanner \
+                                        -Dsonar.organization=${SONAR_ORGANIZATION} \
+                                        -Dsonar.host.url=https://sonarcloud.io \
+                                        -Dsonar.projectKey=${SONAR_PROJECT_KEY} \
+                                        -Dsonar.java.binaries="Backend/*/target/classes" \
+                                        -Dsonar.java.libraries="Backend/*/target/*.jar,$MAVEN_REPO/**/*.jar" \
+                                        -Dsonar.verbose=true
+                                '''
+                            } else {
+                                bat '''
+                                    @echo off
+                                    where sonar-scanner >nul 2>&1
+                                    if %ERRORLEVEL% NEQ 0 (
+                                        echo Installing sonar-scanner...
+                                        npm install -g sonarqube-scanner
+                                    )
+
+                                    REM Run sonar-scanner from project root using sonar-project.properties
+                                    sonar-scanner ^
+                                        -Dsonar.organization=%SONAR_ORGANIZATION% ^
+                                        -Dsonar.host.url=https://sonarcloud.io ^
+                                        -Dsonar.projectKey=%SONAR_PROJECT_KEY% ^
+                                        -Dsonar.java.binaries=Backend/*/target/classes ^
+                                        -Dsonar.java.libraries=Backend/*/target/*.jar ^
+                                        -Dsonar.verbose=true
+                                '''
+                            }
                         }
+                    } catch (Exception e) {
+                        echo "⚠️  SonarCloud analysis failed: ${e.message}"
+                        echo """
+                        ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                        📋 SonarCloud Configuration Required
+                        ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+                        To enable SonarCloud analysis, configure it in Jenkins:
+
+                        1. Go to: Jenkins → Manage Jenkins → Configure System
+                        2. Find "SonarQube servers" section
+                        3. Click "Add SonarQube"
+                        4. Configure:
+                           • Name: SonarCloud
+                           • Server URL: https://sonarcloud.io
+                           • Server authentication token: [Add your SonarCloud token]
+
+                        5. Get your token from: https://sonarcloud.io/account/security
+
+                        ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                        """
+                        // Don't fail the build if SonarCloud is not configured
+                        unstable('SonarCloud analysis skipped - not configured')
                     }
                 }
             }
