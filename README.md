@@ -123,6 +123,8 @@ Automated code quality analysis runs on every push using GitHub Actions.
 📚 **Documentation**: 
 - [Quick Start Guide](docs/GITHUB_ACTIONS_QUICK_START.md)
 - [Complete Guide](docs/GITHUB_ACTIONS_SONARCLOUD.md)
+- [Troubleshooting Common Issues](docs/SONARCLOUD_TROUBLESHOOTING.md)
+- [Quick Fix: Automatic Analysis Error](docs/SONARCLOUD_QUICK_FIX.md)
 
 ### Jenkins vs GitHub Actions
 
