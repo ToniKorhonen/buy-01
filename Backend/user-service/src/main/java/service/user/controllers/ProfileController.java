@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
+import service.user.clients.ProductServiceClient;
 import service.user.dtos.UserDtos.UserResponse;
 import service.user.dtos.UserDtos.UpdateProfileRequest;
 import service.user.models.User;
@@ -16,12 +17,14 @@ public class ProfileController {
     private final UserRepository userRepository;
     private final JwtService jwtService;
     private final PasswordEncoder passwordEncoder;
+    private final ProductServiceClient productServiceClient;
 
     @Autowired
-    public ProfileController(UserRepository userRepository, JwtService jwtService, PasswordEncoder passwordEncoder) {
+    public ProfileController(UserRepository userRepository, JwtService jwtService, PasswordEncoder passwordEncoder, ProductServiceClient productServiceClient) {
         this.userRepository = userRepository;
         this.jwtService = jwtService;
         this.passwordEncoder = passwordEncoder;
+        this.productServiceClient = productServiceClient;
     }
 
     @GetMapping("/me")
@@ -129,6 +132,10 @@ public class ProfileController {
             return ResponseEntity.status(404).build();
         }
 
+        // Delete all products created by this user
+        productServiceClient.deleteAllProductsByUserId(user.getId());
+
+        // Delete the user account
         userRepository.delete(user);
 
         return ResponseEntity.noContent().build();

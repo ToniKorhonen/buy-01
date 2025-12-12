@@ -2,6 +2,8 @@
 package service.product.services;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import service.product.dtos.ProductDtos.*;
@@ -23,7 +25,8 @@ public class ProductService {
     }
 
     @Transactional
-    public ProductResponse create(CreateProductRequest req, String ownerUserId) {
+    public ProductResponse create(CreateProductRequest req, String ownerUserId, Authentication auth) {
+        checkSellerRole(auth);
         Product p = new Product();
         p.setName(s(req.name()));
         p.setDescription(s(req.description()));
@@ -38,12 +41,17 @@ public class ProductService {
         return repo.findAll().stream().map(this::toResponse).toList();
     }
 
+    public List<ProductResponse> listByUserId(String userId) {
+        return repo.findByUserId(userId).stream().map(this::toResponse).toList();
+    }
+
     public ProductResponse get(String id) {
         return toResponse(find(id));
     }
 
     @Transactional
-    public ProductResponse update(String id, UpdateProductRequest req, String requesterUserId) {
+    public ProductResponse update(String id, UpdateProductRequest req, String requesterUserId, Authentication auth) {
+        checkSellerRole(auth);
         Product p = find(id);
         checkOwnership(p, requesterUserId);
         p.setName(s(req.name()));
@@ -55,10 +63,17 @@ public class ProductService {
     }
 
     @Transactional
-    public void delete(String id, String requesterUserId) {
+    public void delete(String id, String requesterUserId, Authentication auth) {
+        checkSellerRole(auth);
         Product p = find(id);
         checkOwnership(p, requesterUserId);
         repo.delete(p);
+    }
+
+    @Transactional
+    public void deleteAllByUserId(String userId) {
+        List<Product> products = repo.findByUserId(userId);
+        repo.deleteAll(products);
     }
 
     private Product find(String id) {
@@ -68,6 +83,20 @@ public class ProductService {
     private void checkOwnership(Product p, String requesterUserId) {
         if (p.getUserId() == null || !p.getUserId().equals(requesterUserId)) {
             throw new AccessDeniedBusinessException("Not owner of product");
+        }
+    }
+
+    private void checkSellerRole(Authentication auth) {
+        if (auth == null || auth.getAuthorities() == null) {
+            throw new AccessDeniedBusinessException("Only sellers can create, update, or delete products");
+        }
+
+        boolean isSeller = auth.getAuthorities().stream()
+            .map(GrantedAuthority::getAuthority)
+            .anyMatch(role -> role.equals("ROLE_SELLER"));
+
+        if (!isSeller) {
+            throw new AccessDeniedBusinessException("Only sellers can create, update, or delete products");
         }
     }
 

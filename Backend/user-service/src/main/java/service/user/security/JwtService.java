@@ -20,7 +20,7 @@ public class JwtService {
 
     public String generateToken(User user) {
         long expirationTimestamp = System.currentTimeMillis() + expirationTime;
-        String payload = user.getEmail() + ":" + user.getRole() + ":" + expirationTimestamp;
+        String payload = user.getId() + ":" + user.getEmail() + ":" + user.getRole() + ":" + expirationTimestamp;
         String signature = hmacSha256(payload, secret);
         String token = payload + ":" + signature;
         return Base64.getUrlEncoder().withoutPadding().encodeToString(token.getBytes(StandardCharsets.UTF_8));
@@ -30,17 +30,40 @@ public class JwtService {
         try {
             String decoded = new String(Base64.getUrlDecoder().decode(token), StandardCharsets.UTF_8);
             String[] parts = decoded.split(":");
-            if (parts.length >= 4) {
-                String payload = parts[0] + ":" + parts[1] + ":" + parts[2];
-                String signature = parts[3];
+            if (parts.length >= 5) {
+                String payload = parts[0] + ":" + parts[1] + ":" + parts[2] + ":" + parts[3];
+                String signature = parts[4];
                 String expectedSignature = hmacSha256(payload, secret);
                 if (signature.equals(expectedSignature)) {
                     // Validate expiration
-                    long expirationTimestamp = Long.parseLong(parts[2]);
+                    long expirationTimestamp = Long.parseLong(parts[3]);
                     if (System.currentTimeMillis() > expirationTimestamp) {
                         return null; // Token expired
                     }
-                    return parts[0]; // email is the first part
+                    return parts[1]; // email is the second part
+                }
+            }
+            return null;
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    public String extractUserId(String token) {
+        try {
+            String decoded = new String(Base64.getUrlDecoder().decode(token), StandardCharsets.UTF_8);
+            String[] parts = decoded.split(":");
+            if (parts.length >= 5) {
+                String payload = parts[0] + ":" + parts[1] + ":" + parts[2] + ":" + parts[3];
+                String signature = parts[4];
+                String expectedSignature = hmacSha256(payload, secret);
+                if (signature.equals(expectedSignature)) {
+                    // Validate expiration
+                    long expirationTimestamp = Long.parseLong(parts[3]);
+                    if (System.currentTimeMillis() > expirationTimestamp) {
+                        return null; // Token expired
+                    }
+                    return parts[0]; // userId
                 }
             }
             return null;
@@ -53,17 +76,17 @@ public class JwtService {
         try {
             String decoded = new String(Base64.getUrlDecoder().decode(token), StandardCharsets.UTF_8);
             String[] parts = decoded.split(":");
-            if (parts.length >= 4) {
-                String payload = parts[0] + ":" + parts[1] + ":" + parts[2];
-                String signature = parts[3];
+            if (parts.length >= 5) {
+                String payload = parts[0] + ":" + parts[1] + ":" + parts[2] + ":" + parts[3];
+                String signature = parts[4];
                 String expectedSignature = hmacSha256(payload, secret);
                 if (signature.equals(expectedSignature)) {
                     // Validate expiration
-                    long expirationTimestamp = Long.parseLong(parts[2]);
+                    long expirationTimestamp = Long.parseLong(parts[3]);
                     if (System.currentTimeMillis() > expirationTimestamp) {
                         return null; // Token expired
                     }
-                    return parts[1]; // role is the second part
+                    return parts[2]; // role is the third part
                 }
             }
             return null;

@@ -36,25 +36,40 @@ public class ProductRestController {
         return service.get(id);
     }
 
+    // Get current user's products
+    @PreAuthorize("isAuthenticated()")
+    @GetMapping("/my-products")
+    public List<ProductResponse> getMyProducts(Authentication auth) {
+        String userId = auth.getName();
+        return service.listByUserId(userId);
+    }
+
     @PreAuthorize("isAuthenticated()")
     @PostMapping
     public ResponseEntity<ProductResponse> create(@Valid @RequestBody CreateProductRequest req,
                                                   Authentication auth) {
         String userId = auth.getName();
-        return ResponseEntity.status(201).body(service.create(req, userId));
+        return ResponseEntity.status(201).body(service.create(req, userId, auth));
     }
 
     @PreAuthorize("isAuthenticated()")
     @PutMapping("/{id}")
     public ProductResponse update(@PathVariable String id,
                                   @Valid @RequestBody UpdateProductRequest req,
-                                  Authentication auth) {return service.update(id, req, auth.getName());
+                                  Authentication auth) {return service.update(id, req, auth.getName(), auth);
     }
 
     @PreAuthorize("isAuthenticated()")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable String id, Authentication auth) {
-        service.delete(id, auth.getName());
+        service.delete(id, auth.getName(), auth);
+        return ResponseEntity.noContent().build();
+    }
+
+    // Internal endpoint for user-service to delete all products when user is deleted
+    @DeleteMapping("/user/{userId}")
+    public ResponseEntity<Void> deleteAllByUserId(@PathVariable String userId) {
+        service.deleteAllByUserId(userId);
         return ResponseEntity.noContent().build();
     }
 }
