@@ -78,43 +78,81 @@ export class RegisterComponent {
     this.message = '';
     this.error = '';
 
-    // If seller and has avatar, upload it first
-    if (this.model.role === 'SELLER' && this.selectedFile) {
-      this.uploadingAvatar = true;
-      this.mediaService.uploadMedia(this.selectedFile, this.model.email).subscribe({
-        next: (mediaResponse) => {
-          // Store the media ID, not the URL
-          this.model.avatarId = mediaResponse.id;
-          this.registerUser();
-        },
-        error: (err) => {
-          console.error('Upload error:', err);
-          // Parse error message from backend
-          const errorMsg = err.error?.message || err.error || 'Failed to upload avatar';
-          this.error = errorMsg;
-          this.loading = false;
-          this.uploadingAvatar = false;
-        }
-      });
-    } else {
-      this.registerUser();
-    }
+    // Register user first
+    this.registerUser();
   }
 
   private registerUser() {
     this.userService.register(this.model).subscribe({
-      next: (res) => {
-        this.message = `Registered successfully! Redirecting to login...`;
+      next: () => {
+        // If seller with avatar, auto-login and upload avatar
+        if (this.model.role === 'SELLER' && this.selectedFile) {
+          this.autoLoginAndUploadAvatar();
+        } else {
+          this.message = `Registered successfully! Redirecting to login...`;
+          this.loading = false;
+          this.uploadingAvatar = false;
+          setTimeout(() => {
+            this.router.navigate(['/login']);
+          }, 2000);
+        }
+      },
+      error: (err: any) => {
+        this.error = err?.error?.message || 'Registration failed';
+        this.loading = false;
+        this.uploadingAvatar = false;
+      }
+    });
+  }
+
+  private autoLoginAndUploadAvatar() {
+    // Auto-login to get JWT token
+    this.userService.login({ email: this.model.email, password: this.model.password }).subscribe({
+      next: () => {
+        // Now upload avatar with authentication
+        this.uploadingAvatar = true;
+        this.mediaService.uploadMedia(this.selectedFile!, this.model.email).subscribe({
+          next: (mediaResponse) => {
+            // Update user profile with avatar ID
+            this.userService.updateProfile({ avatarId: mediaResponse.id }).subscribe({
+              next: () => {
+                this.message = `Registered successfully with avatar! Redirecting to login...`;
+                this.loading = false;
+                this.uploadingAvatar = false;
+                setTimeout(() => {
+                  this.router.navigate(['/login']);
+                }, 2000);
+              },
+              error: (err: any) => {
+                console.error('Failed to update profile with avatar:', err);
+                this.message = `Registered successfully, but avatar update failed. Redirecting to login...`;
+                this.loading = false;
+                this.uploadingAvatar = false;
+                setTimeout(() => {
+                  this.router.navigate(['/login']);
+                }, 2000);
+              }
+            });
+          },
+          error: (err: any) => {
+            console.error('Upload error:', err);
+            this.message = `Registered successfully, but avatar upload failed. Redirecting to login...`;
+            this.loading = false;
+            this.uploadingAvatar = false;
+            setTimeout(() => {
+              this.router.navigate(['/login']);
+            }, 2000);
+          }
+        });
+      },
+      error: (err: any) => {
+        console.error('Auto-login failed:', err);
+        this.message = `Registered successfully! Please login manually.`;
         this.loading = false;
         this.uploadingAvatar = false;
         setTimeout(() => {
           this.router.navigate(['/login']);
         }, 2000);
-      },
-      error: (err) => {
-        this.error = err?.error?.message || 'Registration failed';
-        this.loading = false;
-        this.uploadingAvatar = false;
       }
     });
   }

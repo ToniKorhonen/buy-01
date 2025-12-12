@@ -160,6 +160,22 @@ public class MediaService {
         }
     }
 
+    public void deleteAllMediaByProductId(String productId) {
+        List<Media> mediaList = mediaRepository.findByProductId(productId);
+        for (Media media : mediaList) {
+            try {
+                Path filePath = this.storageLocation.resolve(media.getFilePath()).normalize();
+                if (filePath.startsWith(this.storageLocation)) {
+                    Files.deleteIfExists(filePath);
+                }
+            } catch (IOException e) {
+                log.error("Failed to delete file for media id: {}", media.getId(), e);
+            }
+        }
+        mediaRepository.deleteAll(mediaList);
+        log.info("Deleted {} media files for product: {}", mediaList.size(), productId);
+    }
+
     private MediaResponse toResponse(Media media) {
         String downloadUrl = baseUrl + "/api/media/" + media.getId();
         return new MediaResponse(
