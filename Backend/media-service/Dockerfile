@@ -11,7 +11,7 @@ RUN apk add --no-cache wget curl && \
     mkdir -p /app/uploads && \
     chmod 777 /app/uploads
 WORKDIR /app
-COPY --from=build /app/target/*.jar app.jar
+COPY target/*.jar app.jar
 EXPOSE 8083
 ENV JAVA_OPTS="-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0 -XX:+TieredCompilation -XX:TieredStopAtLevel=1"
 HEALTHCHECK --interval=30s --timeout=3s --start-period=60s --retries=3 \

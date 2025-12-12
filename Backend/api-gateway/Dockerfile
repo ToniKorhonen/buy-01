@@ -14,8 +14,8 @@ FROM eclipse-temurin:17-jre-alpine
 RUN apk add --no-cache wget curl && \
     rm -rf /var/cache/apk/*
 WORKDIR /app
-# Copy only the JAR file
-COPY --from=build /app/target/*.jar app.jar
+# Copy only the JAR file from Jenkins build
+COPY target/*.jar app.jar
 EXPOSE 8080
 # Optimized JVM settings for containers
 ENV JAVA_OPTS="-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0 -XX:+TieredCompilation -XX:TieredStopAtLevel=1 -Djava.security.egd=file:/dev/./urandom"
