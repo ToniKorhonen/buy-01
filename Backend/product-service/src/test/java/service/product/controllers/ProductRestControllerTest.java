@@ -1,12 +1,15 @@
 package service.product.controllers;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
+import service.product.mongo_repo.ProductRepository;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -23,60 +26,75 @@ class ProductRestControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
-    @Test
-    void testGetAllProducts_ShouldReturnOk() throws Exception {
-        mockMvc.perform(get("/products"))
-                .andExpect(status().isOk());
+    @Autowired
+    private ProductRepository productRepository;
+
+    @BeforeEach
+    void setUp() {
+        // Clean the database before each test to ensure test isolation
+        productRepository.deleteAll();
     }
 
     @Test
+    void testGetAllProducts_ShouldReturnOk() throws Exception {
+        // GET / is public - no authentication needed
+        // Should return OK even if empty list
+        mockMvc.perform(get("/"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON));
+    }
+
+    @Test
+    @WithMockUser(username = "testuser", roles = {"SELLER"})
     void testCreateProduct_WithValidData_ShouldReturnCreated() throws Exception {
         String productJson = """
             {
                 "name": "Test Product",
                 "description": "A test product",
                 "price": 99.99,
-                "stock": 10,
-                "category": "Electronics"
+                "quantity": 10
             }
         """;
 
-        mockMvc.perform(post("/products")
+        // POST / requires authentication and SELLER role
+        mockMvc.perform(post("/")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(productJson))
                 .andExpect(status().isCreated());
     }
 
     @Test
+    @WithMockUser(username = "testuser", roles = {"SELLER"})
     void testCreateProduct_WithNegativePrice_ShouldReturnBadRequest() throws Exception {
         String invalidProductJson = """
             {
                 "name": "Invalid Product",
                 "description": "Invalid price",
                 "price": -10.00,
-                "stock": 10,
-                "category": "Test"
+                "quantity": 10
             }
         """;
 
-        mockMvc.perform(post("/products")
+        // POST / requires authentication and SELLER role
+        mockMvc.perform(post("/")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(invalidProductJson))
                 .andExpect(status().isBadRequest());
     }
 
     @Test
+    @WithMockUser(username = "testuser", roles = {"SELLER"})
     void testCreateProduct_WithMissingName_ShouldReturnBadRequest() throws Exception {
         String invalidProductJson = """
             {
                 "description": "Missing name",
                 "price": 50.00,
-                "stock": 5,
-                "category": "Test"
+                "quantity": 5
             }
         """;
 
-        mockMvc.perform(post("/products")
+        // POST / requires authentication and SELLER role
+        mockMvc.perform(post("/")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(invalidProductJson))
                 .andExpect(status().isBadRequest());
@@ -84,17 +102,9 @@ class ProductRestControllerTest {
 
     @Test
     void testGetProductById_NonExistent_ShouldReturnNotFound() throws Exception {
-        mockMvc.perform(get("/products/999999999999999999999999"))
+        // GET /{id} is public - no authentication needed
+        mockMvc.perform(get("/999999999999999999999999"))
                 .andExpect(status().isNotFound());
     }
-
-    /**
-     * INTENTIONALLY BREAKABLE TEST FOR AUDIT DEMO
-     * Uncomment to demonstrate test failure detection
-     */
-    // @Test
-    // public void testIntentionalFailure_ForAuditDemo() {
-    //     org.junit.jupiter.api.Assertions.fail("This test is intentionally failing");
-    // }
 }
 

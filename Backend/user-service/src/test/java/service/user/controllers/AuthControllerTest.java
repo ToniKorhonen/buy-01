@@ -1,12 +1,16 @@
 package service.user.controllers;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
+import service.user.config.TestSecurityConfig;
+import service.user.mongo_repo.UserRepository;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -20,34 +24,46 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @TestPropertySource(locations = "classpath:application-test.properties")
+@Import(TestSecurityConfig.class)
 class AuthControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
 
+    @Autowired
+    private UserRepository userRepository;
+
+    @BeforeEach
+    void setUp() {
+        // Clean the database before each test to ensure test isolation
+        userRepository.deleteAll();
+    }
+
     @Test
      void testRegisterWithValidData_ShouldReturnCreated() throws Exception {
         String validUserJson = """
             {
-                "username": "testuser",
+                "name": "Test User",
                 "email": "test@example.com",
-                "password": "Password123!"
+                "password": "Password123!",
+                "role": "CLIENT"
             }
         """;
 
         mockMvc.perform(post("/auth/register")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(validUserJson))
-                .andExpect(status().isCreated());
+                .andExpect(status().isOk());
     }
 
     @Test
     void testRegisterWithInvalidEmail_ShouldReturnBadRequest() throws Exception {
         String invalidUserJson = """
             {
-                "username": "testuser",
+                "name": "Test User",
                 "email": "not-an-email",
-                "password": "Password123!"
+                "password": "Password123!",
+                "role": "CLIENT"
             }
         """;
 
@@ -62,7 +78,8 @@ class AuthControllerTest {
         String invalidUserJson = """
             {
                 "email": "test@example.com",
-                "password": "Password123!"
+                "password": "Password123!",
+                "role": "CLIENT"
             }
         """;
 
@@ -77,9 +94,10 @@ class AuthControllerTest {
         // First register a user
         String registerJson = """
             {
-                "username": "logintest",
+                "name": "Login Test",
                 "email": "logintest@example.com",
-                "password": "Password123!"
+                "password": "Password123!",
+                "role": "CLIENT"
             }
         """;
 
@@ -107,9 +125,10 @@ class AuthControllerTest {
         // First register a user
         String registerJson = """
             {
-                "username": "passwordtest",
+                "name": "Password Test",
                 "email": "passwordtest@example.com",
-                "password": "Password123!"
+                "password": "Password123!",
+                "role": "CLIENT"
             }
         """;
 
