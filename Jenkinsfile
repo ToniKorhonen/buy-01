@@ -299,12 +299,12 @@ echo MEDIA_DB_NAME=media_db
                                 if (isUnix()) {
                                     sh '''
                                         export JWT_SECRET="${JWT_SECRET}"
-                                        ./mvnw test || true
+                                        ./mvnw test
                                     '''
                                 } else {
                                     bat '''
                                         set JWT_SECRET=%JWT_SECRET%
-                                        mvnw.cmd test || exit /b 0
+                                        mvnw.cmd test
                                     '''
                                 }
                             }
@@ -325,12 +325,12 @@ echo MEDIA_DB_NAME=media_db
                                 if (isUnix()) {
                                     sh '''
                                         export JWT_SECRET="${JWT_SECRET}"
-                                        ./mvnw test || true
+                                        ./mvnw test
                                     '''
                                 } else {
                                     bat '''
                                         set JWT_SECRET=%JWT_SECRET%
-                                        mvnw.cmd test || exit /b 0
+                                        mvnw.cmd test
                                     '''
                                 }
                             }
@@ -351,12 +351,12 @@ echo MEDIA_DB_NAME=media_db
                                 if (isUnix()) {
                                     sh '''
                                         export JWT_SECRET="${JWT_SECRET}"
-                                        ./mvnw test || true
+                                        ./mvnw test
                                     '''
                                 } else {
                                     bat '''
                                         set JWT_SECRET=%JWT_SECRET%
-                                        mvnw.cmd test || exit /b 0
+                                        mvnw.cmd test
                                     '''
                                 }
                             }
