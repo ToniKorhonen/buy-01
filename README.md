@@ -179,8 +179,9 @@ JWT_SECRET=your-secret-key-here
 JWT_EXPIRATION=3600000
 
 # MongoDB
+# Note: Docker deployment uses port 27018 to avoid conflicts with local MongoDB (27017)
 MONGODB_HOST=localhost
-MONGODB_PORT=27017
+MONGODB_PORT=27018  # For Docker deployment (local MongoDB uses 27017 for tests)
 ```
 
 ## 🐳 Docker Commands

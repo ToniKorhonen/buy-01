@@ -186,7 +186,8 @@ docker-compose build --no-cache
 ### Deployment Health Checks Fail
 ```bash
 # Check if ports are already in use
-netstat -tulpn | grep -E ':(8080|8081|8082|8083|4200|4443|27017)'
+# Note: Docker MongoDB uses port 27018 (local MongoDB uses 27017 for tests)
+netstat -tulpn | grep -E ':(8080|8081|8082|8083|4200|4443|27018)'
 
 # Stop conflicting services
 docker-compose down

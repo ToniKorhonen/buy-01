@@ -60,7 +60,9 @@ The JWT secret has been externalized from the codebase to enhance security. **Ne
 ### Optional Variables (for future use)
 
 - **MONGODB_HOST**: MongoDB server host (default: localhost)
-- **MONGODB_PORT**: MongoDB server port (default: 27017)
+- **MONGODB_PORT**: MongoDB server port
+  - Docker deployment: 27018
+  - Local tests: 27017 (uses local MongoDB instance)
 - **MONGODB_USERNAME**: MongoDB authentication username
 - **MONGODB_PASSWORD**: MongoDB authentication password
 

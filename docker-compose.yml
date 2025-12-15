@@ -6,7 +6,7 @@ services:
     environment:
       MONGO_INITDB_DATABASE: buy01
     ports:
-      - "27017:27017"
+      - "27018:27017"  # Map to host port 27018 to avoid conflict with local MongoDB
     volumes:
       - mongodb_data:/data/db
     networks:

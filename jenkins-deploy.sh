@@ -69,7 +69,7 @@ echo ""
 sleep 5
 
 # Check MongoDB first (foundational service)
-check_service_health "MongoDB" 27017 || rollback
+check_service_health "MongoDB" 27018 || rollback
 
 # Check backend services
 check_service_health "User Service" 8081 || rollback
