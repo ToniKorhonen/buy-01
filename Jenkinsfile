@@ -368,6 +368,32 @@ echo MEDIA_DB_NAME=media_db
                         }
                     }
                 }
+
+                stage('Test Media Service') {
+                    steps {
+                        dir('Backend/media-service') {
+                            echo '🧪 Testing Media Service...'
+                            script {
+                                if (isUnix()) {
+                                    sh '''
+                                        export JWT_SECRET="${JWT_SECRET}"
+                                        ./mvnw test
+                                    '''
+                                } else {
+                                    bat '''
+                                        set JWT_SECRET=%JWT_SECRET%
+                                        mvnw.cmd test
+                                    '''
+                                }
+                            }
+                        }
+                    }
+                    post {
+                        always {
+                            junit allowEmptyResults: true, testResults: 'Backend/media-service/target/surefire-reports/*.xml'
+                        }
+                    }
+                }
             }
         }
 
