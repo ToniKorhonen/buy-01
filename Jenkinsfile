@@ -371,6 +371,94 @@ echo MEDIA_DB_NAME=media_db
             }
         }
 
+        // AUDIT REQUIREMENT: Publish Test Reports and Coverage
+        stage('Publish Test Reports') {
+            when {
+                expression { params.SKIP_TESTS == false }
+            }
+            steps {
+                script {
+                    echo '📊 Publishing test coverage reports...'
+
+                    // Publish JaCoCo coverage reports
+                    try {
+                        jacoco(
+                            execPattern: '**/target/jacoco.exec',
+                            classPattern: '**/target/classes',
+                            sourcePattern: '**/src/main/java',
+                            exclusionPattern: '**/dto/**,**/config/**,**/security/**,**/*Application.class'
+                        )
+                        echo '✅ JaCoCo coverage reports published'
+                    } catch (Exception e) {
+                        echo "⚠️  JaCoCo plugin not installed or reports not found: ${e.message}"
+                        echo "Install JaCoCo plugin from: Manage Jenkins → Plugins → JaCoCo"
+                    }
+
+                    // Archive HTML coverage reports for each service
+                    try {
+                        publishHTML([
+                            allowMissing: true,
+                            alwaysLinkToLastBuild: true,
+                            keepAll: true,
+                            reportDir: 'Backend/user-service/target/site/jacoco',
+                            reportFiles: 'index.html',
+                            reportName: 'User Service Coverage',
+                            reportTitles: 'User Service Code Coverage'
+                        ])
+                        echo '✅ User Service coverage report published'
+                    } catch (Exception e) {
+                        echo "⚠️  HTML Publisher plugin not installed: ${e.message}"
+                        echo "Install HTML Publisher from: Manage Jenkins → Plugins → HTML Publisher"
+                    }
+
+                    try {
+                        publishHTML([
+                            allowMissing: true,
+                            alwaysLinkToLastBuild: true,
+                            keepAll: true,
+                            reportDir: 'Backend/product-service/target/site/jacoco',
+                            reportFiles: 'index.html',
+                            reportName: 'Product Service Coverage',
+                            reportTitles: 'Product Service Code Coverage'
+                        ])
+                        echo '✅ Product Service coverage report published'
+                    } catch (Exception e) {
+                        echo "⚠️  Could not publish Product Service coverage: ${e.message}"
+                    }
+
+                    try {
+                        publishHTML([
+                            allowMissing: true,
+                            alwaysLinkToLastBuild: true,
+                            keepAll: true,
+                            reportDir: 'Backend/api-gateway/target/site/jacoco',
+                            reportFiles: 'index.html',
+                            reportName: 'API Gateway Coverage',
+                            reportTitles: 'API Gateway Code Coverage'
+                        ])
+                        echo '✅ API Gateway coverage report published'
+                    } catch (Exception e) {
+                        echo "⚠️  Could not publish API Gateway coverage: ${e.message}"
+                    }
+
+                    try {
+                        publishHTML([
+                            allowMissing: true,
+                            alwaysLinkToLastBuild: true,
+                            keepAll: true,
+                            reportDir: 'Backend/media-service/target/site/jacoco',
+                            reportFiles: 'index.html',
+                            reportName: 'Media Service Coverage',
+                            reportTitles: 'Media Service Code Coverage'
+                        ])
+                        echo '✅ Media Service coverage report published'
+                    } catch (Exception e) {
+                        echo "⚠️  Could not publish Media Service coverage: ${e.message}"
+                    }
+                }
+            }
+        }
+
         // AUDIT REQUIREMENT: Code Quality Analysis with SonarCloud
         stage('SonarCloud Analysis') {
             when {
@@ -553,6 +641,23 @@ echo MEDIA_DB_NAME=media_db
     }
 
     post {
+        always {
+            script {
+                // AUDIT REQUIREMENT: Archive test reports and coverage data for future reference
+                echo '📦 Archiving test reports and coverage data...'
+                try {
+                    archiveArtifacts(
+                        artifacts: '**/target/surefire-reports/*.xml, **/target/site/jacoco/**/*',
+                        allowEmptyArchive: true,
+                        fingerprint: true
+                    )
+                    echo '✅ Test reports and coverage data archived'
+                } catch (Exception e) {
+                    echo "⚠️  Could not archive artifacts: ${e.message}"
+                }
+            }
+        }
+
         success {
             echo '✅ Pipeline completed successfully!'
             script {
@@ -616,6 +721,10 @@ echo MEDIA_DB_NAME=media_db
                         <ul>
                             <li><a href="${env.BUILD_URL}">View Build Console Output</a></li>
                             <li><a href="${env.BUILD_URL}testReport/">View Test Reports</a></li>
+                            <li><a href="${env.BUILD_URL}jacoco/">View Code Coverage Summary</a></li>
+                            <li><a href="${env.BUILD_URL}User_Service_Coverage/">User Service Coverage Report</a></li>
+                            <li><a href="${env.BUILD_URL}Product_Service_Coverage/">Product Service Coverage Report</a></li>
+                            <li><a href="${env.BUILD_URL}API_Gateway_Coverage/">API Gateway Coverage Report</a></li>
                         </ul>
 
                         <p style="color: #6c757d; font-size: 12px;">
