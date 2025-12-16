@@ -287,8 +287,12 @@ echo MEDIA_DB_NAME=media_db
                 expression { params.SKIP_TESTS == false }
             }
             environment {
-                // Set JWT_SECRET for tests - use test value that won't be used in production
+            environment {
                 JWT_SECRET = 'test-jwt-secret-for-testing-only-do-not-use-in-production-12345678901234567890'
+            }
+            options {
+                // Stop all tests immediately if any service fails
+                parallelsAlwaysFailFast()
             }
             parallel {
                 stage('Test User Service') {
@@ -406,18 +410,23 @@ echo MEDIA_DB_NAME=media_db
                 script {
                     echo '📊 Publishing test coverage reports...'
 
-                    // Publish JaCoCo coverage reports
+                    // Publish JaCoCo coverage reports using Coverage plugin
                     try {
-                        jacoco(
-                            execPattern: '**/target/jacoco.exec',
-                            classPattern: '**/target/classes',
-                            sourcePattern: '**/src/main/java',
-                            exclusionPattern: '**/dto/**,**/config/**,**/security/**,**/*Application.class'
-                        )
-                        echo '✅ JaCoCo coverage reports published'
+                        // The Coverage plugin automatically picks up JaCoCo reports
+                        publishCoverage adapters: [
+                            jacocoAdapter(
+                                path: '**/target/site/jacoco/jacoco.xml',
+                                thresholds: [
+                                    [thresholdTarget: 'Line', unhealthyThreshold: 50.0, unstableThreshold: 70.0],
+                                    [thresholdTarget: 'Conditional', unhealthyThreshold: 50.0, unstableThreshold: 70.0]
+                                ]
+                            )
+                        ],
+                        sourceFileResolver: sourceFiles('STORE_ALL_BUILD')
+                        echo '✅ Coverage reports published via Coverage plugin'
                     } catch (Exception e) {
-                        echo "⚠️  JaCoCo plugin not installed or reports not found: ${e.message}"
-                        echo "Install JaCoCo plugin from: Manage Jenkins → Plugins → JaCoCo"
+                        echo "⚠️  Coverage plugin not installed or reports not found: ${e.message}"
+                        echo "Install Coverage plugin from: Manage Jenkins → Plugins → Code Coverage API"
                     }
 
                     // Archive HTML coverage reports for each service
@@ -581,7 +590,10 @@ echo MEDIA_DB_NAME=media_db
 
         stage('Build Docker Images') {
             when {
-                expression { env.SHOULD_DEPLOY == 'true' }
+                allOf {
+                    expression { env.SHOULD_DEPLOY == 'true' }
+                    expression { currentBuild.result == null || currentBuild.result == 'SUCCESS' }
+                }
             }
             steps {
                 script {
@@ -628,6 +640,7 @@ echo MEDIA_DB_NAME=media_db
                 allOf {
                     expression { env.SHOULD_DEPLOY == 'true' }
                     expression { env.NEEDS_APPROVAL == 'true' }
+                    expression { currentBuild.result == null || currentBuild.result == 'SUCCESS' }
                 }
             }
             steps {
@@ -644,7 +657,10 @@ echo MEDIA_DB_NAME=media_db
 
         stage('Deploy') {
             when {
-                expression { env.SHOULD_DEPLOY == 'true' }
+                allOf {
+                    expression { env.SHOULD_DEPLOY == 'true' }
+                    expression { currentBuild.result == null || currentBuild.result == 'SUCCESS' }
+                }
             }
             steps {
                 script {
