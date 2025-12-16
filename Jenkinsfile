@@ -288,10 +288,6 @@ echo MEDIA_DB_NAME=media_db
             environment {
                 JWT_SECRET = 'test-jwt-secret-for-testing-only-do-not-use-in-production-12345678901234567890'
             }
-            options {
-                // Stop all tests immediately if any service fails
-                parallelsAlwaysFailFast()
-            }
             parallel {
                 stage('Test User Service') {
                     steps {
