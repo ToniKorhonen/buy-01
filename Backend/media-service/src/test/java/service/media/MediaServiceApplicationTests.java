@@ -2,12 +2,14 @@ package service.media;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.TestPropertySource;
 
 /**
  * Integration tests for Media Service Application.
  * This test class ensures the application context loads successfully.
  */
 @SpringBootTest
+@TestPropertySource(locations = "classpath:application-test.properties")
 class MediaServiceApplicationTests {
 
     /**
