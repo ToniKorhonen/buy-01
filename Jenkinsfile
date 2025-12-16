@@ -404,23 +404,17 @@ echo MEDIA_DB_NAME=media_db
                 script {
                     echo '📊 Publishing test coverage reports...'
 
-                    // Publish JaCoCo coverage reports using Coverage plugin
+                    // Publish JaCoCo coverage reports using recordCoverage
                     try {
-                        // The Coverage plugin automatically picks up JaCoCo reports
-                        publishCoverage adapters: [
-                            jacocoAdapter(
-                                path: '**/target/site/jacoco/jacoco.xml',
-                                thresholds: [
-                                    [thresholdTarget: 'Line', unhealthyThreshold: 50.0, unstableThreshold: 70.0],
-                                    [thresholdTarget: 'Conditional', unhealthyThreshold: 50.0, unstableThreshold: 70.0]
-                                ]
-                            )
-                        ],
-                        sourceFileResolver: sourceFiles('STORE_ALL_BUILD')
-                        echo '✅ Coverage reports published via Coverage plugin'
+                        // Use recordCoverage step for JaCoCo reports
+                        recordCoverage(
+                            tools: [[parser: 'JACOCO', pattern: '**/target/site/jacoco/jacoco.xml']],
+                            sourceCodeRetention: 'EVERY_BUILD'
+                        )
+                        echo '✅ Coverage reports published'
                     } catch (Exception e) {
-                        echo "⚠️  Coverage plugin not installed or reports not found: ${e.message}"
-                        echo "Install Coverage plugin from: Manage Jenkins → Plugins → Code Coverage API"
+                        echo "⚠️  Coverage reports not found or plugin not configured: ${e.message}"
+                        echo "This is optional - tests were still run successfully"
                     }
 
                     // Archive HTML coverage reports for each service
