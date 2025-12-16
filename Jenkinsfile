@@ -507,7 +507,9 @@ echo MEDIA_DB_NAME=media_db
                                     # Install sonar-scanner if not available
                                     if ! command -v sonar-scanner &> /dev/null; then
                                         echo "Installing sonar-scanner..."
-                                        npm install -g sonarqube-scanner
+                                        npm install -g sonarqube-scanner || echo "⚠️  Failed to install sonar-scanner, but it may already be installed"
+                                    else
+                                        echo "✓ sonar-scanner is already installed"
                                     fi
 
                                     # Prepare Java libraries paths for better analysis
@@ -535,6 +537,11 @@ echo MEDIA_DB_NAME=media_db
                                     if %ERRORLEVEL% NEQ 0 (
                                         echo Installing sonar-scanner...
                                         npm install -g sonarqube-scanner
+                                        if %ERRORLEVEL% NEQ 0 (
+                                            echo Warning: Failed to install sonar-scanner, but it may already be installed
+                                        )
+                                    ) else (
+                                        echo Checkmark: sonar-scanner is already installed
                                     )
 
                                     REM Run sonar-scanner from project root using sonar-project.properties
