@@ -281,12 +281,10 @@ echo MEDIA_DB_NAME=media_db
             }
         }
 
-        // AUDIT REQUIREMENT: Automated testing
         stage('Run Tests') {
             when {
                 expression { params.SKIP_TESTS == false }
             }
-            environment {
             environment {
                 JWT_SECRET = 'test-jwt-secret-for-testing-only-do-not-use-in-production-12345678901234567890'
             }
@@ -951,4 +949,5 @@ ${dockerLogs.take(5000)}
         }
     }
 }
+
 
