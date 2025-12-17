@@ -18,7 +18,7 @@ RUN addgroup -g 1001 appgroup && \
 WORKDIR /app
 
 # Copy JAR with root ownership and set read-only permissions
-COPY --chown=root:root target/*.jar app.jar
+COPY --chown=root:root --from=build /app/target/*.jar app.jar
 RUN chmod 444 app.jar
 
 # Switch to non-root user

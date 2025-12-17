@@ -114,10 +114,10 @@ pipeline {
                         ]) {
                             // Use shell/bat to write file securely without exposing secret in logs
                             if (isUnix()) {
-                                sh '''
-cat > .env << 'EOF'
+                                sh """
+cat > .env << 'ENVEOF'
 # JWT Configuration (from Jenkins credentials)
-JWT_SECRET=${JWT_SECRET}
+JWT_SECRET=\${JWT_SECRET}
 JWT_EXPIRATION=3600000
 
 # MongoDB Configuration
@@ -128,8 +128,8 @@ MONGODB_PORT=27017
 USER_DB_NAME=buy01_users
 PRODUCT_DB_NAME=buy01_products
 MEDIA_DB_NAME=media_db
-EOF
-                                '''
+ENVEOF
+                                """
                             } else {
                                 bat '''
 @echo off
@@ -375,12 +375,12 @@ echo MEDIA_DB_NAME=media_db
                                 if (isUnix()) {
                                     sh '''
                                         export JWT_SECRET="${JWT_SECRET}"
-                                        ./mvnw test
+                                        ./mvnw clean test jacoco:report
                                     '''
                                 } else {
                                     bat '''
                                         set JWT_SECRET=%JWT_SECRET%
-                                        mvnw.cmd test
+                                        mvnw.cmd clean test jacoco:report
                                     '''
                                 }
                             }

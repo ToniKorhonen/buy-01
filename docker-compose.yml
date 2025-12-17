@@ -122,6 +122,8 @@ services:
       USER_SERVICE_URL: http://buy01-user-service:8081
       PRODUCT_SERVICE_URL: http://buy01-product-service:8082
       MEDIA_SERVICE_URL: http://buy01-media-service:8083
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRATION: ${JWT_EXPIRATION:-3600000}
     ports:
       - "8080:8080"
     depends_on:
