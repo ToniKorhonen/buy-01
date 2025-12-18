@@ -12,10 +12,9 @@ export class MediaService {
 
   constructor(private http: HttpClient) {}
 
-  uploadMedia(file: File, uploaderId?: string, productId?: string): Observable<MediaUploadResponse> {
+  uploadMedia(file: File, productId?: string): Observable<MediaUploadResponse> {
     const formData = new FormData();
     formData.append('file', file);
-    formData.append('uploaderId', uploaderId || 'anonymous');
     if (productId) {
       formData.append('productId', productId);
     }
@@ -27,9 +26,6 @@ export class MediaService {
     return this.http.get<Media[]>(this.apiUrl);
   }
 
-  getMediaByUploaderId(uploaderId: string): Observable<Media[]> {
-    return this.http.get<Media[]>(`${this.apiUrl}/uploader/${uploaderId}`);
-  }
 
   getMediaByProductId(productId: string): Observable<Media[]> {
     return this.http.get<Media[]>(`${this.apiUrl}/product/${productId}`);

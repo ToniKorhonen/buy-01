@@ -208,9 +208,8 @@ export class SellerDashboardComponent implements OnInit {
     }
 
     this.uploadingImage = true;
-    const user = this.userService.getCurrentUser();
 
-    this.mediaService.uploadMedia(this.selectedFile, user?.email || 'anonymous', productId).subscribe({
+    this.mediaService.uploadMedia(this.selectedFile, productId).subscribe({
       next: () => {
         this.uploadingImage = false;
         this.closeForm();

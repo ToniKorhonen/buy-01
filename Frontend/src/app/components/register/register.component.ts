@@ -111,7 +111,7 @@ export class RegisterComponent {
       next: () => {
         // Now upload avatar with authentication
         this.uploadingAvatar = true;
-        this.mediaService.uploadMedia(this.selectedFile!, this.model.email).subscribe({
+        this.mediaService.uploadMedia(this.selectedFile!).subscribe({
           next: (mediaResponse) => {
             // Update user profile with avatar ID
             this.userService.updateProfile({ avatarId: mediaResponse.id }).subscribe({

@@ -14,7 +14,6 @@ import { Media, MediaUploadResponse } from '../../models/media.model';
 export class MediaGalleryComponent implements OnInit {
   mediaList: Media[] = [];
   selectedFile: File | null = null;
-  uploaderId: string = '';
   isLoading: boolean = false;
   uploadMessage: string = '';
   uploadSuccess: boolean = false;
@@ -77,7 +76,7 @@ export class MediaGalleryComponent implements OnInit {
     this.isLoading = true;
     this.uploadMessage = '';
 
-    this.mediaService.uploadMedia(this.selectedFile, this.uploaderId || 'anonymous')
+    this.mediaService.uploadMedia(this.selectedFile)
       .subscribe({
         next: (response: MediaUploadResponse) => {
           this.uploadMessage = `✅ ${response.message}`;
@@ -85,7 +84,6 @@ export class MediaGalleryComponent implements OnInit {
           this.isLoading = false;
           this.selectedFile = null;
           this.previewUrl = null;
-          this.uploaderId = '';
 
           // Reset file input
           const fileInput = document.getElementById('fileInput') as HTMLInputElement;

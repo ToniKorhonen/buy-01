@@ -5,6 +5,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import service.user.clients.ProductServiceClient;
+import service.user.clients.MediaServiceClient;
 import service.user.dtos.UserDtos.UserResponse;
 import service.user.dtos.UserDtos.UpdateProfileRequest;
 import service.user.models.User;
@@ -18,13 +19,15 @@ public class ProfileController {
     private final JwtService jwtService;
     private final PasswordEncoder passwordEncoder;
     private final ProductServiceClient productServiceClient;
+    private final MediaServiceClient mediaServiceClient;
 
     @Autowired
-    public ProfileController(UserRepository userRepository, JwtService jwtService, PasswordEncoder passwordEncoder, ProductServiceClient productServiceClient) {
+    public ProfileController(UserRepository userRepository, JwtService jwtService, PasswordEncoder passwordEncoder, ProductServiceClient productServiceClient, MediaServiceClient mediaServiceClient) {
         this.userRepository = userRepository;
         this.jwtService = jwtService;
         this.passwordEncoder = passwordEncoder;
         this.productServiceClient = productServiceClient;
+        this.mediaServiceClient = mediaServiceClient;
     }
 
     @GetMapping("/me")
@@ -132,7 +135,12 @@ public class ProfileController {
             return ResponseEntity.status(404).build();
         }
 
-        // Delete all products created by this user
+        // Delete user avatar if it exists
+        if (user.getAvatarId() != null && !user.getAvatarId().isBlank()) {
+            mediaServiceClient.deleteMedia(user.getAvatarId());
+        }
+
+        // Delete all products created by this user (which will cascade delete product images)
         productServiceClient.deleteAllProductsByUserId(user.getId());
 
         // Delete the user account

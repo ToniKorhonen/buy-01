@@ -11,6 +11,7 @@ import service.product.exception.AccessDeniedBusinessException;
 import service.product.exception.ProductNotFoundException;
 import service.product.models.Product;
 import service.product.mongo_repo.ProductRepository;
+import service.product.clients.MediaServiceClient;
 
 import java.util.List;
 
@@ -18,10 +19,12 @@ import java.util.List;
 public class ProductService {
 
     private final ProductRepository repo;
+    private final MediaServiceClient mediaServiceClient;
 
     @Autowired
-    public ProductService(ProductRepository repo) {
+    public ProductService(ProductRepository repo, MediaServiceClient mediaServiceClient) {
         this.repo = repo;
+        this.mediaServiceClient = mediaServiceClient;
     }
 
     @Transactional
@@ -67,12 +70,22 @@ public class ProductService {
         checkSellerRole(auth);
         Product p = find(id);
         checkOwnership(p, requesterUserId);
+
+        // Delete all media associated with this product
+        mediaServiceClient.deleteAllMediaByProductId(id);
+
         repo.delete(p);
     }
 
     @Transactional
     public void deleteAllByUserId(String userId) {
         List<Product> products = repo.findByUserId(userId);
+
+        // Delete all media for each product
+        for (Product product : products) {
+            mediaServiceClient.deleteAllMediaByProductId(product.getId());
+        }
+
         repo.deleteAll(products);
     }
 

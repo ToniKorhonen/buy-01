@@ -34,13 +34,12 @@ public class MediaController {
     @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> uploadMedia(
             @RequestParam("file") MultipartFile file,
-            @RequestParam(value = "uploaderId", required = false) String uploaderId,
             @RequestParam(value = "productId", required = false) String productId,
             Authentication auth) {
         try {
             checkSellerRole(auth);
-            log.info("Uploading file: {}, size: {} bytes, uploaderId: {}, productId: {}",
-                file.getOriginalFilename(), file.getSize(), uploaderId, productId);
+            log.info("Uploading file: {}, size: {} bytes, productId: {}",
+                file.getOriginalFilename(), file.getSize(), productId);
             MediaDtos.MediaUploadResponse response = mediaService.uploadMedia(file, productId);
             return ResponseEntity.ok(response);
 
