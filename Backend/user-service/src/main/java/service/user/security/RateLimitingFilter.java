@@ -33,16 +33,20 @@ public class RateLimitingFilter extends OncePerRequestFilter {
             throws ServletException, IOException {
         String uri = request.getRequestURI();
         String clientIp = getClientIp(request);
+
+        boolean shouldContinue = true;
+
         // Apply rate limiting based on endpoint
         if (uri.contains("/auth/login")) {
-            if (!checkRateLimit(clientIp, loginRateLimitMap, maxLoginAttempts, "login", response)) {
-                return;
-            }
+            shouldContinue = checkRateLimit(clientIp, loginRateLimitMap, maxLoginAttempts, "login", response);
         } else if (uri.contains("/auth/register")) {
-            if (!checkRateLimit(clientIp, registerRateLimitMap, maxRegisterAttempts, "register", response)) {
-                return;
-            }
+            shouldContinue = checkRateLimit(clientIp, registerRateLimitMap, maxRegisterAttempts, "register", response);
         }
+
+        if (!shouldContinue) {
+            return;
+        }
+
         // Clean up old entries periodically
         cleanupOldEntries();
         filterChain.doFilter(request, response);
