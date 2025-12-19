@@ -15,6 +15,8 @@ import service.user.security.JwtService;
 @RestController
 @RequestMapping("/profile")
 public class ProfileController {
+    private static final String BEARER_PREFIX = "Bearer ";
+
     private final UserRepository userRepository;
     private final JwtService jwtService;
     private final PasswordEncoder passwordEncoder;
@@ -32,7 +34,7 @@ public class ProfileController {
 
     @GetMapping("/me")
     public ResponseEntity<UserResponse> getCurrentUser(@RequestHeader("Authorization") String authHeader) {
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+        if (authHeader == null || !authHeader.startsWith(BEARER_PREFIX)) {
             return ResponseEntity.status(401).build();
         }
 
@@ -63,7 +65,7 @@ public class ProfileController {
     public ResponseEntity<UserResponse> updateProfile(
             @RequestHeader("Authorization") String authHeader,
             @RequestBody UpdateProfileRequest request) {
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+        if (authHeader == null || !authHeader.startsWith(BEARER_PREFIX)) {
             return ResponseEntity.status(401).build();
         }
 
@@ -119,7 +121,7 @@ public class ProfileController {
 
     @DeleteMapping("/me")
     public ResponseEntity<Void> deleteAccount(@RequestHeader("Authorization") String authHeader) {
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+        if (authHeader == null || !authHeader.startsWith(BEARER_PREFIX)) {
             return ResponseEntity.status(401).build();
         }
 
@@ -149,5 +151,3 @@ public class ProfileController {
         return ResponseEntity.noContent().build();
     }
 }
-
-

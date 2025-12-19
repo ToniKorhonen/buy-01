@@ -54,7 +54,7 @@ public class UserService {
         return toResponse(find(id));
     }
     private User find(String id) {
-        return repo.findById(id).orElseThrow(() -> new UserNotFoundException(id, "retrieval"));
+        return repo.findById(id).orElseThrow(() -> new UserNotFoundException(id));
     }
     public List<UserResponse> list() {
         return repo.findAll().stream().map(this::toResponse).toList();

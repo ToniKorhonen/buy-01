@@ -21,7 +21,8 @@ import java.util.stream.Collectors;
 @Service
 public class MediaService {
     private static final Logger log = LoggerFactory.getLogger(MediaService.class);
-    private static final long MAX_FILE_SIZE = 2 * 1024 * 1024;
+    private static final long MAX_FILE_SIZE = 2L * 1024 * 1024;
+    private static final String MEDIA_NOT_FOUND_MESSAGE = "Media not found with id: ";
 
     private final MediaRepository mediaRepository;
     private final Path storageLocation;
@@ -113,13 +114,13 @@ public class MediaService {
 
     public MediaResponse getMediaById(String id) {
         Media media = mediaRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException("Media not found with id: " + id));
+            .orElseThrow(() -> new RuntimeException(MEDIA_NOT_FOUND_MESSAGE + id));
         return toResponse(media);
     }
 
     public byte[] getMediaFile(String id) {
         Media media = mediaRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException("Media not found with id: " + id));
+            .orElseThrow(() -> new RuntimeException(MEDIA_NOT_FOUND_MESSAGE + id));
 
         try {
             Path filePath = this.storageLocation.resolve(media.getFilePath()).normalize();
@@ -139,7 +140,7 @@ public class MediaService {
 
     public void deleteMedia(String id) {
         Media media = mediaRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException("Media not found with id: " + id));
+            .orElseThrow(() -> new RuntimeException(MEDIA_NOT_FOUND_MESSAGE + id));
 
         try {
             Path filePath = this.storageLocation.resolve(media.getFilePath()).normalize();

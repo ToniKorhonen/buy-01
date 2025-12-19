@@ -90,7 +90,7 @@ public class ProductService {
     }
 
     private Product find(String id) {
-        return repo.findById(id).orElseThrow(() -> new ProductNotFoundException(id, "retrieval"));
+        return repo.findById(id).orElseThrow(() -> new ProductNotFoundException(id));
     }
 
     private void checkOwnership(Product p, String requesterUserId) {

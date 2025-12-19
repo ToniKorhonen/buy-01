@@ -16,6 +16,8 @@ import java.util.Map;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    private static final String BAD_REQUEST_MESSAGE = "Bad Request";
+
     @ExceptionHandler(ProductNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleProductNotFound(
             ProductNotFoundException ex, HttpServletRequest request) {
@@ -64,7 +66,7 @@ public class GlobalExceptionHandler {
 
         ErrorResponse error = new ErrorResponse(
                 HttpStatus.BAD_REQUEST.value(),
-                "Bad Request",
+                BAD_REQUEST_MESSAGE,
                 "Validation failed",
                 request.getRequestURI(),
                 validationErrors
@@ -84,7 +86,7 @@ public class GlobalExceptionHandler {
 
         ErrorResponse error = new ErrorResponse(
                 HttpStatus.BAD_REQUEST.value(),
-                "Bad Request",
+                BAD_REQUEST_MESSAGE,
                 "Constraint violation",
                 request.getRequestURI(),
                 validationErrors
@@ -97,7 +99,7 @@ public class GlobalExceptionHandler {
             IllegalArgumentException ex, HttpServletRequest request) {
         ErrorResponse error = new ErrorResponse(
                 HttpStatus.BAD_REQUEST.value(),
-                "Bad Request",
+                BAD_REQUEST_MESSAGE,
                 ex.getMessage(),
                 request.getRequestURI()
         );
