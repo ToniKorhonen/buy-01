@@ -8,9 +8,9 @@ import { environment } from '../environment';
   providedIn: 'root'
 })
 export class MediaService {
-  private apiUrl = `${environment.apiBaseUrl}/media`;
+  private readonly apiUrl = `${environment.apiBaseUrl}/media`;
 
-  constructor(private http: HttpClient) {}
+  constructor(private readonly http: HttpClient) {}
 
   uploadMedia(file: File, productId?: string): Observable<MediaUploadResponse> {
     const formData = new FormData();
