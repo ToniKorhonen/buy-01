@@ -93,12 +93,12 @@ export class ProfileComponent implements OnInit {
     if (!this.user) return;
 
     // Validation
-    if (!this.editName || this.editName.trim().length < 2) {
+    if (this.editName?.trim().length < 2) {
       this.error = 'Name must be at least 2 characters';
       return;
     }
 
-    if (!this.editEmail || !this.editEmail.includes('@')) {
+    if (!this.editEmail?.includes('@')) {
       this.error = 'Please enter a valid email';
       return;
     }
