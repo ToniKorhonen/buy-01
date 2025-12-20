@@ -47,7 +47,7 @@ export class SellerDashboardComponent implements OnInit {
 
   ngOnInit() {
     const user = this.userService.getCurrentUser();
-    if (!user || user.role !== 'SELLER') {
+    if (user?.role !== 'SELLER') {
       this.router.navigate(['/']);
       return;
     }
@@ -143,7 +143,7 @@ export class SellerDashboardComponent implements OnInit {
 
   onFileSelected(event: Event) {
     const input = event.target as HTMLInputElement;
-    if (input.files && input.files[0]) {
+    if (input.files?.[0]) {
       this.selectedFile = input.files[0];
 
       // Create preview
