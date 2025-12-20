@@ -22,7 +22,7 @@ export class MediaGalleryComponent implements OnInit {
   private readonly MAX_FILE_SIZE = 2 * 1024 * 1024;
   private readonly ALLOWED_TYPES = ['image/png', 'image/jpeg', 'image/gif'];
 
-  constructor(private mediaService: MediaService) {}
+  constructor(private readonly mediaService: MediaService) {}
 
   ngOnInit(): void {
     this.loadMedia();
