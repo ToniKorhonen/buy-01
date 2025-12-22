@@ -7,6 +7,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import service.media.dtos.MediaDtos.*;
+import service.media.exception.MediaNotFoundException;
+import service.media.exception.StorageException;
 import service.media.models.Media;
 import service.media.mongo_repo.MediaRepository;
 
@@ -46,7 +48,7 @@ public class MediaService {
             log.info("Base URL for media: {}", this.baseUrl);
         } catch (IOException e) {
             log.error("Could not create storage directory", e);
-            throw new RuntimeException("Could not create storage directory", e);
+            throw new StorageException("Could not create storage directory", e);
         }
     }
 
@@ -96,7 +98,7 @@ public class MediaService {
 
         } catch (IOException e) {
             log.error("Failed to upload file: {}", file.getOriginalFilename(), e);
-            throw new RuntimeException("Failed to upload file", e);
+            throw new StorageException("Failed to upload file", e);
         }
     }
 
@@ -114,13 +116,13 @@ public class MediaService {
 
     public MediaResponse getMediaById(String id) {
         Media media = mediaRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException(MEDIA_NOT_FOUND_MESSAGE + id));
+            .orElseThrow(() -> new MediaNotFoundException(MEDIA_NOT_FOUND_MESSAGE + id));
         return toResponse(media);
     }
 
     public byte[] getMediaFile(String id) {
         Media media = mediaRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException(MEDIA_NOT_FOUND_MESSAGE + id));
+            .orElseThrow(() -> new MediaNotFoundException(MEDIA_NOT_FOUND_MESSAGE + id));
 
         try {
             Path filePath = this.storageLocation.resolve(media.getFilePath()).normalize();
@@ -134,13 +136,13 @@ public class MediaService {
             return Files.readAllBytes(filePath);
         } catch (IOException e) {
             log.error("Failed to read file for media id: {}", id, e);
-            throw new RuntimeException("Failed to read file", e);
+            throw new StorageException("Failed to read file", e);
         }
     }
 
     public void deleteMedia(String id) {
         Media media = mediaRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException(MEDIA_NOT_FOUND_MESSAGE + id));
+            .orElseThrow(() -> new MediaNotFoundException(MEDIA_NOT_FOUND_MESSAGE + id));
 
         try {
             Path filePath = this.storageLocation.resolve(media.getFilePath()).normalize();
@@ -156,7 +158,7 @@ public class MediaService {
             log.info("Media deleted successfully: id={}", id);
         } catch (IOException e) {
             log.error("Failed to delete file for media id: {}", id, e);
-            throw new RuntimeException("Failed to delete file", e);
+            throw new StorageException("Failed to delete file", e);
         }
     }
 
