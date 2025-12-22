@@ -2,6 +2,7 @@ package service.user.security;
 
 
 import service.user.models.User;
+import service.user.exception.JwtTokenValidationException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -102,7 +103,7 @@ public class JwtService {
             byte[] rawHmac = mac.doFinal(data.getBytes(StandardCharsets.UTF_8));
             return Base64.getUrlEncoder().withoutPadding().encodeToString(rawHmac);
         } catch (Exception e) {
-            throw new RuntimeException("Error generating token", e);
+            throw new JwtTokenValidationException("Error generating token", e);
         }
     }
 }
