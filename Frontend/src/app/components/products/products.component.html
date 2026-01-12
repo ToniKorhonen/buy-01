@@ -4,8 +4,127 @@
   <div class="loading" *ngIf="loading">Loading products...</div>
   <div class="error" *ngIf="error">{{ error }}</div>
 
+  <!-- Search and Filter Section -->
+  <div class="search-filter-section" *ngIf="!loading && !error">
+    <!-- Search Bar -->
+    <div class="search-bar">
+      <div class="input-with-clear">
+        <input
+          type="text"
+          [(ngModel)]="searchKeyword"
+          (ngModelChange)="onSearchChange()"
+          placeholder="🔍 Search products by name or description..."
+          class="search-input">
+        <button
+          *ngIf="searchKeyword"
+          (click)="clearSearch()"
+          class="clear-btn"
+          title="Clear search">×</button>
+      </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="filters-row">
+      <!-- Price Filters -->
+      <div class="filter-section">
+        <h4>💰 Price Range</h4>
+        <div class="filter-inputs">
+          <div class="filter-group">
+            <label>Min ($)</label>
+            <div class="input-with-clear">
+              <input
+                type="number"
+                [(ngModel)]="priceMin"
+                (ngModelChange)="onFilterChange()"
+                placeholder="0"
+                min="0"
+                step="0.01">
+              <button
+                *ngIf="priceMin !== null"
+                (click)="clearPriceMin()"
+                class="clear-btn"
+                title="Clear min price">×</button>
+            </div>
+          </div>
+          <div class="filter-group">
+            <label>Max ($)</label>
+            <div class="input-with-clear">
+              <input
+                type="number"
+                [(ngModel)]="priceMax"
+                (ngModelChange)="onFilterChange()"
+                placeholder="∞"
+                min="0"
+                step="0.01">
+              <button
+                *ngIf="priceMax !== null"
+                (click)="clearPriceMax()"
+                class="clear-btn"
+                title="Clear max price">×</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Stock Filters -->
+      <div class="filter-section">
+        <h4>📦 Stock Quantity</h4>
+        <div class="filter-inputs">
+          <div class="filter-group">
+            <label>Min</label>
+            <div class="input-with-clear">
+              <input
+                type="number"
+                [(ngModel)]="stockMin"
+                (ngModelChange)="onFilterChange()"
+                placeholder="0"
+                min="0"
+                step="1">
+              <button
+                *ngIf="stockMin !== null"
+                (click)="clearStockMin()"
+                class="clear-btn"
+                title="Clear min stock">×</button>
+            </div>
+          </div>
+          <div class="filter-group">
+            <label>Max</label>
+            <div class="input-with-clear">
+              <input
+                type="number"
+                [(ngModel)]="stockMax"
+                (ngModelChange)="onFilterChange()"
+                placeholder="∞"
+                min="0"
+                step="1">
+              <button
+                *ngIf="stockMax !== null"
+                (click)="clearStockMax()"
+                class="clear-btn"
+                title="Clear max stock">×</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filter Actions -->
+    <div class="filter-actions">
+      <button
+        (click)="clearAllFilters()"
+        class="clear-all-btn"
+        [disabled]="!searchKeyword && priceMin === null && priceMax === null && stockMin === null && stockMax === null">
+        🗑️ Clear All Filters
+      </button>
+      <div class="results-info">
+        Showing <strong>{{ filteredProducts.length }}</strong> of <strong>{{ products.length }}</strong> products
+      </div>
+    </div>
+  </div>
+
+  <!-- Products Grid -->
   <div class="products-grid" *ngIf="!loading && !error">
-    <div class="product-card" *ngFor="let product of products">
+    <div class="product-card" *ngFor="let product of filteredProducts">
       <div class="product-image">
         <img *ngIf="product.imageUrl" [src]="product.imageUrl" [alt]="product.name">
         <div *ngIf="!product.imageUrl" class="placeholder-image">📦</div>
@@ -18,9 +137,13 @@
       </div>
     </div>
 
+    <div class="no-products" *ngIf="filteredProducts.length === 0 && products.length > 0">
+      <p>😕 No products match your filters.</p>
+      <button (click)="clearAllFilters()" class="clear-filters-link">Clear all filters</button>
+    </div>
+
     <div class="no-products" *ngIf="products.length === 0">
       No products available yet.
     </div>
   </div>
 </div>
-
