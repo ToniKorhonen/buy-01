@@ -14,6 +14,23 @@ interface ProductWithMedia extends ProductResponse {
   imageUrl?: string;
 }
 
+// Interface for best-selling product statistics
+interface BestSellingProduct {
+  id: string;
+  name: string;
+  price: number;
+  unitsSold: number;
+  totalRevenue: number;
+  imageUrl?: string;
+}
+
+// Interface for seller statistics
+interface SellerStatistics {
+  totalRevenue: number;
+  totalSales: number;
+  bestSellingProducts: BestSellingProduct[];
+}
+
 @Component({
   selector: 'app-seller-dashboard',
   standalone: true,
@@ -30,6 +47,13 @@ export class SellerDashboardComponent implements OnInit {
   products: ProductWithMedia[] = [];
   loading = false;
   error = '';
+
+  // Seller statistics (placeholder data - will be populated from backend later)
+  sellerStats: SellerStatistics = {
+    totalRevenue: 0,
+    totalSales: 0,
+    bestSellingProducts: []
+  };
 
   showForm = false;
   editingProduct: ProductResponse | null = null;
