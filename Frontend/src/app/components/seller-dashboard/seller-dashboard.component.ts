@@ -14,6 +14,23 @@ interface ProductWithMedia extends ProductResponse {
   imageUrl?: string;
 }
 
+// Interface for best-selling product statistics
+interface BestSellingProduct {
+  id: string;
+  name: string;
+  price: number;
+  unitsSold: number;
+  totalRevenue: number;
+  imageUrl?: string;
+}
+
+// Interface for seller statistics
+interface SellerStatistics {
+  totalRevenue: number;
+  totalSales: number;
+  bestSellingProducts: BestSellingProduct[];
+}
+
 @Component({
   selector: 'app-seller-dashboard',
   standalone: true,
@@ -31,6 +48,13 @@ export class SellerDashboardComponent implements OnInit {
   loading = false;
   error = '';
 
+  // Seller statistics (placeholder data - will be populated from backend later)
+  sellerStats: SellerStatistics = {
+    totalRevenue: 0,
+    totalSales: 0,
+    bestSellingProducts: []
+  };
+
   showForm = false;
   editingProduct: ProductResponse | null = null;
 
@@ -47,7 +71,7 @@ export class SellerDashboardComponent implements OnInit {
 
   ngOnInit() {
     const user = this.userService.getCurrentUser();
-    if (!user || user.role !== 'SELLER') {
+    if (user?.role !== 'SELLER') {
       this.router.navigate(['/']);
       return;
     }
@@ -143,7 +167,7 @@ export class SellerDashboardComponent implements OnInit {
 
   onFileSelected(event: Event) {
     const input = event.target as HTMLInputElement;
-    if (input.files && input.files[0]) {
+    if (input.files?.[0]) {
       this.selectedFile = input.files[0];
 
       // Create preview

@@ -43,6 +43,99 @@
     font-size: 16px;
   }
 
+  // Statistics Section
+  .statistics-section {
+    margin-bottom: 30px;
+
+    .stats-overview {
+      display: grid;
+      gap: 20px;
+
+      @media (min-width: 768px) {
+        grid-template-columns: 1fr 1.5fr;
+      }
+    }
+
+    .stat-card {
+      background: white;
+      border-radius: 8px;
+      padding: 25px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .revenue-card {
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+
+      .stat-icon { font-size: 3rem; }
+      .stat-value { font-size: 2.5rem; font-weight: bold; }
+    }
+
+    .bestseller-list {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    .bestseller-item {
+      display: flex;
+      gap: 15px;
+      padding: 15px;
+      background: #f8f9fa;
+      border-radius: 8px;
+
+      .rank-badge {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        flex-shrink: 0;
+      }
+
+      .product-image {
+        width: 60px;
+        height: 60px;
+        border-radius: 8px;
+        background: #e0e0e0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+
+        img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          border-radius: 8px;
+        }
+
+        .placeholder-icon { font-size: 2rem; }
+      }
+
+      .product-info { flex: 1; }
+      .product-name { font-weight: 600; margin: 0; }
+      .product-stats { font-size: 0.875rem; color: #666; }
+      .price { color: #007bff; }
+      .product-revenue { font-size: 0.875rem; color: #28a745; font-weight: 600; }
+    }
+
+    .empty-state {
+      text-align: center;
+      color: #999;
+      padding: 2rem;
+      font-style: italic;
+    }
+  }
+
+
   // Product Form
   .product-form {
     background: white;
@@ -221,11 +314,11 @@
     transition: all 0.3s;
 
     &.btn-primary {
-      background-color: #007bff;
+      background-color: #0056b3;
       color: white;
 
       &:hover:not(:disabled) {
-        background-color: #0056b3;
+        background-color: #004085;
       }
 
       &:disabled {

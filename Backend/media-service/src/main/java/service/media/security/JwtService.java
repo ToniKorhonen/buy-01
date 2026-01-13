@@ -2,6 +2,7 @@ package service.media.security;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import service.media.exception.JwtTokenValidationException;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
@@ -92,7 +93,7 @@ public class JwtService {
             byte[] rawHmac = mac.doFinal(data.getBytes(StandardCharsets.UTF_8));
             return Base64.getUrlEncoder().withoutPadding().encodeToString(rawHmac);
         } catch (Exception e) {
-            throw new RuntimeException("Error validating token", e);
+            throw new JwtTokenValidationException("Error validating token", e);
         }
     }
 }

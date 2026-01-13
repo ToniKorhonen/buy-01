@@ -6,6 +6,22 @@ import { UserService } from '../../services/user.service';
 import { MediaService } from '../../services/media.service';
 import { UserResponse } from '../../models/user.model';
 
+// User Statistics Interfaces
+interface PurchasedProduct {
+  id: string;
+  name: string;
+  imageUrl?: string;
+  price: number;
+  purchaseCount: number;
+  totalSpent: number;
+}
+
+interface UserStatistics {
+  topPurchasedProducts: PurchasedProduct[];
+  mostBoughtProducts: PurchasedProduct[];
+  totalMoneySpent: number;
+}
+
 @Component({
   selector: 'app-profile',
   standalone: true,
@@ -31,6 +47,13 @@ export class ProfileComponent implements OnInit {
   editEmail = '';
   editPassword = '';
   editPasswordConfirm = '';
+
+  // User Statistics (placeholder data - will be populated from backend later)
+  userStats: UserStatistics = {
+    topPurchasedProducts: [],
+    mostBoughtProducts: [],
+    totalMoneySpent: 0
+  };
 
   ngOnInit() {
     this.loadUserProfile();
@@ -93,12 +116,12 @@ export class ProfileComponent implements OnInit {
     if (!this.user) return;
 
     // Validation
-    if (!this.editName || this.editName.trim().length < 2) {
+    if (this.editName?.trim().length < 2) {
       this.error = 'Name must be at least 2 characters';
       return;
     }
 
-    if (!this.editEmail || !this.editEmail.includes('@')) {
+    if (!this.editEmail?.includes('@')) {
       this.error = 'Please enter a valid email';
       return;
     }

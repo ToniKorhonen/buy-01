@@ -12,6 +12,48 @@
 
   <div class="error" *ngIf="error">{{ error }}</div>
 
+  <!-- Seller Statistics Section -->
+  <div class="statistics-section">
+    <h2>📊 Sales Statistics</h2>
+
+    <div class="stats-overview">
+      <!-- Total Revenue Card -->
+      <div class="stat-card revenue-card">
+        <div class="stat-icon">💵</div>
+        <div class="stat-content">
+          <h3>Total Revenue</h3>
+          <p class="stat-value">${{ sellerStats.totalRevenue.toFixed(2) }}</p>
+          <p class="stat-label">{{ sellerStats.totalSales }} total sales</p>
+        </div>
+      </div>
+
+      <!-- Best-Selling Products Card -->
+      <div class="stat-card bestsellers-card">
+        <h3>🏆 Best-Selling Products</h3>
+        <div class="bestseller-list">
+          <div class="bestseller-item" *ngFor="let product of sellerStats.bestSellingProducts; let i = index">
+            <div class="rank-badge">{{ i + 1 }}</div>
+            <div class="product-image">
+              <img *ngIf="product.imageUrl" [src]="product.imageUrl" [alt]="product.name">
+              <span *ngIf="!product.imageUrl" class="placeholder-icon">📦</span>
+            </div>
+            <div class="product-info">
+              <p class="product-name">{{ product.name }}</p>
+              <p class="product-stats">
+                <span class="units">{{ product.unitsSold }} units sold</span>
+                <span class="price">${{ product.price.toFixed(2) }} each</span>
+              </p>
+              <p class="product-revenue">Revenue: ${{ product.totalRevenue.toFixed(2) }}</p>
+            </div>
+          </div>
+          <p class="empty-state" *ngIf="sellerStats.bestSellingProducts.length === 0">
+            No sales yet
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Product Form -->
   <div class="product-form" *ngIf="showForm">
     <div class="form-header">

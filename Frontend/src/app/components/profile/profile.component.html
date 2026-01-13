@@ -132,6 +132,71 @@
       </button>
     </div>
 
+    <!-- User Statistics Section -->
+    <div class="statistics-section" *ngIf="user?.role === 'CLIENT'">
+      <h3>📊 My Purchase Statistics</h3>
+
+      <div class="stats-grid">
+        <!-- Total Money Spent Card -->
+        <div class="stat-card total-spent">
+          <div class="stat-icon">💰</div>
+          <div class="stat-content">
+            <h4>Total Money Spent</h4>
+            <p class="stat-value">${{ userStats.totalMoneySpent.toFixed(2) }}</p>
+            <p class="stat-label">All-time purchases</p>
+          </div>
+        </div>
+
+        <!-- Top Purchased Products -->
+        <div class="stat-card products-list">
+          <h4>🏆 Best Products (By Value)</h4>
+          <div class="product-items">
+            <div class="product-item" *ngFor="let product of userStats.topPurchasedProducts">
+              <div class="product-image">
+                <img *ngIf="product.imageUrl" [src]="product.imageUrl" [alt]="product.name">
+                <span *ngIf="!product.imageUrl" class="placeholder-icon">📦</span>
+              </div>
+              <div class="product-details">
+                <p class="product-name">{{ product.name }}</p>
+                <p class="product-stats">
+                  <span class="price">${{ product.price.toFixed(2) }}</span>
+                  <span class="count">× {{ product.purchaseCount }}</span>
+                </p>
+                <p class="product-total">Total: ${{ product.totalSpent.toFixed(2) }}</p>
+              </div>
+            </div>
+            <p class="empty-state" *ngIf="userStats.topPurchasedProducts.length === 0">
+              No purchases yet
+            </p>
+          </div>
+        </div>
+
+        <!-- Most Bought Products -->
+        <div class="stat-card products-list">
+          <h4>🔥 Most Bought Products (By Quantity)</h4>
+          <div class="product-items">
+            <div class="product-item" *ngFor="let product of userStats.mostBoughtProducts">
+              <div class="product-image">
+                <img *ngIf="product.imageUrl" [src]="product.imageUrl" [alt]="product.name">
+                <span *ngIf="!product.imageUrl" class="placeholder-icon">📦</span>
+              </div>
+              <div class="product-details">
+                <p class="product-name">{{ product.name }}</p>
+                <p class="product-stats">
+                  <span class="count">{{ product.purchaseCount }} purchases</span>
+                  <span class="price">${{ product.price.toFixed(2) }} each</span>
+                </p>
+                <p class="product-total">Total: ${{ product.totalSpent.toFixed(2) }}</p>
+              </div>
+            </div>
+            <p class="empty-state" *ngIf="userStats.mostBoughtProducts.length === 0">
+              No purchases yet
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Delete Confirmation Modal -->
     <div *ngIf="showDeleteConfirm" class="modal-overlay" (click)="cancelDelete()">
       <div class="modal-content" (click)="$event.stopPropagation()">
