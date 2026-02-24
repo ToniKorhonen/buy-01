@@ -1,0 +1,86 @@
+<div class="dashboard-container">
+  <h1>📋 Incoming Orders</h1>
+
+  <div class="loading" *ngIf="loading">Loading orders...</div>
+  <div class="error" *ngIf="error">{{ error }}</div>
+
+  <!-- New / Placed Orders -->
+  <section *ngIf="!loading">
+    <h2 class="section-title">🛒 New Orders <span class="badge" *ngIf="pendingOrders.length">{{ pendingOrders.length }}</span></h2>
+    <div *ngIf="pendingOrders.length === 0" class="empty-state">No new orders.</div>
+    <div class="order-list">
+      <div class="order-card" *ngFor="let order of pendingOrders">
+        <div class="order-meta">
+          <span class="order-id">#{{ order.id.slice(-8).toUpperCase() }}</span>
+          <span class="status-badge started">{{ statusLabel(order.status) }}</span>
+        </div>
+        <div class="order-info">
+          <p class="product-name">{{ order.productName }}</p>
+          <p class="order-detail">Qty: <strong>{{ order.quantity }}</strong> &nbsp;|&nbsp; Total: <strong>${{ order.totalPrice.toFixed(2) }}</strong></p>
+          <p class="order-date">{{ order.createdAt | date:'mediumDate' }}</p>
+        </div>
+        <div class="order-actions">
+          <button class="btn btn-primary"
+            (click)="markOngoing(order)"
+            [disabled]="actionLoading[order.id]">
+            🚚 Mark Ongoing
+          </button>
+          <button class="btn btn-danger"
+            (click)="cancelOrder(order)"
+            [disabled]="actionLoading[order.id]">
+            ❌ Cancel &amp; Refund
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Active / Ongoing Orders -->
+  <section *ngIf="!loading" class="section-gap">
+    <h2 class="section-title">🚚 Ongoing <span class="badge" *ngIf="activeOrders.length">{{ activeOrders.length }}</span></h2>
+    <div *ngIf="activeOrders.length === 0" class="empty-state">No ongoing orders.</div>
+    <div class="order-list">
+      <div class="order-card" *ngFor="let order of activeOrders">
+        <div class="order-meta">
+          <span class="order-id">#{{ order.id.slice(-8).toUpperCase() }}</span>
+          <span class="status-badge ongoing">{{ statusLabel(order.status) }}</span>
+        </div>
+        <div class="order-info">
+          <p class="product-name">{{ order.productName }}</p>
+          <p class="order-detail">Qty: <strong>{{ order.quantity }}</strong> &nbsp;|&nbsp; Total: <strong>${{ order.totalPrice.toFixed(2) }}</strong></p>
+          <p class="order-date">{{ order.createdAt | date:'mediumDate' }}</p>
+        </div>
+        <div class="order-actions">
+          <button class="btn btn-danger"
+            (click)="cancelOrder(order)"
+            [disabled]="actionLoading[order.id]">
+            ❌ Cancel &amp; Refund
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- History -->
+  <section *ngIf="!loading" class="section-gap">
+    <h2 class="section-title">📜 History</h2>
+    <div *ngIf="historyOrders.length === 0" class="empty-state">No history yet.</div>
+    <div class="order-list">
+      <div class="order-card history" *ngFor="let order of historyOrders">
+        <div class="order-meta">
+          <span class="order-id">#{{ order.id.slice(-8).toUpperCase() }}</span>
+          <span class="status-badge" [ngClass]="order.status.toLowerCase()">{{ statusLabel(order.status) }}</span>
+        </div>
+        <div class="order-info">
+          <p class="product-name">{{ order.productName }}</p>
+          <p class="order-detail">Qty: <strong>{{ order.quantity }}</strong> &nbsp;|&nbsp; Total: <strong>${{ order.totalPrice.toFixed(2) }}</strong></p>
+          <p class="order-date">{{ order.updatedAt | date:'mediumDate' }}</p>
+        </div>
+        <div class="order-actions">
+          <button class="btn btn-ghost" (click)="removeFromList(order)">🗑 Remove</button>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+

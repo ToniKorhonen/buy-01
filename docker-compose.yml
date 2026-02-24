@@ -124,6 +124,36 @@ services:
       resources:
         limits:
           memory: 512M
+  order-service:
+    build:
+      context: ./Backend/order-service
+      dockerfile: Dockerfile
+    container_name: buy01-order-service
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      SPRING_DATA_MONGODB_URI: mongodb://mongodb:27017/buy01
+      SERVER_PORT: 8084
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRATION: ${JWT_EXPIRATION:-3600000}
+    ports:
+      - "8084:8084"
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - buy01-network
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z localhost 8084 || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+    deploy:
+      resources:
+        limits:
+          memory: 512M
   api-gateway:
     build:
       context: ./Backend/api-gateway
@@ -137,6 +167,7 @@ services:
       USER_SERVICE_URL: http://buy01-user-service:8081
       PRODUCT_SERVICE_URL: http://buy01-product-service:8082
       MEDIA_SERVICE_URL: http://buy01-media-service:8083
+      ORDER_SERVICE_URL: http://buy01-order-service:8084
       JWT_SECRET: ${JWT_SECRET}
       JWT_EXPIRATION: ${JWT_EXPIRATION:-3600000}
     ports:
@@ -147,6 +178,8 @@ services:
       product-service:
         condition: service_healthy
       media-service:
+        condition: service_healthy
+      order-service:
         condition: service_healthy
     networks:
       - buy01-network

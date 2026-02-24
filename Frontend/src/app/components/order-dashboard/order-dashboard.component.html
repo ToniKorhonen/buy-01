@@ -1,0 +1,78 @@
+<div class="dashboard-container">
+  <h1>📦 My Orders</h1>
+
+  <div class="loading" *ngIf="loading">Loading orders...</div>
+  <div class="error" *ngIf="error">{{ error }}</div>
+
+  <!-- Active Orders -->
+  <section *ngIf="!loading">
+    <h2 class="section-title">🚚 Active Orders</h2>
+
+    <div *ngIf="activeOrders.length === 0" class="empty-state">No active orders.</div>
+
+    <div class="order-list">
+      <div class="order-card" *ngFor="let order of activeOrders">
+        <div class="order-meta">
+          <span class="order-id">#{{ order.id.slice(-8).toUpperCase() }}</span>
+          <span class="status-badge ongoing">{{ statusLabel(order.status) }}</span>
+        </div>
+        <div class="order-info">
+          <p class="product-name">{{ order.productName }}</p>
+          <p class="order-detail">Qty: <strong>{{ order.quantity }}</strong> &nbsp;|&nbsp; Total: <strong>${{ order.totalPrice.toFixed(2) }}</strong></p>
+          <p class="order-date">Ordered: {{ order.createdAt | date:'mediumDate' }}</p>
+        </div>
+        <div class="order-actions">
+          <button class="btn btn-success"
+            (click)="markDelivered(order)"
+            [disabled]="actionLoading[order.id]">
+            ✅ Mark Delivered
+          </button>
+          <button class="btn btn-danger"
+            (click)="cancelOrder(order)"
+            [disabled]="actionLoading[order.id]">
+            ❌ Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Order History -->
+  <section *ngIf="!loading" class="history-section">
+    <h2 class="section-title">📋 Order History</h2>
+
+    <div *ngIf="historyOrders.length === 0" class="empty-state">No order history yet.</div>
+
+    <div class="order-list">
+      <div class="order-card history" *ngFor="let order of historyOrders">
+        <div class="order-meta">
+          <span class="order-id">#{{ order.id.slice(-8).toUpperCase() }}</span>
+          <span class="status-badge" [ngClass]="order.status.toLowerCase()">{{ statusLabel(order.status) }}</span>
+        </div>
+        <div class="order-info">
+          <p class="product-name">{{ order.productName }}</p>
+          <p class="order-detail">Qty: <strong>{{ order.quantity }}</strong> &nbsp;|&nbsp; Total: <strong>${{ order.totalPrice.toFixed(2) }}</strong></p>
+          <p class="order-date">{{ order.updatedAt | date:'mediumDate' }}</p>
+        </div>
+        <div class="order-actions">
+          <!-- Reorder -->
+          <div class="reorder-row">
+            <label>Qty:</label>
+            <input type="number" [(ngModel)]="reorderQty[order.id]" min="1" class="qty-input">
+            <button class="btn btn-primary"
+              (click)="reorder(order)"
+              [disabled]="actionLoading[order.id]">
+              🔄 Reorder
+            </button>
+          </div>
+          <button class="btn btn-ghost"
+            (click)="removeFromList(order)"
+            [disabled]="actionLoading[order.id]">
+            🗑 Remove from list
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+

@@ -1,5 +1,8 @@
 <div class="products-container">
-  <h1>All Products</h1>
+  <div class="page-header">
+    <h1>All Products</h1>
+    <button class="btn-cart" (click)="goToCart()" *ngIf="isBuyer">🛒 View Cart</button>
+  </div>
 
   <div class="loading" *ngIf="loading">Loading products...</div>
   <div class="error" *ngIf="error">{{ error }}</div>
@@ -134,6 +137,13 @@
         <p class="description">{{ product.description }}</p>
         <p class="price">${{ product.price.toFixed(2) }}</p>
         <p class="stock">Stock: {{ product.quantity }}</p>
+        <div class="card-actions" *ngIf="isBuyer">
+          <button class="btn-add-cart"
+            (click)="addToCart(product)"
+            [disabled]="addingToCart[product.id] || product.quantity === 0">
+            {{ cartMessage[product.id] || (addingToCart[product.id] ? 'Adding...' : '🛒 Add to Cart') }}
+          </button>
+        </div>
       </div>
     </div>
 

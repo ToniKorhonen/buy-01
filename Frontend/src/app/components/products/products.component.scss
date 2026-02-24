@@ -279,4 +279,33 @@
       }
     }
   }
+
+  .page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+
+    h1 { margin: 0; }
+  }
+
+  .btn-cart {
+    background: #007bff; color: white; border: none;
+    padding: 10px 20px; border-radius: 8px; font-size: 15px;
+    font-weight: 600; cursor: pointer; transition: background 0.2s;
+    &:hover { background: #0056b3; }
+  }
+
+  .card-actions {
+    margin-top: 12px;
+
+    .btn-add-cart {
+      width: 100%; padding: 10px;
+      background: #28a745; color: white; border: none;
+      border-radius: 6px; font-size: 14px; font-weight: 600;
+      cursor: pointer; transition: background 0.2s;
+      &:hover:not(:disabled) { background: #1e7e34; }
+      &:disabled { opacity: 0.6; cursor: not-allowed; }
+    }
+  }
 }

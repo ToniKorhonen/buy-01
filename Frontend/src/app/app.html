@@ -13,6 +13,9 @@
 
       <span class="nav-divider" *ngIf="isAuthenticated">|</span>
       <a routerLink="/seller/dashboard" routerLinkActive="active" *ngIf="isSeller">Dashboard</a>
+      <a routerLink="/seller/orders" routerLinkActive="active" *ngIf="isSeller">Orders</a>
+      <a routerLink="/cart" routerLinkActive="active" *ngIf="isAuthenticated && !isSeller">🛒 Cart</a>
+      <a routerLink="/orders" routerLinkActive="active" *ngIf="isAuthenticated && !isSeller">My Orders</a>
       <span class="user-info" *ngIf="isAuthenticated && currentUser">
         <img *ngIf="avatarUrl" [src]="avatarUrl" alt="User avatar" class="user-avatar">
         <span class="user-avatar-placeholder" *ngIf="!avatarUrl">👤</span>
