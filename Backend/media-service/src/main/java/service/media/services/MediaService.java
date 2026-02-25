@@ -19,7 +19,6 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 @Service
 public class MediaService {
     private static final Logger log = LoggerFactory.getLogger(MediaService.class);
@@ -47,7 +46,6 @@ public class MediaService {
             log.info("Allowed file types: {}", this.allowedTypes);
             log.info("Base URL for media: {}", this.baseUrl);
         } catch (IOException e) {
-            log.error("Could not create storage directory", e);
             throw new StorageException("Could not create storage directory", e);
         }
     }
@@ -72,7 +70,7 @@ public class MediaService {
             String fileExtension = originalFilename != null && originalFilename.contains(".")
                 ? originalFilename.substring(originalFilename.lastIndexOf("."))
                 : "";
-            String uniqueFilename = UUID.randomUUID().toString() + fileExtension;
+            String uniqueFilename = UUID.randomUUID() + fileExtension;
 
             Path targetLocation = this.storageLocation.resolve(uniqueFilename);
             Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
@@ -97,7 +95,6 @@ public class MediaService {
             );
 
         } catch (IOException e) {
-            log.error("Failed to upload file: {}", file.getOriginalFilename(), e);
             throw new StorageException("Failed to upload file", e);
         }
     }
@@ -105,13 +102,13 @@ public class MediaService {
     public List<MediaResponse> getAllMedia() {
         return mediaRepository.findAll().stream()
             .map(this::toResponse)
-            .collect(Collectors.toList());
+            .toList();
     }
 
     public List<MediaResponse> getMediaByProductId(String productId) {
         return mediaRepository.findByProductId(productId).stream()
             .map(this::toResponse)
-            .collect(Collectors.toList());
+            .toList();
     }
 
     public MediaResponse getMediaById(String id) {
@@ -129,13 +126,11 @@ public class MediaService {
 
             // Path traversal protection: ensure the file is within the storage directory
             if (!filePath.startsWith(this.storageLocation)) {
-                log.error("Path traversal attempt detected for media id: {}, filePath: {}", id, media.getFilePath());
-                throw new SecurityException("Invalid file path");
+                throw new StorageException("Invalid file path: path traversal detected");
             }
 
             return Files.readAllBytes(filePath);
         } catch (IOException e) {
-            log.error("Failed to read file for media id: {}", id, e);
             throw new StorageException("Failed to read file", e);
         }
     }
@@ -149,22 +144,20 @@ public class MediaService {
 
             // Path traversal protection: ensure the file is within the storage directory
             if (!filePath.startsWith(this.storageLocation)) {
-                log.error("Path traversal attempt detected for media id: {}, filePath: {}", id, media.getFilePath());
-                throw new SecurityException("Invalid file path");
+                throw new StorageException("Invalid file path: path traversal detected");
             }
 
             Files.deleteIfExists(filePath);
             mediaRepository.delete(media);
             log.info("Media deleted successfully: id={}", id);
         } catch (IOException e) {
-            log.error("Failed to delete file for media id: {}", id, e);
             throw new StorageException("Failed to delete file", e);
         }
     }
 
     public void deleteAllMediaByProductId(String productId) {
         List<Media> mediaList = mediaRepository.findByProductId(productId);
-        for (Media media : mediaList) {
+        mediaList.forEach(media -> {
             try {
                 Path filePath = this.storageLocation.resolve(media.getFilePath()).normalize();
                 if (filePath.startsWith(this.storageLocation)) {
@@ -173,7 +166,7 @@ public class MediaService {
             } catch (IOException e) {
                 log.error("Failed to delete file for media id: {}", media.getId(), e);
             }
-        }
+        });
         mediaRepository.deleteAll(mediaList);
         log.info("Deleted {} media files for product: {}", mediaList.size(), productId);
     }

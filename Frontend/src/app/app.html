@@ -7,21 +7,34 @@
       <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">Home</a>
       <a routerLink="/products" routerLinkActive="active">Products</a>
 
-      <span class="nav-divider" *ngIf="!isAuthenticated">|</span>
-      <a routerLink="/login" routerLinkActive="active" *ngIf="!isAuthenticated">Login</a>
-      <a routerLink="/register" routerLinkActive="active" *ngIf="!isAuthenticated">Register</a>
+      @if (!isAuthenticated) {
+        <span class="nav-divider">|</span>
+        <a routerLink="/login" routerLinkActive="active">Login</a>
+        <a routerLink="/register" routerLinkActive="active">Register</a>
+      }
 
-      <span class="nav-divider" *ngIf="isAuthenticated">|</span>
-      <a routerLink="/seller/dashboard" routerLinkActive="active" *ngIf="isSeller">Dashboard</a>
-      <a routerLink="/seller/orders" routerLinkActive="active" *ngIf="isSeller">Orders</a>
-      <a routerLink="/cart" routerLinkActive="active" *ngIf="isAuthenticated && !isSeller">🛒 Cart</a>
-      <a routerLink="/orders" routerLinkActive="active" *ngIf="isAuthenticated && !isSeller">My Orders</a>
-      <span class="user-info" *ngIf="isAuthenticated && currentUser">
-        <img *ngIf="avatarUrl" [src]="avatarUrl" alt="User avatar" class="user-avatar">
-        <span class="user-avatar-placeholder" *ngIf="!avatarUrl">👤</span>
-        <span class="user-name">{{ currentUser!.name }}</span>
-        <button (click)="logout()" class="logout-btn">Logout</button>
-      </span>
+      @if (isAuthenticated) {
+        <span class="nav-divider">|</span>
+        @if (isSeller) {
+          <a routerLink="/seller/dashboard" routerLinkActive="active">Dashboard</a>
+          <a routerLink="/seller/orders" routerLinkActive="active">Orders</a>
+        }
+        @if (!isSeller) {
+          <a routerLink="/cart" routerLinkActive="active">🛒 Cart</a>
+          <a routerLink="/orders" routerLinkActive="active">My Orders</a>
+        }
+        @if (currentUser) {
+          <span class="user-info">
+            @if (avatarUrl) {
+              <img [src]="avatarUrl" alt="User avatar" class="user-avatar">
+            } @else {
+              <span class="user-avatar-placeholder">👤</span>
+            }
+            <span class="user-name">{{ currentUser.name }}</span>
+            <button (click)="logout()" class="logout-btn">Logout</button>
+          </span>
+        }
+      }
     </div>
   </div>
 </nav>

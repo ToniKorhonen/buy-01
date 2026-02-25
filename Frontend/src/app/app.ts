@@ -1,6 +1,7 @@
 import { Component, inject, OnInit } from '@angular/core';
 import { RouterOutlet, RouterModule, RouterLink, RouterLinkActive } from '@angular/router';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 import { UserService } from './services/user.service';
 import { MediaService } from './services/media.service';
 
@@ -13,6 +14,7 @@ import { MediaService } from './services/media.service';
 export class App implements OnInit {
   protected readonly userService = inject(UserService);
   protected readonly mediaService = inject(MediaService);
+  private readonly router = inject(Router);
 
   avatarUrl: string | null = null;
 
@@ -51,5 +53,6 @@ export class App implements OnInit {
   logout() {
     this.userService.logout();
     this.avatarUrl = null;
+    this.router.navigate(['/login']);
   }
 }

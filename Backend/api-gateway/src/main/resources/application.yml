@@ -18,6 +18,7 @@ spring:
               - GET
               - POST
               - PUT
+              - PATCH
               - DELETE
               - OPTIONS
             allowedHeaders: "*"
@@ -30,6 +31,12 @@ spring:
             - Path=/api/users,/api/users/**
           filters:
             - RewritePath=/api/users(?<segment>.*), /${segment}
+        - id: block-internal-products
+          uri: no://op
+          predicates:
+            - Path=/api/products/internal/**
+          filters:
+            - SetStatus=403
         - id: product-service
           uri: ${PRODUCT_SERVICE_URL:http://localhost:8082}
           predicates:
@@ -46,9 +53,19 @@ spring:
           uri: ${MEDIA_SERVICE_URL:http://localhost:8083}
           predicates:
             - Path=/api/media,/api/media/**
+        - id: block-internal-profile
+          uri: no://op
+          predicates:
+            - Path=/api/profile/internal/**
+          filters:
+            - SetStatus=403
         - id: profile-service
           uri: ${USER_SERVICE_URL:http://localhost:8081}
           predicates:
             - Path=/api/profile/**
           filters:
             - RewritePath=/api/profile/(?<segment>.*), /profile/${segment}
+        - id: order-service
+          uri: ${ORDER_SERVICE_URL:http://localhost:8084}
+          predicates:
+            - Path=/api/orders,/api/orders/**

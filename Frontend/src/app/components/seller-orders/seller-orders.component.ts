@@ -1,6 +1,7 @@
 import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { OrderService } from '../../services/order.service';
+import { UserService } from '../../services/user.service';
 import { OrderResponse } from '../../models/order.model';
 
 @Component({
@@ -12,6 +13,7 @@ import { OrderResponse } from '../../models/order.model';
 })
 export class SellerOrdersComponent implements OnInit {
   private readonly orderService = inject(OrderService);
+  private readonly userService = inject(UserService);
 
   orders: OrderResponse[] = [];
   loading = false;
@@ -52,7 +54,11 @@ export class SellerOrdersComponent implements OnInit {
   cancelOrder(order: OrderResponse) {
     this.actionLoading[order.id] = true;
     this.orderService.cancelOrder(order.id).subscribe({
-      next: (updated: OrderResponse) => { this.replaceOrder(updated); this.actionLoading[order.id] = false; },
+      next: (updated: OrderResponse) => {
+        this.replaceOrder(updated);
+        this.actionLoading[order.id] = false;
+        this.userService.fetchUserProfile();
+      },
       error: () => { this.error = 'Failed to cancel order.'; this.actionLoading[order.id] = false; }
     });
   }
@@ -67,7 +73,7 @@ export class SellerOrdersComponent implements OnInit {
   }
 
   statusLabel(status: string): string {
-    const map: Record<string, string> = { STARTED: '🛒 Placed', ONGOING: '🚚 Ongoing', DELIVERED: '✅ Delivered', CANCELLED: '❌ Cancelled' };
+    const map: Record<string, string> = { ADDED: '🛒 In Cart', STARTED: '💳 Paid', ONGOING: '🚚 Ongoing', DELIVERED: '✅ Delivered', CANCELLED: '❌ Cancelled' };
     return map[status] ?? status;
   }
 }

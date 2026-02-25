@@ -31,6 +31,10 @@ public class User {
 
     private String avatarId; // ID of the Media entity for user avatar
 
+    private double balance;      // current wallet balance
+    private double moneySpent;   // total spent as buyer
+    private double moneyReceived; // total received as seller
+
     public String getId() {
         return id;
     }
@@ -78,4 +82,13 @@ public class User {
     public void setAvatarId(String avatarId) {
         this.avatarId = avatarId;
     }
+
+    public double getBalance() { return balance; }
+    public void setBalance(double balance) { this.balance = balance; }
+
+    public double getMoneySpent() { return moneySpent; }
+    public void setMoneySpent(double moneySpent) { this.moneySpent = moneySpent; }
+
+    public double getMoneyReceived() { return moneyReceived; }
+    public void setMoneyReceived(double moneyReceived) { this.moneyReceived = moneyReceived; }
 }

@@ -55,7 +55,10 @@ public class ProfileController {
             user.getName(),
             user.getEmail(),
             user.getRole(),
-            user.getAvatarId()
+            user.getAvatarId(),
+            user.getBalance(),
+            user.getMoneySpent(),
+            user.getMoneyReceived()
         );
 
         return ResponseEntity.ok(response);
@@ -113,15 +116,43 @@ public class ProfileController {
             user.getName(),
             user.getEmail(),
             user.getRole(),
-            user.getAvatarId()
+            user.getAvatarId(),
+            user.getBalance(),
+            user.getMoneySpent(),
+            user.getMoneyReceived()
         );
 
         return ResponseEntity.ok(response);
     }
 
-    @DeleteMapping("/me")
-    public ResponseEntity<Void> deleteAccount(@RequestHeader("Authorization") String authHeader) {
+    @PatchMapping("/me/topup")
+    public ResponseEntity<UserResponse> topUp(
+            @RequestHeader("Authorization") String authHeader,
+            @RequestBody TopUpRequest request) {
         if (authHeader == null || !authHeader.startsWith(BEARER_PREFIX)) {
+            return ResponseEntity.status(401).build();
+        }
+        if (request.amount() <= 0) {
+            return ResponseEntity.badRequest().build();
+        }
+        String token = authHeader.substring(7);
+        String email = jwtService.extractEmail(token);
+        if (email == null) return ResponseEntity.status(401).build();
+
+        User user = userRepository.findByEmail(email);
+        if (user == null) return ResponseEntity.status(404).build();
+
+        user.setBalance(user.getBalance() + request.amount());
+        userRepository.save(user);
+
+        return ResponseEntity.ok(new UserResponse(
+            user.getId(), user.getName(), user.getEmail(), user.getRole(),
+            user.getAvatarId(), user.getBalance(), user.getMoneySpent(), user.getMoneyReceived()
+        ));
+    }
+
+    @DeleteMapping("/me")
+    public ResponseEntity<Void> deleteAccount(@RequestHeader("Authorization") String authHeader) {        if (authHeader == null || !authHeader.startsWith(BEARER_PREFIX)) {
             return ResponseEntity.status(401).build();
         }
 
@@ -150,4 +181,39 @@ public class ProfileController {
 
         return ResponseEntity.noContent().build();
     }
+
+    // Internal endpoint called by order-service to update wallet fields
+    // Not exposed through API gateway
+    @PatchMapping("/internal/wallet/{userId}")
+    public ResponseEntity<Void> updateWallet(
+            @PathVariable String userId,
+            @RequestBody WalletUpdateRequest request) {
+        User user = userRepository.findById(userId).orElse(null);
+        if (user == null) return ResponseEntity.notFound().build();
+
+        if (request.balanceDelta() != 0) {
+            user.setBalance(user.getBalance() + request.balanceDelta());
+        }
+        if (request.spentDelta() != 0) {
+            user.setMoneySpent(user.getMoneySpent() + request.spentDelta());
+        }
+        if (request.receivedDelta() != 0) {
+            user.setMoneyReceived(user.getMoneyReceived() + request.receivedDelta());
+        }
+        userRepository.save(user);
+        return ResponseEntity.noContent().build();
+    }
+
+    // Internal endpoint called by order-service to check buyer balance before checkout
+    // Not exposed through API gateway
+    @GetMapping("/internal/balance/{userId}")
+    public ResponseEntity<Double> getBalance(@PathVariable String userId) {
+        User user = userRepository.findById(userId).orElse(null);
+        if (user == null) return ResponseEntity.notFound().build();
+        return ResponseEntity.ok(user.getBalance());
+    }
+
+    public record WalletUpdateRequest(double balanceDelta, double spentDelta, double receivedDelta) {}
+
+    public record TopUpRequest(double amount) {}
 }

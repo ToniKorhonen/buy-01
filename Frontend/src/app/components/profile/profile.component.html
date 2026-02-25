@@ -1,221 +1,248 @@
 <div class="profile-container">
   <h2>Profile</h2>
 
-  <div *ngIf="loading" class="loading">
-    Loading profile...
-  </div>
+  @if (loading) {
+    <div class="loading">Loading profile...</div>
+  }
 
-  <div *ngIf="error && !updating" class="error">
-    {{ error }}
-  </div>
+  @if (error && !updating) {
+    <div class="error">{{ error }}</div>
+  }
 
-  <div *ngIf="user && !loading" class="profile-content">
-    <div class="profile-avatar">
-      <img *ngIf="avatarUrl" [src]="avatarUrl" [alt]="user.name" />
-      <div *ngIf="!avatarUrl" class="avatar-placeholder">👤</div>
-    </div>
-
-    <!-- View Mode -->
-    <div *ngIf="!isEditing" class="profile-info">
-      <div class="info-item">
-        <label>Name:</label>
-        <span>{{ user.name }}</span>
+  @if (user && !loading) {
+    <div class="profile-content">
+      <div class="profile-avatar">
+        @if (avatarUrl) {
+          <img [src]="avatarUrl" [alt]="user.name" />
+        } @else {
+          <div class="avatar-placeholder">👤</div>
+        }
       </div>
 
-      <div class="info-item">
-        <label>Email:</label>
-        <span>{{ user.email }}</span>
-      </div>
+      <!-- View Mode -->
+      @if (!isEditing) {
+        <div class="profile-info">
+          <div class="info-item">
+            <span class="info-label">Name</span>
+            <span>{{ user.name }}</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Email</span>
+            <span>{{ user.email }}</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Role</span>
+            <span>{{ user.role }}</span>
+          </div>
+          @if (user.id) {
+            <div class="info-item">
+              <span class="info-label">ID</span>
+              <span>{{ user.id }}</span>
+            </div>
+          }
 
-      <div class="info-item">
-        <label>Role:</label>
-        <span>{{ user.role }}</span>
-      </div>
+          <!-- Wallet Section -->
+          <div class="wallet-section">
+            <h3>💰 Wallet</h3>
+            <div class="info-item">
+              <span class="info-label">Balance</span>
+              <span class="wallet-balance">${{ (user.balance ?? 0).toFixed(2) }}</span>
+            </div>
+            @if (user.role === 'CLIENT') {
+              <div class="info-item">
+                <span class="info-label">Total Spent</span>
+                <span>${{ (user.moneySpent ?? 0).toFixed(2) }}</span>
+              </div>
+            }
+            @if (user.role === 'SELLER') {
+              <div class="info-item">
+                <span class="info-label">Total Received</span>
+                <span>${{ (user.moneyReceived ?? 0).toFixed(2) }}</span>
+              </div>
+            }
 
-      <div class="info-item" *ngIf="user.id">
-        <label>ID:</label>
-        <span>{{ user.id }}</span>
-      </div>
-    </div>
+            @if (!showTopUp) {
+              <button class="btn-topup" (click)="openTopUp()">➕ Add Funds</button>
+            }
 
-    <!-- Edit Mode -->
-    <div *ngIf="isEditing" class="profile-edit-form">
-      <div class="form-group">
-        <label for="editName">Name:</label>
-        <input
-          type="text"
-          id="editName"
-          [(ngModel)]="editName"
-          placeholder="Enter your name"
-          [disabled]="updating"
-        />
-      </div>
-
-      <div class="form-group">
-        <label for="editEmail">Email:</label>
-        <input
-          type="email"
-          id="editEmail"
-          [(ngModel)]="editEmail"
-          placeholder="Enter your email"
-          [disabled]="updating"
-        />
-      </div>
-
-      <div class="form-group">
-        <label for="editPassword">New Password (optional):</label>
-        <input
-          type="password"
-          id="editPassword"
-          [(ngModel)]="editPassword"
-          placeholder="Leave blank to keep current password"
-          [disabled]="updating"
-        />
-        <small>Must be at least 8 characters with uppercase, lowercase, number and special character</small>
-      </div>
-
-      <div class="form-group" *ngIf="editPassword">
-        <label for="editPasswordConfirm">Confirm New Password:</label>
-        <input
-          type="password"
-          id="editPasswordConfirm"
-          [(ngModel)]="editPasswordConfirm"
-          placeholder="Re-enter your new password"
-          [disabled]="updating"
-        />
-      </div>
-
-      <div *ngIf="error" class="error">
-        {{ error }}
-      </div>
-
-      <div class="form-actions">
-        <button
-          (click)="saveProfile()"
-          class="btn-save"
-          [disabled]="updating"
-        >
-          {{ updating ? 'Saving...' : 'Save Changes' }}
-        </button>
-        <button
-          (click)="cancelEdit()"
-          class="btn-cancel"
-          [disabled]="updating"
-        >
-          Cancel
-        </button>
-      </div>
-    </div>
-
-    <!-- Action Buttons -->
-    <div class="profile-actions">
-      <button
-        *ngIf="!isEditing"
-        (click)="startEdit()"
-        class="btn-edit"
-        [disabled]="updating"
-      >
-        ✏️ Edit Profile
-      </button>
-
-      <button (click)="logout()" class="btn-logout" [disabled]="updating">
-        Logout
-      </button>
-
-      <button
-        *ngIf="!isEditing"
-        (click)="confirmDelete()"
-        class="btn-delete"
-        [disabled]="updating"
-      >
-        🗑️ Delete Account
-      </button>
-    </div>
-
-    <!-- User Statistics Section -->
-    <div class="statistics-section" *ngIf="user?.role === 'CLIENT'">
-      <h3>📊 My Purchase Statistics</h3>
-
-      <div class="stats-grid">
-        <!-- Total Money Spent Card -->
-        <div class="stat-card total-spent">
-          <div class="stat-icon">💰</div>
-          <div class="stat-content">
-            <h4>Total Money Spent</h4>
-            <p class="stat-value">${{ userStats.totalMoneySpent.toFixed(2) }}</p>
-            <p class="stat-label">All-time purchases</p>
+            @if (showTopUp) {
+              <div class="topup-form">
+                <div class="form-group">
+                  <label for="topUpAmount">Amount to add ($):</label>
+                  <input
+                    type="number"
+                    id="topUpAmount"
+                    [(ngModel)]="topUpAmount"
+                    min="0.01"
+                    step="0.01"
+                    placeholder="e.g. 50.00"
+                    [disabled]="topUpLoading" />
+                </div>
+                @if (topUpError) { <div class="topup-error">{{ topUpError }}</div> }
+                @if (topUpSuccess) { <div class="topup-success">✅ {{ topUpSuccess }}</div> }
+                <div class="topup-actions">
+                  <button class="btn-save" (click)="submitTopUp()" [disabled]="topUpLoading">
+                    {{ topUpLoading ? 'Adding...' : 'Add Funds' }}
+                  </button>
+                  <button class="btn-cancel" (click)="closeTopUp()" [disabled]="topUpLoading">Cancel</button>
+                </div>
+              </div>
+            }
           </div>
         </div>
+      }
 
-        <!-- Top Purchased Products -->
-        <div class="stat-card products-list">
-          <h4>🏆 Best Products (By Value)</h4>
-          <div class="product-items">
-            <div class="product-item" *ngFor="let product of userStats.topPurchasedProducts">
-              <div class="product-image">
-                <img *ngIf="product.imageUrl" [src]="product.imageUrl" [alt]="product.name">
-                <span *ngIf="!product.imageUrl" class="placeholder-icon">📦</span>
-              </div>
-              <div class="product-details">
-                <p class="product-name">{{ product.name }}</p>
-                <p class="product-stats">
-                  <span class="price">${{ product.price.toFixed(2) }}</span>
-                  <span class="count">× {{ product.purchaseCount }}</span>
-                </p>
-                <p class="product-total">Total: ${{ product.totalSpent.toFixed(2) }}</p>
+      <!-- Edit Mode -->
+      @if (isEditing) {
+        <div class="profile-edit-form">
+          <div class="form-group">
+            <label for="editName">Name:</label>
+            <input type="text" id="editName" [(ngModel)]="editName"
+              placeholder="Enter your name" [disabled]="updating" />
+          </div>
+          <div class="form-group">
+            <label for="editEmail">Email:</label>
+            <input type="email" id="editEmail" [(ngModel)]="editEmail"
+              placeholder="Enter your email" [disabled]="updating" />
+          </div>
+          <div class="form-group">
+            <label for="editPassword">New Password (optional):</label>
+            <input type="password" id="editPassword" [(ngModel)]="editPassword"
+              placeholder="Leave blank to keep current password" [disabled]="updating" />
+            <small>Must be at least 8 characters with uppercase, lowercase, number and special character</small>
+          </div>
+          @if (editPassword) {
+            <div class="form-group">
+              <label for="editPasswordConfirm">Confirm New Password:</label>
+              <input type="password" id="editPasswordConfirm" [(ngModel)]="editPasswordConfirm"
+                placeholder="Re-enter your new password" [disabled]="updating" />
+            </div>
+          }
+          @if (error) {
+            <div class="error">{{ error }}</div>
+          }
+          <div class="form-actions">
+            <button (click)="saveProfile()" class="btn-save" [disabled]="updating">
+              {{ updating ? 'Saving...' : 'Save Changes' }}
+            </button>
+            <button (click)="cancelEdit()" class="btn-cancel" [disabled]="updating">
+              Cancel
+            </button>
+          </div>
+        </div>
+      }
+
+      <!-- Action Buttons -->
+      <div class="profile-actions">
+        @if (!isEditing) {
+          <button (click)="startEdit()" class="btn-edit" [disabled]="updating">
+            ✏️ Edit Profile
+          </button>
+        }
+        <button (click)="logout()" class="btn-logout" [disabled]="updating">Logout</button>
+        @if (!isEditing) {
+          <button (click)="confirmDelete()" class="btn-delete" [disabled]="updating">
+            🗑️ Delete Account
+          </button>
+        }
+      </div>
+
+      <!-- User Statistics Section -->
+      @if (user?.role === 'CLIENT') {
+        <div class="statistics-section">
+          <h3>📊 My Purchase Statistics</h3>
+          <div class="stats-grid">
+            <div class="stat-card total-spent">
+              <div class="stat-icon">💰</div>
+              <div class="stat-content">
+                <h4>Total Money Spent</h4>
+                <p class="stat-value">${{ userStats.totalMoneySpent.toFixed(2) }}</p>
+                <p class="stat-label">All-time purchases</p>
               </div>
             </div>
-            <p class="empty-state" *ngIf="userStats.topPurchasedProducts.length === 0">
-              No purchases yet
-            </p>
-          </div>
-        </div>
 
-        <!-- Most Bought Products -->
-        <div class="stat-card products-list">
-          <h4>🔥 Most Bought Products (By Quantity)</h4>
-          <div class="product-items">
-            <div class="product-item" *ngFor="let product of userStats.mostBoughtProducts">
-              <div class="product-image">
-                <img *ngIf="product.imageUrl" [src]="product.imageUrl" [alt]="product.name">
-                <span *ngIf="!product.imageUrl" class="placeholder-icon">📦</span>
-              </div>
-              <div class="product-details">
-                <p class="product-name">{{ product.name }}</p>
-                <p class="product-stats">
-                  <span class="count">{{ product.purchaseCount }} purchases</span>
-                  <span class="price">${{ product.price.toFixed(2) }} each</span>
-                </p>
-                <p class="product-total">Total: ${{ product.totalSpent.toFixed(2) }}</p>
+            <div class="stat-card products-list">
+              <h4>🏆 Best Products (By Value)</h4>
+              <div class="product-items">
+                @for (product of userStats.topPurchasedProducts; track product.name) {
+                  <div class="product-item">
+                    <div class="product-image">
+                      @if (product.imageUrl) {
+                        <img [src]="product.imageUrl" [alt]="product.name">
+                      } @else {
+                        <span class="placeholder-icon">📦</span>
+                      }
+                    </div>
+                    <div class="product-details">
+                      <p class="product-name">{{ product.name }}</p>
+                      <p class="product-stats">
+                        <span class="price">${{ product.price.toFixed(2) }}</span>
+                        <span class="count">× {{ product.purchaseCount }}</span>
+                      </p>
+                      <p class="product-total">Total: ${{ product.totalSpent.toFixed(2) }}</p>
+                    </div>
+                  </div>
+                } @empty {
+                  <p class="empty-state">No purchases yet</p>
+                }
               </div>
             </div>
-            <p class="empty-state" *ngIf="userStats.mostBoughtProducts.length === 0">
-              No purchases yet
-            </p>
+
+            <div class="stat-card products-list">
+              <h4>🔥 Most Bought Products (By Quantity)</h4>
+              <div class="product-items">
+                @for (product of userStats.mostBoughtProducts; track product.name) {
+                  <div class="product-item">
+                    <div class="product-image">
+                      @if (product.imageUrl) {
+                        <img [src]="product.imageUrl" [alt]="product.name">
+                      } @else {
+                        <span class="placeholder-icon">📦</span>
+                      }
+                    </div>
+                    <div class="product-details">
+                      <p class="product-name">{{ product.name }}</p>
+                      <p class="product-stats">
+                        <span class="count">{{ product.purchaseCount }} purchases</span>
+                        <span class="price">${{ product.price.toFixed(2) }} each</span>
+                      </p>
+                      <p class="product-total">Total: ${{ product.totalSpent.toFixed(2) }}</p>
+                    </div>
+                  </div>
+                } @empty {
+                  <p class="empty-state">No purchases yet</p>
+                }
+              </div>
+            </div>
           </div>
         </div>
-      </div>
-    </div>
+      }
 
-    <!-- Delete Confirmation Modal -->
-    <div *ngIf="showDeleteConfirm" class="modal-overlay" (click)="cancelDelete()">
-      <div class="modal-content" (click)="$event.stopPropagation()">
-        <h3>⚠️ Delete Account</h3>
-        <p>Are you absolutely sure you want to delete your account?</p>
-        <p class="warning-text">
-          This action is <strong>permanent</strong> and cannot be undone.
-          All your data will be lost forever.
-        </p>
-        <div class="modal-actions">
-          <button (click)="deleteAccount()" class="btn-confirm-delete" [disabled]="updating">
-            {{ updating ? 'Deleting...' : 'Yes, Delete My Account' }}
-          </button>
-          <button (click)="cancelDelete()" class="btn-cancel-delete" [disabled]="updating">
-            Cancel
-          </button>
-        </div>
-      </div>
+      <!-- Delete Confirmation Modal -->
+      @if (showDeleteConfirm) {
+        <dialog open
+          class="modal-overlay"
+          aria-labelledby="deleteModalTitle"
+          (keydown.escape)="cancelDelete()">
+          <div class="modal-content">
+            <h3 id="deleteModalTitle">⚠️ Delete Account</h3>
+            <p>Are you absolutely sure you want to delete your account?</p>
+            <p class="warning-text">
+              This action is <strong>permanent</strong> and cannot be undone.
+              All your data will be lost forever.
+            </p>
+            <div class="modal-actions">
+              <button (click)="deleteAccount()" class="btn-confirm-delete" [disabled]="updating">
+                {{ updating ? 'Deleting...' : 'Yes, Delete My Account' }}
+              </button>
+              <button (click)="cancelDelete()" class="btn-cancel-delete" [disabled]="updating">
+                Cancel
+              </button>
+            </div>
+          </div>
+        </dialog>
+      }
     </div>
-  </div>
+  }
 </div>
 

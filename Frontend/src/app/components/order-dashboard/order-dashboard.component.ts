@@ -2,6 +2,7 @@ import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { OrderService } from '../../services/order.service';
+import { UserService } from '../../services/user.service';
 import { OrderResponse } from '../../models/order.model';
 
 @Component({
@@ -13,6 +14,7 @@ import { OrderResponse } from '../../models/order.model';
 })
 export class OrderDashboardComponent implements OnInit {
   private readonly orderService = inject(OrderService);
+  private readonly userService = inject(UserService);
 
   orders: OrderResponse[] = [];
   loading = false;
@@ -21,7 +23,7 @@ export class OrderDashboardComponent implements OnInit {
   reorderQty: { [orderId: string]: number } = {};
 
   get activeOrders(): OrderResponse[] {
-    return this.orders.filter(o => o.status === 'ONGOING');
+    return this.orders.filter(o => o.status === 'STARTED' || o.status === 'ONGOING');
   }
 
   get historyOrders(): OrderResponse[] {
@@ -46,7 +48,11 @@ export class OrderDashboardComponent implements OnInit {
   markDelivered(order: OrderResponse) {
     this.actionLoading[order.id] = true;
     this.orderService.markDelivered(order.id).subscribe({
-      next: (updated: OrderResponse) => { this.replaceOrder(updated); this.actionLoading[order.id] = false; },
+      next: (updated: OrderResponse) => {
+        this.replaceOrder(updated);
+        this.actionLoading[order.id] = false;
+        this.userService.fetchUserProfile();
+      },
       error: () => { this.error = 'Failed to mark delivered.'; this.actionLoading[order.id] = false; }
     });
   }
@@ -54,7 +60,11 @@ export class OrderDashboardComponent implements OnInit {
   cancelOrder(order: OrderResponse) {
     this.actionLoading[order.id] = true;
     this.orderService.cancelOrder(order.id).subscribe({
-      next: (updated: OrderResponse) => { this.replaceOrder(updated); this.actionLoading[order.id] = false; },
+      next: (updated: OrderResponse) => {
+        this.replaceOrder(updated);
+        this.actionLoading[order.id] = false;
+        this.userService.fetchUserProfile();
+      },
       error: () => { this.error = 'Failed to cancel order.'; this.actionLoading[order.id] = false; }
     });
   }
@@ -78,7 +88,7 @@ export class OrderDashboardComponent implements OnInit {
   }
 
   statusLabel(status: string): string {
-    const map: Record<string, string> = { STARTED: '🛒 In Cart', ONGOING: '🚚 On the Way', DELIVERED: '✅ Delivered', CANCELLED: '❌ Cancelled' };
+    const map: Record<string, string> = { ADDED: '🛒 In Cart', STARTED: '💳 Paid - Awaiting Seller', ONGOING: '🚚 On the Way', DELIVERED: '✅ Delivered', CANCELLED: '❌ Cancelled' };
     return map[status] ?? status;
   }
 }

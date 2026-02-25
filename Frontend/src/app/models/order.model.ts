@@ -1,4 +1,4 @@
-export type OrderStatus = 'STARTED' | 'ONGOING' | 'DELIVERED' | 'CANCELLED';
+export type OrderStatus = 'ADDED' | 'STARTED' | 'ONGOING' | 'DELIVERED' | 'CANCELLED';
 
 export interface OrderRequest {
   productId: string;

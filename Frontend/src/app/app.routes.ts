@@ -18,8 +18,8 @@ export const routes: Routes = [
   { path: 'products', component: ProductsComponent },
   { path: 'seller/dashboard', component: SellerDashboardComponent, canActivate: [sellerGuard] },
   { path: 'seller/orders', component: SellerOrdersComponent, canActivate: [sellerGuard] },
-  { path: 'media', component: MediaGalleryComponent },
-  { path: 'profile', component: ProfileComponent },
+  { path: 'media', component: MediaGalleryComponent, canActivate: [authGuard] },
+  { path: 'profile', component: ProfileComponent, canActivate: [authGuard] },
   { path: 'cart', component: CartComponent, canActivate: [authGuard] },
   { path: 'orders', component: OrderDashboardComponent, canActivate: [authGuard] }
 ];

@@ -89,6 +89,19 @@ public class ProductService {
         repo.deleteAll(products);
     }
 
+    /**
+     * Adjust stock by a delta (negative = deduct, positive = restock).
+     * Called internally by order-service.
+     */
+    @Transactional
+    public void adjustStock(String productId, int delta) {
+        Product p = find(productId);
+        int newQty = p.getQuantity() + delta;
+        if (newQty < 0) newQty = 0;
+        p.setQuantity(newQty);
+        repo.save(p);
+    }
+
     private Product find(String id) {
         return repo.findById(id).orElseThrow(() -> new ProductNotFoundException(id));
     }

@@ -45,7 +45,10 @@ public class UserService {
                 u.getName(),
                 u.getEmail(),
                 u.getRole(),
-                u.getAvatarId()
+                u.getAvatarId(),
+                u.getBalance(),
+                u.getMoneySpent(),
+                u.getMoneyReceived()
         );
     }
 

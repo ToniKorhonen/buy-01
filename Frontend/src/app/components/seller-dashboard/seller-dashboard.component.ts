@@ -5,7 +5,9 @@ import { Router } from '@angular/router';
 import { ProductService } from '../../services/product.service';
 import { UserService } from '../../services/user.service';
 import { MediaService } from '../../services/media.service';
+import { OrderService } from '../../services/order.service';
 import { ProductRequest, ProductResponse } from '../../models/product.model';
+import { OrderResponse } from '../../models/order.model';
 import { forkJoin, of } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
 
@@ -42,6 +44,7 @@ export class SellerDashboardComponent implements OnInit {
   private readonly productService = inject(ProductService);
   private readonly userService = inject(UserService);
   private readonly mediaService = inject(MediaService);
+  private readonly orderService = inject(OrderService);
   private readonly router = inject(Router);
 
   products: ProductWithMedia[] = [];
@@ -76,6 +79,56 @@ export class SellerDashboardComponent implements OnInit {
       return;
     }
     this.loadProducts();
+    this.loadSellerStats();
+  }
+
+  private loadSellerStats(): void {
+    // Get live moneyReceived from profile
+    this.userService.getProfile().subscribe({
+      next: (user) => {
+        this.sellerStats.totalRevenue = user.moneyReceived ?? 0;
+      },
+      error: () => {}
+    });
+
+    // Build best-selling product breakdown from delivered orders
+    this.orderService.getSellerOrders().subscribe({
+      next: (orders) => {
+        const delivered = orders.filter(o => o.status === 'DELIVERED');
+        this.sellerStats = this.computeSellerStats(delivered);
+      },
+      error: () => {}
+    });
+  }
+
+  private computeSellerStats(orders: OrderResponse[]): SellerStatistics {
+    const map = new Map<string, BestSellingProduct>();
+
+    for (const order of orders) {
+      const unitPrice = order.quantity > 0 ? order.totalPrice / order.quantity : 0;
+      const existing = map.get(order.productId);
+      if (existing) {
+        existing.unitsSold += order.quantity;
+        existing.totalRevenue += order.totalPrice;
+      } else {
+        map.set(order.productId, {
+          id: order.productId,
+          name: order.productName,
+          price: unitPrice,
+          unitsSold: order.quantity,
+          totalRevenue: order.totalPrice
+        });
+      }
+    }
+
+    const products = Array.from(map.values())
+      .sort((a, b) => b.totalRevenue - a.totalRevenue)
+      .slice(0, 5);
+
+    const totalSales = orders.reduce((sum, o) => sum + o.quantity, 0);
+    const totalRevenue = orders.reduce((sum, o) => sum + o.totalPrice, 0);
+
+    return { totalRevenue, totalSales, bestSellingProducts: products };
   }
 
   loadProducts() {
@@ -87,7 +140,7 @@ export class SellerDashboardComponent implements OnInit {
         // Load media for each product
         this.loadProductsWithMedia(products);
       },
-      error: (err) => {
+      error: () => {
         this.error = 'Failed to load products';
         this.loading = false;
       }
@@ -258,7 +311,7 @@ export class SellerDashboardComponent implements OnInit {
       next: () => {
         this.loadProducts();
       },
-      error: (err) => {
+      error: () => {
         this.error = 'Failed to delete product';
       }
     });
@@ -266,7 +319,7 @@ export class SellerDashboardComponent implements OnInit {
 
   logout() {
     this.userService.logout();
-    this.router.navigate(['/']);
+    this.router.navigate(['/login']);
   }
 }
 

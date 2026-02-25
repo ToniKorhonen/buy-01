@@ -4,7 +4,9 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { UserService } from '../../services/user.service';
 import { MediaService } from '../../services/media.service';
+import { OrderService } from '../../services/order.service';
 import { UserResponse } from '../../models/user.model';
+import { OrderResponse } from '../../models/order.model';
 
 // User Statistics Interfaces
 interface PurchasedProduct {
@@ -32,6 +34,7 @@ interface UserStatistics {
 export class ProfileComponent implements OnInit {
   private readonly userService = inject(UserService);
   private readonly mediaService = inject(MediaService);
+  private readonly orderService = inject(OrderService);
   private readonly router = inject(Router);
 
   user: UserResponse | null = null;
@@ -47,6 +50,13 @@ export class ProfileComponent implements OnInit {
   editEmail = '';
   editPassword = '';
   editPasswordConfirm = '';
+
+  // Top-up
+  showTopUp = false;
+  topUpAmount: number | null = null;
+  topUpLoading = false;
+  topUpError = '';
+  topUpSuccess = '';
 
   // User Statistics (placeholder data - will be populated from backend later)
   userStats: UserStatistics = {
@@ -72,6 +82,14 @@ export class ProfileComponent implements OnInit {
         if (user.avatarId) {
           this.loadAvatar(user.avatarId);
         }
+
+        // Sync totalMoneySpent from the live user object
+        this.userStats.totalMoneySpent = user.moneySpent ?? 0;
+
+        // Build per-product breakdown from delivered order history
+        if (user.role === 'CLIENT') {
+          this.loadOrderStats();
+        }
       },
       error: (err) => {
         this.error = 'Failed to load profile';
@@ -79,6 +97,46 @@ export class ProfileComponent implements OnInit {
         console.error('Error loading profile:', err);
       }
     });
+  }
+
+  private loadOrderStats(): void {
+    this.orderService.getMyOrders().subscribe({
+      next: (orders) => {
+        const delivered = orders.filter(o => o.status === 'DELIVERED');
+        this.userStats = this.computeBuyerStats(delivered);
+      },
+      error: () => {
+        // Stats unavailable — keep totals already set from user profile
+      }
+    });
+  }
+
+  private computeBuyerStats(orders: OrderResponse[]): UserStatistics {
+    const map = new Map<string, PurchasedProduct>();
+
+    for (const order of orders) {
+      const unitPrice = order.quantity > 0 ? order.totalPrice / order.quantity : 0;
+      const existing = map.get(order.productId);
+      if (existing) {
+        existing.purchaseCount += order.quantity;
+        existing.totalSpent += order.totalPrice;
+      } else {
+        map.set(order.productId, {
+          id: order.productId,
+          name: order.productName,
+          price: unitPrice,
+          purchaseCount: order.quantity,
+          totalSpent: order.totalPrice
+        });
+      }
+    }
+
+    const products = Array.from(map.values());
+    return {
+      totalMoneySpent: this.user?.moneySpent ?? 0,
+      topPurchasedProducts: [...products].sort((a, b) => b.totalSpent - a.totalSpent).slice(0, 5),
+      mostBoughtProducts: [...products].sort((a, b) => b.purchaseCount - a.purchaseCount).slice(0, 5)
+    };
   }
 
   loadAvatar(avatarId: string) {
@@ -198,9 +256,46 @@ export class ProfileComponent implements OnInit {
     });
   }
 
+  openTopUp() {
+    this.showTopUp = true;
+    this.topUpAmount = null;
+    this.topUpError = '';
+    this.topUpSuccess = '';
+  }
+
+  closeTopUp() {
+    this.showTopUp = false;
+    this.topUpAmount = null;
+    this.topUpError = '';
+    this.topUpSuccess = '';
+  }
+
+  submitTopUp() {
+    const amount = this.topUpAmount;
+    if (!amount || amount <= 0) {
+      this.topUpError = 'Please enter a positive amount.';
+      return;
+    }
+    this.topUpLoading = true;
+    this.topUpError = '';
+    this.topUpSuccess = '';
+    this.userService.topUp(amount).subscribe({
+      next: (updated) => {
+        this.user = updated;
+        this.topUpLoading = false;
+        this.topUpSuccess = `$${amount.toFixed(2)} added to your wallet.`;
+        this.topUpAmount = null;
+      },
+      error: () => {
+        this.topUpLoading = false;
+        this.topUpError = 'Failed to add funds. Please try again.';
+      }
+    });
+  }
+
   logout() {
     this.userService.logout();
-    this.router.navigate(['/']);
+    this.router.navigate(['/login']);
   }
 }
 

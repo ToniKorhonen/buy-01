@@ -72,4 +72,16 @@ public class ProductRestController {
         service.deleteAllByUserId(userId);
         return ResponseEntity.noContent().build();
     }
+
+    // Internal endpoint called by order-service to adjust stock
+    // positive delta = restock, negative delta = deduct
+    @PatchMapping("/internal/stock/{productId}")
+    public ResponseEntity<Void> adjustStock(
+            @PathVariable String productId,
+            @RequestBody StockAdjustRequest req) {
+        service.adjustStock(productId, req.delta());
+        return ResponseEntity.noContent().build();
+    }
+
+    public record StockAdjustRequest(int delta) {}
 }

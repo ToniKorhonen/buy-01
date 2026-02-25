@@ -54,6 +54,15 @@ export class UserService {
     );
   }
 
+  topUp(amount: number): Observable<UserResponse> {
+    return this.http.patch<UserResponse>(`${this.base}/profile/me/topup`, { amount }).pipe(
+      tap((user) => {
+        this.currentUser = user;
+        localStorage.setItem('current_user', JSON.stringify(user));
+      })
+    );
+  }
+
   deleteAccount(): Observable<void> {
     return this.http.delete<void>(`${this.base}/profile/me`).pipe(
       tap(() => {

@@ -4,7 +4,6 @@
   <!-- Upload Section -->
   <div class="upload-section">
     <h2>📤 Upload Picture</h2>
-
     <div class="file-restrictions">
       <p><strong>File Requirements:</strong></p>
       <ul>
@@ -16,34 +15,28 @@
     <div class="upload-form">
       <div class="form-group">
         <label for="fileInput">Select a picture:</label>
-        <input
-          type="file"
-          id="fileInput"
+        <input type="file" id="fileInput"
           accept=".png,.jpg,.jpeg,.gif,image/png,image/jpeg,image/gif"
           (change)="onFileSelected($event)"
-          class="file-input"
-        >
+          class="file-input">
       </div>
 
-      <div class="form-group" *ngIf="previewUrl">
-        <p class="preview-label"><strong>Preview:</strong></p>
-        <div class="preview-container">
-          <img [src]="previewUrl" alt="Preview" class="preview-image">
+      @if (previewUrl) {
+        <div class="form-group">
+          <p class="preview-label"><strong>Preview:</strong></p>
+          <div class="preview-container">
+            <img [src]="previewUrl" alt="Preview" class="preview-image">
+          </div>
         </div>
-      </div>
+      }
 
-
-      <button
-        (click)="uploadMedia()"
-        [disabled]="!selectedFile || isLoading"
-        class="btn btn-primary"
-      >
+      <button (click)="uploadMedia()" [disabled]="!selectedFile || isLoading" class="btn btn-primary">
         {{ isLoading ? 'Uploading...' : 'Upload Picture' }}
       </button>
 
-      <div *ngIf="uploadMessage" [class]="uploadSuccess ? 'message success' : 'message error'">
-        {{ uploadMessage }}
-      </div>
+      @if (uploadMessage) {
+        <div [class]="uploadSuccess ? 'message success' : 'message error'">{{ uploadMessage }}</div>
+      }
     </div>
   </div>
 
@@ -51,45 +44,36 @@
   <div class="gallery-section">
     <div class="gallery-header">
       <h2>🖼️ All Uploaded Pictures</h2>
-      <button (click)="loadMedia()" class="btn btn-secondary">
-        🔄 Refresh
-      </button>
+      <button (click)="loadMedia()" class="btn btn-secondary">🔄 Refresh</button>
     </div>
 
-    <div *ngIf="isLoading" class="loading">
-      Loading pictures...
-    </div>
-
-    <div *ngIf="!isLoading && mediaList.length === 0" class="empty-state">
-      No pictures uploaded yet. Upload your first picture above!
-    </div>
-
-    <div *ngIf="!isLoading && mediaList.length > 0" class="media-grid">
-      <div *ngFor="let media of mediaList" class="media-card">
-        <div class="media-image-container">
-          <img
-            [src]="getMediaUrl(media)"
-            [alt]="'Media ' + media.id"
-            class="media-image"
-          >
-        </div>
-
-        <div class="media-info">
-          <p *ngIf="media.productId"><strong>Product ID:</strong> {{ media.productId }}</p>
-          <p *ngIf="!media.productId"><strong>Type:</strong> Avatar</p>
-          <p class="media-id"><strong>Media ID:</strong> {{ media.id }}</p>
-
-          <div class="media-actions">
-            <a [href]="getMediaUrl(media)" target="_blank" class="btn btn-link">
-              View Full Size
-            </a>
-            <button (click)="deleteMedia(media.id)" class="btn btn-danger">
-              🗑️ Delete
-            </button>
+    @if (isLoading) {
+      <div class="loading">Loading pictures...</div>
+    } @else if (mediaList.length === 0) {
+      <div class="empty-state">No pictures uploaded yet. Upload your first picture above!</div>
+    } @else {
+      <div class="media-grid">
+        @for (media of mediaList; track media.id) {
+          <div class="media-card">
+            <div class="media-image-container">
+              <img [src]="getMediaUrl(media)" [alt]="'Media ' + media.id" class="media-image">
+            </div>
+            <div class="media-info">
+              @if (media.productId) {
+                <p><strong>Product ID:</strong> {{ media.productId }}</p>
+              } @else {
+                <p><strong>Type:</strong> Avatar</p>
+              }
+              <p class="media-id"><strong>Media ID:</strong> {{ media.id }}</p>
+              <div class="media-actions">
+                <a [href]="getMediaUrl(media)" target="_blank" class="btn btn-link">View Full Size</a>
+                <button (click)="deleteMedia(media.id)" class="btn btn-danger">🗑️ Delete</button>
+              </div>
+            </div>
           </div>
-        </div>
+        }
       </div>
-    </div>
+    }
   </div>
 </div>
 

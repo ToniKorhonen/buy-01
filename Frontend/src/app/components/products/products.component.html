@@ -1,159 +1,133 @@
 <div class="products-container">
   <div class="page-header">
     <h1>All Products</h1>
-    <button class="btn-cart" (click)="goToCart()" *ngIf="isBuyer">🛒 View Cart</button>
+    @if (isBuyer) {
+      <button class="btn-cart" (click)="goToCart()">🛒 View Cart</button>
+    }
   </div>
 
-  <div class="loading" *ngIf="loading">Loading products...</div>
-  <div class="error" *ngIf="error">{{ error }}</div>
+  @if (loading) { <div class="loading">Loading products...</div> }
+  @if (error) { <div class="error">{{ error }}</div> }
 
-  <!-- Search and Filter Section -->
-  <div class="search-filter-section" *ngIf="!loading && !error">
-    <!-- Search Bar -->
-    <div class="search-bar">
-      <div class="input-with-clear">
-        <input
-          type="text"
-          [(ngModel)]="searchKeyword"
-          (ngModelChange)="onSearchChange()"
-          placeholder="🔍 Search products by name or description..."
-          class="search-input">
+  @if (!loading && !error) {
+    <!-- Search and Filter Section -->
+    <div class="search-filter-section">
+      <div class="search-bar">
+        <div class="input-with-clear">
+          <label for="searchInput" class="sr-only">Search products</label>
+          <input
+            id="searchInput"
+            type="text"
+            [(ngModel)]="searchKeyword"
+            (ngModelChange)="onSearchChange()"
+            placeholder="🔍 Search products by name or description..."
+            class="search-input">
+          @if (searchKeyword) {
+            <button (click)="clearSearch()" class="clear-btn" title="Clear search">×</button>
+          }
+        </div>
+      </div>
+
+      <div class="filters-row">
+        <div class="filter-section">
+          <h4>💰 Price Range</h4>
+          <div class="filter-inputs">
+            <div class="filter-group">
+              <label for="priceMin">Min ($)</label>
+              <div class="input-with-clear">
+                <input id="priceMin" type="number" [(ngModel)]="priceMin" (ngModelChange)="onFilterChange()" placeholder="0" min="0" step="0.01">
+                @if (priceMin !== null) {
+                  <button (click)="clearPriceMin()" class="clear-btn" title="Clear min price">×</button>
+                }
+              </div>
+            </div>
+            <div class="filter-group">
+              <label for="priceMax">Max ($)</label>
+              <div class="input-with-clear">
+                <input id="priceMax" type="number" [(ngModel)]="priceMax" (ngModelChange)="onFilterChange()" placeholder="∞" min="0" step="0.01">
+                @if (priceMax !== null) {
+                  <button (click)="clearPriceMax()" class="clear-btn" title="Clear max price">×</button>
+                }
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="filter-section">
+          <h4>📦 Stock Quantity</h4>
+          <div class="filter-inputs">
+            <div class="filter-group">
+              <label for="stockMin">Min</label>
+              <div class="input-with-clear">
+                <input id="stockMin" type="number" [(ngModel)]="stockMin" (ngModelChange)="onFilterChange()" placeholder="0" min="0" step="1">
+                @if (stockMin !== null) {
+                  <button (click)="clearStockMin()" class="clear-btn" title="Clear min stock">×</button>
+                }
+              </div>
+            </div>
+            <div class="filter-group">
+              <label for="stockMax">Max</label>
+              <div class="input-with-clear">
+                <input id="stockMax" type="number" [(ngModel)]="stockMax" (ngModelChange)="onFilterChange()" placeholder="∞" min="0" step="1">
+                @if (stockMax !== null) {
+                  <button (click)="clearStockMax()" class="clear-btn" title="Clear max stock">×</button>
+                }
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="filter-actions">
         <button
-          *ngIf="searchKeyword"
-          (click)="clearSearch()"
-          class="clear-btn"
-          title="Clear search">×</button>
-      </div>
-    </div>
-
-    <!-- Filters -->
-    <div class="filters-row">
-      <!-- Price Filters -->
-      <div class="filter-section">
-        <h4>💰 Price Range</h4>
-        <div class="filter-inputs">
-          <div class="filter-group">
-            <label>Min ($)</label>
-            <div class="input-with-clear">
-              <input
-                type="number"
-                [(ngModel)]="priceMin"
-                (ngModelChange)="onFilterChange()"
-                placeholder="0"
-                min="0"
-                step="0.01">
-              <button
-                *ngIf="priceMin !== null"
-                (click)="clearPriceMin()"
-                class="clear-btn"
-                title="Clear min price">×</button>
-            </div>
-          </div>
-          <div class="filter-group">
-            <label>Max ($)</label>
-            <div class="input-with-clear">
-              <input
-                type="number"
-                [(ngModel)]="priceMax"
-                (ngModelChange)="onFilterChange()"
-                placeholder="∞"
-                min="0"
-                step="0.01">
-              <button
-                *ngIf="priceMax !== null"
-                (click)="clearPriceMax()"
-                class="clear-btn"
-                title="Clear max price">×</button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Stock Filters -->
-      <div class="filter-section">
-        <h4>📦 Stock Quantity</h4>
-        <div class="filter-inputs">
-          <div class="filter-group">
-            <label>Min</label>
-            <div class="input-with-clear">
-              <input
-                type="number"
-                [(ngModel)]="stockMin"
-                (ngModelChange)="onFilterChange()"
-                placeholder="0"
-                min="0"
-                step="1">
-              <button
-                *ngIf="stockMin !== null"
-                (click)="clearStockMin()"
-                class="clear-btn"
-                title="Clear min stock">×</button>
-            </div>
-          </div>
-          <div class="filter-group">
-            <label>Max</label>
-            <div class="input-with-clear">
-              <input
-                type="number"
-                [(ngModel)]="stockMax"
-                (ngModelChange)="onFilterChange()"
-                placeholder="∞"
-                min="0"
-                step="1">
-              <button
-                *ngIf="stockMax !== null"
-                (click)="clearStockMax()"
-                class="clear-btn"
-                title="Clear max stock">×</button>
-            </div>
-          </div>
+          (click)="clearAllFilters()"
+          class="clear-all-btn"
+          [disabled]="!searchKeyword && priceMin === null && priceMax === null && stockMin === null && stockMax === null">
+          🗑️ Clear All Filters
+        </button>
+        <div class="results-info">
+          Showing <strong>{{ filteredProducts.length }}</strong> of <strong>{{ products.length }}</strong> products
         </div>
       </div>
     </div>
 
-    <!-- Filter Actions -->
-    <div class="filter-actions">
-      <button
-        (click)="clearAllFilters()"
-        class="clear-all-btn"
-        [disabled]="!searchKeyword && priceMin === null && priceMax === null && stockMin === null && stockMax === null">
-        🗑️ Clear All Filters
-      </button>
-      <div class="results-info">
-        Showing <strong>{{ filteredProducts.length }}</strong> of <strong>{{ products.length }}</strong> products
-      </div>
-    </div>
-  </div>
-
-  <!-- Products Grid -->
-  <div class="products-grid" *ngIf="!loading && !error">
-    <div class="product-card" *ngFor="let product of filteredProducts">
-      <div class="product-image">
-        <img *ngIf="product.imageUrl" [src]="product.imageUrl" [alt]="product.name">
-        <div *ngIf="!product.imageUrl" class="placeholder-image">📦</div>
-      </div>
-      <div class="product-details">
-        <h3>{{ product.name }}</h3>
-        <p class="description">{{ product.description }}</p>
-        <p class="price">${{ product.price.toFixed(2) }}</p>
-        <p class="stock">Stock: {{ product.quantity }}</p>
-        <div class="card-actions" *ngIf="isBuyer">
-          <button class="btn-add-cart"
-            (click)="addToCart(product)"
-            [disabled]="addingToCart[product.id] || product.quantity === 0">
-            {{ cartMessage[product.id] || (addingToCart[product.id] ? 'Adding...' : '🛒 Add to Cart') }}
-          </button>
+    <!-- Products Grid -->
+    <div class="products-grid">
+      @for (product of filteredProducts; track product.id) {
+        <div class="product-card">
+          <div class="product-image">
+            @if (product.imageUrl) {
+              <img [src]="product.imageUrl" [alt]="product.name">
+            } @else {
+              <div class="placeholder-image">📦</div>
+            }
+          </div>
+          <div class="product-details">
+            <h3>{{ product.name }}</h3>
+            <p class="description">{{ product.description }}</p>
+            <p class="price">${{ product.price.toFixed(2) }}</p>
+            <p class="stock">Stock: {{ product.quantity }}</p>
+            @if (isBuyer) {
+              <div class="card-actions">
+                <button class="btn-add-cart"
+                  (click)="addToCart(product)"
+                  [disabled]="addingToCart[product.id] || product.quantity === 0">
+                  {{ cartMessage[product.id] || (addingToCart[product.id] ? 'Adding...' : '🛒 Add to Cart') }}
+                </button>
+              </div>
+            }
+          </div>
         </div>
-      </div>
+      } @empty {
+        @if (products.length > 0) {
+          <div class="no-products">
+            <p>😕 No products match your filters.</p>
+            <button (click)="clearAllFilters()" class="clear-filters-link">Clear all filters</button>
+          </div>
+        } @else {
+          <div class="no-products">No products available yet.</div>
+        }
+      }
     </div>
-
-    <div class="no-products" *ngIf="filteredProducts.length === 0 && products.length > 0">
-      <p>😕 No products match your filters.</p>
-      <button (click)="clearAllFilters()" class="clear-filters-link">Clear all filters</button>
-    </div>
-
-    <div class="no-products" *ngIf="products.length === 0">
-      No products available yet.
-    </div>
-  </div>
+  }
 </div>

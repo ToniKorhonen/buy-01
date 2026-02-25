@@ -24,7 +24,7 @@ export class HomeComponent {
 
   logout() {
     this.userService.logout();
-    this.router.navigate(['/']);
+    this.router.navigate(['/login']);
   }
 
   get isSeller() {

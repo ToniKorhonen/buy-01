@@ -52,6 +52,9 @@ public class UserDtos {
             String name,
             String email,
             Role role,
-            String avatarId
+            String avatarId,
+            double balance,
+            double moneySpent,
+            double moneyReceived
     ) {}
 }

@@ -12,6 +12,9 @@ export interface UserResponse {
   email: string;
   role: 'CLIENT' | 'SELLER';
   avatarId?: string;
+  balance?: number;
+  moneySpent?: number;
+  moneyReceived?: number;
 }
 
 export interface LoginRequest {

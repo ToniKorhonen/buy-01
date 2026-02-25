@@ -137,10 +137,16 @@ services:
       SERVER_PORT: 8084
       JWT_SECRET: ${JWT_SECRET}
       JWT_EXPIRATION: ${JWT_EXPIRATION:-3600000}
+      PRODUCT_SERVICE_URL: http://buy01-product-service:8082
+      USER_SERVICE_URL: http://buy01-user-service:8081
     ports:
       - "8084:8084"
     depends_on:
       mongodb:
+        condition: service_healthy
+      product-service:
+        condition: service_healthy
+      user-service:
         condition: service_healthy
     networks:
       - buy01-network
