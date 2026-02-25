@@ -118,6 +118,7 @@ try {
     if (-not (Test-ServiceHealth "User Service" 8081)) { Invoke-Rollback }
     if (-not (Test-ServiceHealth "Product Service" 8082)) { Invoke-Rollback }
     if (-not (Test-ServiceHealth "Media Service" 8083)) { Invoke-Rollback }
+    if (-not (Test-ServiceHealth "Order Service" 8084)) { Invoke-Rollback }
     if (-not (Test-ServiceHealth "API Gateway" 8080)) { Invoke-Rollback }
     if (-not (Test-ServiceHealth "Frontend HTTP" 4200)) { Invoke-Rollback }
     if (-not (Test-ServiceHealth "Frontend HTTPS" 4443)) { Invoke-Rollback }
