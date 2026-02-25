@@ -75,6 +75,7 @@ check_service_health "MongoDB" 27018 || rollback
 check_service_health "User Service" 8081 || rollback
 check_service_health "Product Service" 8082 || rollback
 check_service_health "Media Service" 8083 || rollback
+check_service_health "Order Service" 8084 || rollback
 
 # Check API Gateway
 check_service_health "API Gateway" 8080 || rollback

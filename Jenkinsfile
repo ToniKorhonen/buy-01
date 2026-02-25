@@ -258,6 +258,21 @@ echo MEDIA_DB_NAME=media_db
                     }
                 }
 
+                stage('Build Order Service') {
+                    steps {
+                        dir('Backend/order-service') {
+                            echo '🔨 Building Order Service...'
+                            script {
+                                if (isUnix()) {
+                                    sh './mvnw clean package -DskipTests -Dmaven.javadoc.skip=true'
+                                } else {
+                                    bat 'mvnw.cmd clean package -DskipTests -Dmaven.javadoc.skip=true'
+                                }
+                            }
+                        }
+                    }
+                }
+
                 stage('Build Frontend') {
                     steps {
                         dir('Frontend') {
@@ -448,6 +463,32 @@ echo MEDIA_DB_NAME=media_db
                         }
                     }
                 }
+
+                stage('Test Order Service') {
+                    steps {
+                        dir('Backend/order-service') {
+                            echo '🧪 Testing Order Service...'
+                            script {
+                                if (isUnix()) {
+                                    sh '''
+                                        export JWT_SECRET="${JWT_SECRET}"
+                                        ./mvnw test
+                                    '''
+                                } else {
+                                    bat '''
+                                        set JWT_SECRET=%JWT_SECRET%
+                                        mvnw.cmd test
+                                    '''
+                                }
+                            }
+                        }
+                    }
+                    post {
+                        always {
+                            junit allowEmptyResults: true, testResults: 'Backend/order-service/target/surefire-reports/*.xml'
+                        }
+                    }
+                }
             }
         }
 
@@ -533,6 +574,21 @@ echo MEDIA_DB_NAME=media_db
                         echo '✅ Media Service coverage report published'
                     } catch (Exception e) {
                         echo "⚠️  Could not publish Media Service coverage: ${e.message}"
+                    }
+
+                    try {
+                        publishHTML([
+                            allowMissing: true,
+                            alwaysLinkToLastBuild: true,
+                            keepAll: true,
+                            reportDir: 'Backend/order-service/target/site/jacoco',
+                            reportFiles: 'index.html',
+                            reportName: 'Order Service Coverage',
+                            reportTitles: 'Order Service Code Coverage'
+                        ])
+                        echo '✅ Order Service coverage report published'
+                    } catch (Exception e) {
+                        echo "⚠️  Could not publish Order Service coverage: ${e.message}"
                     }
                 }
             }
@@ -689,6 +745,7 @@ echo MEDIA_DB_NAME=media_db
                             docker tag buy01-product-service:latest buy01-product-service:${imageTag}
                             docker tag buy01-media-service:latest buy01-media-service:${imageTag}
                             docker tag buy01-api-gateway:latest buy01-api-gateway:${imageTag}
+                            docker tag buy01-order-service:latest buy01-order-service:${imageTag}
                             docker tag buy01-frontend:latest buy01-frontend:${imageTag}
 
                             echo "✅ Docker images built and tagged"
@@ -704,6 +761,7 @@ echo MEDIA_DB_NAME=media_db
                             docker tag buy01-product-service:latest buy01-product-service:${imageTag}
                             docker tag buy01-media-service:latest buy01-media-service:${imageTag}
                             docker tag buy01-api-gateway:latest buy01-api-gateway:${imageTag}
+                            docker tag buy01-order-service:latest buy01-order-service:${imageTag}
                             docker tag buy01-frontend:latest buy01-frontend:${imageTag}
 
                             echo Docker images built and tagged
@@ -845,6 +903,7 @@ echo MEDIA_DB_NAME=media_db
                             <li><a href="${env.BUILD_URL}User_Service_Coverage/">User Service Coverage Report</a></li>
                             <li><a href="${env.BUILD_URL}Product_Service_Coverage/">Product Service Coverage Report</a></li>
                             <li><a href="${env.BUILD_URL}API_Gateway_Coverage/">API Gateway Coverage Report</a></li>
+                            <li><a href="${env.BUILD_URL}Order_Service_Coverage/">Order Service Coverage Report</a></li>
                         </ul>
 
                         <p style="color: #6c757d; font-size: 12px;">
