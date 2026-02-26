@@ -4,6 +4,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import service.order.exceptions.InsufficientFundsException;
+import service.order.exceptions.InsufficientStockException;
 import service.order.exceptions.OrderAccessDeniedException;
 import service.order.exceptions.OrderNotFoundException;
 import service.order.exceptions.OrderServiceException;
@@ -19,6 +20,11 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(InsufficientFundsException.class)
     public ResponseEntity<Map<String, String>> handleInsufficientFunds(InsufficientFundsException ex) {
         return ResponseEntity.status(402).body(Map.of(ERROR_KEY, ex.getMessage()));
+    }
+
+    @ExceptionHandler(InsufficientStockException.class)
+    public ResponseEntity<Map<String, String>> handleInsufficientStock(InsufficientStockException ex) {
+        return ResponseEntity.status(409).body(Map.of(ERROR_KEY, ex.getMessage()));
     }
 
     @ExceptionHandler(IllegalStateException.class)

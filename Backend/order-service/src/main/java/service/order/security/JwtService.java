@@ -2,10 +2,13 @@ package service.order.security;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import service.order.exceptions.JwtProcessingException;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
 
 @Service
@@ -39,7 +42,8 @@ public class JwtService {
                 }
             }
             return null;
-        } catch (Exception e) {
+        } catch (IllegalArgumentException | ArrayIndexOutOfBoundsException ignored) {
+            // Malformed token — treat as invalid (NumberFormatException is a subclass of IllegalArgumentException)
             return null;
         }
     }
@@ -51,8 +55,8 @@ public class JwtService {
             mac.init(secretKeySpec);
             byte[] hash = mac.doFinal(data.getBytes(StandardCharsets.UTF_8));
             return Base64.getUrlEncoder().withoutPadding().encodeToString(hash);
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to compute HMAC", e);
+        } catch (NoSuchAlgorithmException | InvalidKeyException e) {
+            throw new JwtProcessingException("Failed to compute HMAC", e);
         }
     }
 }
