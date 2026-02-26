@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import service.order.dtos.OrderDtos;
 import service.order.exceptions.InsufficientFundsException;
+import service.order.exceptions.InsufficientStockException;
 import service.order.exceptions.OrderAccessDeniedException;
 import service.order.exceptions.OrderNotFoundException;
 import service.order.exceptions.ProductNotFoundException;
@@ -53,6 +54,12 @@ public class OrderService {
         String productName = (String) product.get("name");
         String sellerId = (String) product.get("userId");
         double price = ((Number) product.get(PRODUCT_PRICE_KEY)).doubleValue();
+        int availableStock = ((Number) product.get("quantity")).intValue();
+
+        if (req.quantity() > availableStock) {
+            throw new InsufficientStockException(
+                String.format("Only %d unit(s) of '%s' are available.", availableStock, productName));
+        }
 
         Order order = new Order();
         order.setBuyerId(buyerId);
@@ -98,9 +105,16 @@ public class OrderService {
         if (order.getStatus() != Status.ADDED) {
             throw new IllegalStateException("Can only update quantity of cart items");
         }
-        order.setQuantity(quantity);
         Map<String, Object> product = fetchProduct(order.getProductId());
         double price = ((Number) product.get(PRODUCT_PRICE_KEY)).doubleValue();
+        int availableStock = ((Number) product.get("quantity")).intValue();
+
+        if (quantity > availableStock) {
+            throw new InsufficientStockException(
+                String.format("Only %d unit(s) of '%s' are available.", availableStock, product.get("name")));
+        }
+
+        order.setQuantity(quantity);
         order.setTotalPrice(price * quantity);
         order.setUpdatedAt(Instant.now());
         return toDto(repo.save(order));
@@ -118,6 +132,13 @@ public class OrderService {
             throw new InsufficientFundsException(
                 String.format("Insufficient balance. Required: $%.2f, Available: $%.2f",
                     order.getTotalPrice(), balance));
+        }
+
+        int availableStock = productServiceClient.getStock(order.getProductId());
+        if (order.getQuantity() > availableStock) {
+            throw new InsufficientStockException(
+                String.format("Not enough stock for '%s'. Requested: %d, Available: %d",
+                    order.getProductName(), order.getQuantity(), availableStock));
         }
 
         order.setStatus(Status.STARTED);
