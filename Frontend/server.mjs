@@ -36,8 +36,8 @@ const CSP_NORMAL =
   "style-src 'self' 'unsafe-inline'; " +
   "img-src 'self' data: http://localhost:8080 http://localhost:8083; " +
   "font-src 'self' data:; " +
-  "connect-src 'self' http://localhost:8080 http://localhost:8081 http://localhost:8082 " +
-  "http://localhost:8083 https://localhost:4443 ws://localhost:4200 wss://localhost:4443; " +
+  "connect-src 'self' http://localhost:8080 http://localhost:8081 http://localhost:8082 http://localhost:8083 " +
+  "https://localhost:4443 ws://localhost:4200 wss://localhost:4443; " +
   "media-src 'self'; " +
   "worker-src 'self'; " +
   "child-src 'self'; " +
