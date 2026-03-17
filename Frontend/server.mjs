@@ -26,8 +26,8 @@ app.disable('x-powered-by');
 // ─── FIX #7: Truncate BEFORE filtering to bound work on attacker-controlled input ───
 const sanitizeForLog = (value) => String(value ?? '')
   .slice(0, 200)
-  .replace(/[\r\n\t]/g, ' ')
-  .replace(/[^\x20-\x7E]/g, '?');
+  .replaceAll(/[\r\n\t]/g, ' ')
+  .replaceAll(/[^\x20-\x7E]/g, '?');
 
 // ─── FIX #4: Single source of truth for CSP strings ───────────────────────────────
 const CSP_NORMAL =
@@ -84,44 +84,44 @@ const applySecurityHeaders = (headers) => {
 // Single compiled regex is faster and easier to maintain than an array of patterns.
 // Uses case-insensitive flag; covers variant filenames (.env.local, .env.production, etc.)
 const SENSITIVE_PATH_RE = new RegExp(
-  '^\\/' + '(?:' + [
-    '\\.git(?:\\/|$)',
-    '\\.hg(?:\\/|$)',
-    '\\.svn(?:\\/|$)',
-    '\\.bzr(?:\\/|$)',
-    '\\.env(?:\\.[^/]*)?(?:\\/|$)',  // .env, .env.local, .env.production, etc.
-    '\\.idea(?:\\/|$)',
-    '\\.vscode(?:\\/|$)',
-    '\\.DS_Store(?:\\/|$)',
-    'node_modules(?:\\/|$)',
-    '\\.npm(?:\\/|$)',
-    '\\.gitignore$',
-    '\\.gitattributes$',
-    'package-lock\\.json$',
-    'yarn\\.lock$',
-    'composer\\.lock$',
-    'Gemfile\\.lock$',
-    '\\.htaccess$',
-    '\\.htpasswd$',
-    'web\\.config$',
-    'backup(?:\\/|$)',
-    '\\.backup(?:\\/|$)',
-    '\\.sql$',
-    '\\.bak$',
-    '\\.swp$',
-    '\\.swo$',
-    '__pycache__(?:\\/|$)',
-    '\\.pytest_cache(?:\\/|$)',
-    '\\.mypy_cache(?:\\/|$)',
-  ].join('|') + ')',
+  String.raw`^\/(?:` + [
+    String.raw`\.git(?:\/|$)`,
+    String.raw`\.hg(?:\/|$)`,
+    String.raw`\.svn(?:\/|$)`,
+    String.raw`\.bzr(?:\/|$)`,
+    String.raw`\.env(?:\.[^/]*)?(?:\/|$)`,
+    String.raw`\.idea(?:\/|$)`,
+    String.raw`\.vscode(?:\/|$)`,
+    String.raw`\.DS_Store(?:\/|$)`,
+    String.raw`node_modules(?:\/|$)`,
+    String.raw`\.npm(?:\/|$)`,
+    String.raw`\.gitignore$`,
+    String.raw`\.gitattributes$`,
+    String.raw`package-lock\.json$`,
+    String.raw`yarn\.lock$`,
+    String.raw`composer\.lock$`,
+    String.raw`Gemfile\.lock$`,
+    String.raw`\.htaccess$`,
+    String.raw`\.htpasswd$`,
+    String.raw`web\.config$`,
+    String.raw`backup(?:\/|$)`,
+    String.raw`\.backup(?:\/|$)`,
+    String.raw`\.sql$`,
+    String.raw`\.bak$`,
+    String.raw`\.swp$`,
+    String.raw`\.swo$`,
+    String.raw`__pycache__(?:\/|$)`,
+    String.raw`\.pytest_cache(?:\/|$)`,
+    String.raw`\.mypy_cache(?:\/|$)`,
+  ].join('|') + String.raw`)`,
   'i'
 );
+const warnSensitivePath = () => console.warn('Blocked access to sensitive path');
+
 app.use((req, res, next) => {
   if (SENSITIVE_PATH_RE.test(req.path)) {
-    console.warn('Blocked access to sensitive path');   // no user input in the log at all
-
+    warnSensitivePath();
     res.setHeader('Content-Security-Policy', CSP_RESTRICTIVE);
-    // ... rest of headers
     return res.status(403).send('Forbidden');
   }
   next();
@@ -235,7 +235,7 @@ redirectApp.use((req, res) => {
   const rawUrl = req.originalUrl;
   const safeUrl =
     typeof rawUrl === 'string' && /^\/(?![/\\])/.test(rawUrl)
-      ? rawUrl.replace(/[^\x20-\x7E]/g, '').slice(0, 500)
+      ? rawUrl.replaceAll(/[^\x20-\x7E]/g, '').slice(0, 500)
       : '/';
   res.redirect(301, `${REDIRECT_HTTPS_ORIGIN}${safeUrl}`);
 });
