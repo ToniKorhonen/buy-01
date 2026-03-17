@@ -82,9 +82,13 @@ export class OrderDashboardComponent implements OnInit {
     this.orders = this.orders.filter(o => o.id !== order.id);
   }
 
-  private replaceOrder(updated: OrderResponse) {
+  private replaceOrder(updated: OrderResponse): void {
     const idx = this.orders.findIndex(o => o.id === updated.id);
-    if (idx !== -1) this.orders[idx] = updated; else this.orders.unshift(updated);
+    if (idx === -1) {
+      this.orders.unshift(updated);
+    } else {
+      this.orders[idx] = updated;
+    }
   }
 
   statusLabel(status: string): string {

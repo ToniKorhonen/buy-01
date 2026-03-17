@@ -150,14 +150,5 @@ class AuthControllerTest {
                 .andExpect(status().isUnauthorized());
     }
 
-    /**
-     * INTENTIONALLY BREAKABLE TEST FOR AUDIT DEMO
-     * To demonstrate pipeline failure on test failure,
-     * you can uncomment this test and it will fail the build.
-     */
-    // @Test
-    // public void testIntentionalFailure_ForAuditDemo() {
-    //     org.junit.jupiter.api.Assertions.fail("This test is intentionally failing to demonstrate Jenkins test failure detection");
-    // }
 }
 

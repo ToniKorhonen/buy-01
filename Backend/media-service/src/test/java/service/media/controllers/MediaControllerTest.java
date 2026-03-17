@@ -66,8 +66,6 @@ class MediaControllerTest {
         mockMvc.perform(get("/api/media"))
                 .andExpect(status().isOk());
     }
-    // public void testIntentionalFailure_ForAuditDemo() {
-    //     org.junit.jupiter.api.Assertions.fail("This test is intentionally failing");
-    // }
+
 }
 

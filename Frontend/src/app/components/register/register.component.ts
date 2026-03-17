@@ -1,7 +1,8 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
+import { switchMap, catchError, of } from 'rxjs';
 import { UserService } from '../../services/user.service';
 import { MediaService } from '../../services/media.service';
 import { RegisterRequest } from '../../models/user.model';
@@ -13,7 +14,7 @@ import { RegisterRequest } from '../../models/user.model';
   templateUrl: './register.component.html',
   styleUrls: ['./register.component.scss']
 })
-export class RegisterComponent {
+export class RegisterComponent implements OnDestroy {
   private readonly userService = inject(UserService);
   private readonly mediaService = inject(MediaService);
   private readonly router = inject(Router);
@@ -27,134 +28,107 @@ export class RegisterComponent {
   avatarPreview: string | null = null;
   uploadingAvatar = false;
 
-  // File validation constants
-  private readonly MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
+  private readonly MAX_FILE_SIZE = 2 * 1024 * 1024;
   private readonly ALLOWED_TYPES = ['image/png', 'image/jpeg', 'image/jpg', 'image/gif'];
   private readonly CONVERTED_TYPES = ['image/webp', 'image/bmp', 'image/tiff'];
 
-  onFileSelected(event: Event) {
-    const input = event.target as HTMLInputElement;
-    if (input.files?.[0]) {
-      const file = input.files[0];
-      this.warning = '';
-      this.error = '';
+  private redirectTimer: ReturnType<typeof setTimeout> | null = null;
 
-      // Validate file size
-      if (file.size > this.MAX_FILE_SIZE) {
-        const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
-        this.error = `File size (${sizeMB}MB) exceeds the maximum allowed size of 2MB. Please choose a smaller image.`;
-        this.selectedFile = null;
-        this.avatarPreview = null;
-        input.value = ''; // Clear the input
-        return;
-      }
-
-      // Validate file type
-      if (!this.ALLOWED_TYPES.includes(file.type)) {
-        if (this.CONVERTED_TYPES.includes(file.type)) {
-          this.warning = `⚠️ ${file.type.split('/')[1].toUpperCase()} format will be converted to JPG/PNG. This may affect image quality.`;
-        } else {
-          this.error = `File type "${file.type}" is not supported. Please upload PNG, JPG, or GIF images only.`;
-          this.selectedFile = null;
-          this.avatarPreview = null;
-          input.value = '';
-          return;
-        }
-      }
-
-      this.selectedFile = file;
-
-      // Create preview
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        this.avatarPreview = e.target?.result as string;
-      };
-      reader.readAsDataURL(this.selectedFile);
-    }
+  ngOnDestroy(): void {
+    if (this.redirectTimer) clearTimeout(this.redirectTimer);
   }
 
-  submit() {
+  onFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+
+    this.warning = '';
+    this.error = '';
+
+    if (!file) return;
+
+    if (file.size > this.MAX_FILE_SIZE) {
+      const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
+      this.error = `File size (${sizeMB}MB) exceeds the 2MB limit. Please choose a smaller image.`;
+      this.clearFileSelection(input);
+      return;
+    }
+
+    if (!this.ALLOWED_TYPES.includes(file.type)) {
+      if (this.CONVERTED_TYPES.includes(file.type)) {
+        this.warning = `⚠️ ${file.type.split('/')[1].toUpperCase()} format will be converted to JPG/PNG.`;
+      } else {
+        this.error = `File type "${file.type}" is not supported. Please upload PNG, JPG, or GIF images only.`;
+        this.clearFileSelection(input);
+        return;
+      }
+    }
+
+    this.selectedFile = file;
+    const reader = new FileReader();
+    reader.onload = (e) => { this.avatarPreview = e.target?.result as string; };
+    reader.readAsDataURL(file);
+  }
+
+  submit(): void {
     this.loading = true;
     this.message = '';
     this.error = '';
 
-    // Register user first
-    this.registerUser();
+    const needsAvatarUpload = this.model.role === 'SELLER' && !!this.selectedFile;
+
+    if (needsAvatarUpload) {
+      this.registerWithAvatar();
+    } else {
+      this.registerOnly();
+    }
   }
 
-  private registerUser() {
+  private registerOnly(): void {
     this.userService.register(this.model).subscribe({
-      next: () => {
-        // If seller with avatar, auto-login and upload avatar
-        if (this.model.role === 'SELLER' && this.selectedFile) {
-          this.autoLoginAndUploadAvatar();
-        } else {
-          this.message = `Registered successfully! Redirecting to login...`;
-          this.loading = false;
-          this.uploadingAvatar = false;
-          setTimeout(() => {
-            this.router.navigate(['/login']);
-          }, 2000);
-        }
-      },
-      error: (err: any) => {
-        this.error = err?.error?.message || 'Registration failed';
-        this.loading = false;
-        this.uploadingAvatar = false;
-      }
+      next: () => this.redirectWithMessage('Registered successfully! Redirecting to login...'),
+      error: (err: any) => this.handleError(err, 'Registration failed')
     });
   }
 
-  private autoLoginAndUploadAvatar() {
-    // Auto-login to get JWT token
-    this.userService.login({ email: this.model.email, password: this.model.password }).subscribe({
-      next: () => {
-        // Now upload avatar with authentication
+  private registerWithAvatar(): void {
+    this.userService.register(this.model).pipe(
+      switchMap(() => this.userService.login({ email: this.model.email, password: this.model.password })),
+      switchMap(() => {
         this.uploadingAvatar = true;
-        this.mediaService.uploadMedia(this.selectedFile!).subscribe({
-          next: (mediaResponse) => {
-            // Update user profile with avatar ID
-            this.userService.updateProfile({ avatarId: mediaResponse.id }).subscribe({
-              next: () => {
-                this.message = `Registered successfully with avatar! Redirecting to login...`;
-                this.loading = false;
-                this.uploadingAvatar = false;
-                setTimeout(() => {
-                  this.router.navigate(['/login']);
-                }, 2000);
-              },
-              error: (err: any) => {
-                console.error('Failed to update profile with avatar:', err);
-                this.message = `Registered successfully, but avatar update failed. Redirecting to login...`;
-                this.loading = false;
-                this.uploadingAvatar = false;
-                setTimeout(() => {
-                  this.router.navigate(['/login']);
-                }, 2000);
-              }
-            });
-          },
-          error: (err: any) => {
-            console.error('Upload error:', err);
-            this.message = `Registered successfully, but avatar upload failed. Redirecting to login...`;
-            this.loading = false;
-            this.uploadingAvatar = false;
-            setTimeout(() => {
-              this.router.navigate(['/login']);
-            }, 2000);
-          }
-        });
-      },
-      error: (err: any) => {
-        console.error('Auto-login failed:', err);
-        this.message = `Registered successfully! Please login manually.`;
-        this.loading = false;
-        this.uploadingAvatar = false;
-        setTimeout(() => {
-          this.router.navigate(['/login']);
-        }, 2000);
-      }
+        return this.mediaService.uploadMedia(this.selectedFile!);
+      }),
+      switchMap((mediaResponse) => this.userService.updateProfile({ avatarId: mediaResponse.id }).pipe(
+        catchError((err) => {
+          console.error('Failed to update profile with avatar:', err);
+          return of(null);
+        })
+      )),
+      catchError((err) => {
+        console.error('Registration with avatar failed:', err);
+        return of(null);
+      })
+    ).subscribe(() => {
+      this.redirectWithMessage('Registered successfully! Redirecting to login...');
     });
+  }
+
+  private redirectWithMessage(msg: string): void {
+    this.message = msg;
+    this.loading = false;
+    this.uploadingAvatar = false;
+    this.redirectTimer = setTimeout(() => this.router.navigate(['/login']), 2000);
+  }
+
+  private handleError(err: any, fallback: string): void {
+    this.error = err?.error?.message || fallback;
+    this.loading = false;
+    this.uploadingAvatar = false;
+  }
+
+  private clearFileSelection(input: HTMLInputElement): void {
+    this.selectedFile = null;
+    this.avatarPreview = null;
+    input.value = '';
   }
 }
-

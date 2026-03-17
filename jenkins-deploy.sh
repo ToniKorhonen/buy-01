@@ -24,13 +24,13 @@ check_service_health() {
 
     echo -e "${YELLOW}⏳ Waiting for ${service_name} on port ${port}...${NC}"
 
-    while [ $attempt -le $max_attempts ]; do
+    while [[ $attempt -le $max_attempts ]]; do
         if nc -z localhost $port 2>/dev/null; then
             echo -e "${GREEN}✅ ${service_name} is healthy${NC}"
             return 0
         fi
 
-        if [ $attempt -eq $max_attempts ]; then
+        if [[ $attempt -eq $max_attempts ]]; then
             echo -e "${RED}❌ ${service_name} failed to start${NC}"
             return 1
         fi
@@ -49,6 +49,7 @@ rollback() {
     docker compose down
     echo -e "${RED}❌ Rollback complete. Please check the logs.${NC}"
     exit 1
+    return 1
 }
 
 # Trap errors and rollback

@@ -3,7 +3,7 @@ set -e
 echo "🛑 Stopping Buy-01 Application..."
 
 # Try stopping with buy01 project name (Jenkins deployment)
-if [ "$(docker ps -q -f name=buy01-)" ]; then
+if [[ "$(docker ps -q -f name=buy01-)" ]]; then
     echo "📦 Found containers with buy01 project name (Jenkins deployment)"
     COMPOSE_PROJECT_NAME=buy01 docker compose down
 else

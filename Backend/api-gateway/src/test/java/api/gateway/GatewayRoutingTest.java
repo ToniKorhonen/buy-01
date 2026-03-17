@@ -69,13 +69,6 @@ import static org.junit.jupiter.api.Assertions.*;
         }
     }
 
-    /**
-     * INTENTIONALLY BREAKABLE TEST FOR AUDIT DEMO
-     * Uncomment to demonstrate test failure detection
-     */
-    // @Test
-    // public void testIntentionalFailure_ForAuditDemo() {
-    //     fail("This test is intentionally failing to demonstrate Jenkins test failure detection");
-    // }
+
 }
 
