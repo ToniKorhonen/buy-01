@@ -92,12 +92,17 @@ public class ProductService {
     /**
      * Adjust stock by a delta (negative = deduct, positive = restock).
      * Called internally by order-service.
+     * Throws IllegalStateException if deduction would result in negative stock.
      */
     @Transactional
     public void adjustStock(String productId, int delta) {
         Product p = find(productId);
         int newQty = p.getQuantity() + delta;
-        if (newQty < 0) newQty = 0;
+        if (newQty < 0) {
+            throw new IllegalStateException(
+                String.format("Insufficient stock for product %s. Available: %d, Requested deduction: %d",
+                    productId, p.getQuantity(), -delta));
+        }
         p.setQuantity(newQty);
         repo.save(p);
     }

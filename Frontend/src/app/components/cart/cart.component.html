@@ -18,7 +18,7 @@
   @if (!loading && cartItems.length > 0) {
     <div class="cart-items">
       @for (item of cartItems; track item.id) {
-        <div class="cart-item">
+        <div class="cart-item" [class.item-stock-warning]="itemExceedsStock(item)">
           <div class="item-info">
             <h3 class="item-name">{{ item.productName }}</h3>
             <p class="item-price">${{ (item.totalPrice / item.quantity).toFixed(2) }} each</p>
@@ -45,8 +45,8 @@
           <div class="item-actions">
             <button class="btn btn-primary btn-sm"
               (click)="payOnDelivery(item)"
-              [disabled]="actionLoading[item.id] || !itemAffordable(item)"
-              [title]="!itemAffordable(item) ? 'Insufficient balance' : 'Pay on delivery'">
+              [disabled]="actionLoading[item.id] || !canPay(item)"
+              [title]="!itemAffordable(item) ? 'Insufficient balance' : itemExceedsStock(item) ? 'Reduce quantity to match available stock' : 'Pay on delivery'">
               {{ actionLoading[item.id] ? 'Placing...' : '💳 Pay on Delivery' }}
             </button>
             <button class="btn btn-danger btn-sm"
@@ -54,8 +54,31 @@
               [disabled]="actionLoading[item.id]">
               🗑 Remove
             </button>
+
             @if (!itemAffordable(item)) {
-              <p class="insufficient-warning">⚠ Insufficient balance</p>
+              <p class="item-warning insufficient-warning">⚠ Insufficient balance</p>
+            }
+            @if (itemExceedsStock(item)) {
+              <div class="stock-warning">
+                <p class="item-warning">
+                  ⚠ Only {{ availableStockFor(item) }} in stock (you have {{ item.quantity }})
+                </p>
+                <div class="stock-actions">
+                  @if (availableStockFor(item) > 0) {
+                    <button class="btn btn-warning btn-xs"
+                      (click)="fixQuantityToStock(item)"
+                      [disabled]="actionLoading[item.id]"
+                      title="Set quantity to maximum available">
+                      Set to {{ availableStockFor(item) }}
+                    </button>
+                  }
+                  <button class="btn btn-danger btn-xs"
+                    (click)="removeFromCart(item)"
+                    [disabled]="actionLoading[item.id]">
+                    Remove item
+                  </button>
+                </div>
+              </div>
             }
           </div>
         </div>
@@ -74,9 +97,13 @@
       @if (insufficientFunds) {
         <p class="funds-error">⚠ Insufficient balance to pay for all items. You need ${{ (totalPrice - currentBalance).toFixed(2) }} more.</p>
       }
+      @if (hasStockWarnings) {
+        <p class="funds-error">⚠ Some items exceed available stock. Please fix quantities or remove them before checking out.</p>
+      }
       <button class="btn btn-primary btn-lg"
         (click)="payAllOnDelivery()"
-        [disabled]="insufficientFunds">
+        [disabled]="insufficientFunds || hasStockWarnings"
+        [title]="hasStockWarnings ? 'Resolve stock issues before paying' : ''">
         💳 Pay All on Delivery
       </button>
     </div>
