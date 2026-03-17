@@ -1,7 +1,6 @@
 import { Component, inject, OnInit } from '@angular/core';
-import { RouterOutlet, RouterModule, RouterLink, RouterLinkActive } from '@angular/router';
+import {RouterOutlet, RouterModule, RouterLink, RouterLinkActive, Router} from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
 import { UserService } from './services/user.service';
 import { MediaService } from './services/media.service';
 

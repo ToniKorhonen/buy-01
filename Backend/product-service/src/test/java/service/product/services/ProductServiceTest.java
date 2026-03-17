@@ -54,13 +54,6 @@ class ProductServiceTest {
         assertFalse(validCategory.trim().isEmpty(), "Category should not be empty");
     }
 
-    /**
-     * INTENTIONALLY BREAKABLE TEST FOR AUDIT DEMO
-     * Uncomment to demonstrate test failure detection
-     */
-    // @Test
-    // public void testIntentionalFailure_ForAuditDemo() {
-    //     fail("This test is intentionally failing");
-    // }
+
 }
 

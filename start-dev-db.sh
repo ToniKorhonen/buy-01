@@ -12,7 +12,7 @@ fi
 if command -v systemctl &> /dev/null; then
     echo "Starting MongoDB with systemctl..."
     sudo systemctl start mongod
-    if [ $? -eq 0 ]; then
+    if [[ $? -eq 0 ]]; then
         echo "✅ MongoDB started successfully"
         exit 0
     fi
@@ -22,7 +22,7 @@ fi
 if command -v service &> /dev/null; then
     echo "Starting MongoDB with service..."
     sudo service mongod start
-    if [ $? -eq 0 ]; then
+    if [[ $? -eq 0 ]]; then
         echo "✅ MongoDB started successfully"
         exit 0
     fi

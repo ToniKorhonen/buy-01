@@ -222,7 +222,7 @@ export class ProductsComponent implements OnInit, OnDestroy {
         this.stockMin = filters.stockMin;
         this.stockMax = filters.stockMax;
       } catch (e) {
-        // Invalid saved data, ignore
+        console.log("Failed to load saved filters:", e);
       }
     }
   }

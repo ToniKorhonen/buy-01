@@ -7,7 +7,7 @@ RUN mvn clean package -DskipTests -Dmaven.javadoc.skip=true
 FROM eclipse-temurin:17-jre-alpine
 RUN addgroup -g 1001 appgroup && \
     adduser -D -u 1001 -G appgroup appuser && \
-    apk add --no-cache curl wget netcat-openbsd && \
+    apk add --no-cache curl netcat-openbsd wget && \
     rm -rf /var/cache/apk/* && \
     mkdir -p /app && \
     chown appuser:appgroup /app

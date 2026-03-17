@@ -48,13 +48,6 @@ class UserServiceTest {
         assertTrue(validUsername.matches("^[a-zA-Z0-9_]+$"), "Username should only contain alphanumeric and underscore");
     }
 
-    /**
-     * INTENTIONALLY BREAKABLE TEST FOR AUDIT DEMO
-     * Uncomment to demonstrate test failure detection
-     */
-    // @Test
-    // public void testIntentionalFailure_ForAuditDemo() {
-    //     fail("This test is intentionally failing to demonstrate Jenkins test failure detection");
-    // }
+
 }
 

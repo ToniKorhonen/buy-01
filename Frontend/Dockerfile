@@ -12,20 +12,12 @@ RUN npm run build -- --configuration=production
 # Runtime stage - minimal
 FROM node:20-alpine
 
-# Create non-root user and group, install packages, generate certs in one layer
+# Create non-root user and group, install runtime packages in one layer
 RUN addgroup -g 1001 appgroup && \
     adduser -D -u 1001 -G appgroup appuser && \
-    apk add --no-cache curl openssl wget && \
+    apk add --no-cache curl wget && \
     rm -rf /var/cache/apk/* && \
-    mkdir -p /app/certs && \
-    openssl req -x509 -newkey rsa:4096 -nodes \
-        -keyout /app/certs/key.pem \
-        -out /app/certs/cert.pem \
-        -days 365 \
-        -subj "/C=US/ST=State/L=City/O=Buy01/CN=localhost" && \
-    chmod 400 /app/certs/key.pem && \
-    chmod 444 /app/certs/cert.pem && \
-    chown -R appuser:appgroup /app
+    mkdir -p /app/certs
 
 WORKDIR /app
 
@@ -33,14 +25,18 @@ WORKDIR /app
 COPY --chown=root:root package*.json ./
 COPY --chown=root:root --from=build /app/dist/Frontend ./dist/Frontend
 COPY --chown=root:root server.mjs ./
+COPY --chown=root:root certs ./certs
 
-# Install dependencies and set all files to read-only
+# Install dependencies and harden file permissions
 RUN npm ci --only=production --ignore-scripts && \
     npm cache clean --force && \
     chmod -R 555 dist/ && \
     chmod 444 server.mjs package*.json package-lock.json && \
+    chmod 444 /app/certs/cert.pem && \
+    chmod 400 /app/certs/key.pem && \
     find node_modules -type d -exec chmod 555 {} \; && \
-    find node_modules -type f -exec chmod 444 {} \;
+    find node_modules -type f -exec chmod 444 {} \; && \
+    chown -R appuser:appgroup /app
 
 # Switch to non-root user
 USER appuser

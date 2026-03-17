@@ -17,7 +17,7 @@ public class UserDtos {
 
             @NotBlank(message = "Password is required")
             @Size(min = 8, max = 128, message = "Password must be between 8 and 128 characters")
-            @Pattern(regexp = "^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>\\/?]).*$",
+            @Pattern(regexp = "^(?=.*\\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>\\/?]).*$",
                     message = "Password must contain at least one uppercase letter, one lowercase letter, one number and one special character")
             String password,
 
@@ -39,7 +39,7 @@ public class UserDtos {
             String email,
 
             @Size(min = 8, max = 128, message = "Password must be between 8 and 128 characters")
-            @Pattern(regexp = "^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>\\/?]).*$",
+            @Pattern(regexp = "^(?=.*\\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>\\/?]).*$",
                     message = "Password must contain at least one uppercase letter, one lowercase letter, one number and one special character")
             String password,
 

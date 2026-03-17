@@ -1,21 +1,21 @@
 #!/bin/bash
 
 # Load environment variables from .env file
-if [ -f .env ]; then
+if [[ -f .env ]]; then
     echo "Loading environment variables from .env file..."
-    export $(cat .env | grep -v '^#' | grep -v '^$' | xargs)
+    export $(grep -v '^#' .env | grep -v '^$' | xargs)
     echo "✓ Environment variables loaded"
 else
-    echo "ERROR: .env file not found!"
-    echo "Please create a .env file based on .env.example"
-    echo "Generate a secure JWT secret using: openssl rand -base64 64"
+    echo "ERROR: .env file not found!" >&2
+    echo "Please create a .env file based on .env.example" >&2
+    echo "Generate a secure JWT secret using: openssl rand -base64 64" >&2
     exit 1
 fi
 
 # Validate required environment variables
-if [ -z "$JWT_SECRET" ]; then
-    echo "ERROR: JWT_SECRET environment variable is not set!"
-    echo "Please set JWT_SECRET in your .env file"
+if [[ -z "$JWT_SECRET" ]]; then
+    echo "ERROR: JWT_SECRET environment variable is not set!" >&2
+    echo "Please set JWT_SECRET in your .env file" >&2
     exit 1
 fi
 
@@ -36,4 +36,3 @@ echo "  cd Backend/user-service && mvn spring-boot:run"
 echo "  cd Backend/product-service && mvn spring-boot:run"
 echo "  cd Backend/media-service && mvn spring-boot:run"
 echo "  cd Backend/api-gateway && mvn spring-boot:run"
-
