@@ -68,7 +68,7 @@ const CSP_RESTRICTIVE =
 
 // Function to apply security headers to response headers object (used by proxy callbacks)
 const applySecurityHeaders = (headers) => {
-  const existingCSP = headers['content-security-policy'] || headers['Content-Security-Policy'];
+  const existingCSP = headers['content-security-policy'] ?? headers['Content-Security-Policy'];
 
   if (existingCSP) {
     console.log(`  → Existing CSP: ${existingCSP.substring(0, 50)}...`);
@@ -77,11 +77,12 @@ const applySecurityHeaders = (headers) => {
   delete headers['content-security-policy'];
   delete headers['Content-Security-Policy'];
 
-  if (existingCSP && existingCSP.includes("default-src 'none'")) {
+  headers['content-security-policy'] = existingCSP?.includes("default-src 'none'")
+    ? CSP_RESTRICTIVE
+    : CSP_NORMAL;
+
+  if (existingCSP?.includes("default-src 'none'")) {
     console.log('  → Applying restrictive CSP with frame-ancestors and form-action');
-    headers['content-security-policy'] = CSP_RESTRICTIVE;
-  } else {
-    headers['content-security-policy'] = CSP_NORMAL;
   }
 
   headers['x-frame-options'] = 'SAMEORIGIN';

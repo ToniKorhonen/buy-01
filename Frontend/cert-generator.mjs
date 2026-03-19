@@ -54,7 +54,7 @@ function validateSubjectParam(value, maxLength = 64) {
  * Validate numeric certificate days parameter
  */
 function validateCertDays(value) {
-  const days = parseInt(value, 10);
+  const days = Number.parseInt(value, 10);
   if (!Number.isInteger(days) || days < 1 || days > 3650) {
     return 365; // Default safe value
   }
@@ -83,7 +83,7 @@ function certificatesExist() {
 
     // Basic validation: check for PEM headers
     const hasCertHeader = cert.includes('-----BEGIN CERTIFICATE-----') && cert.includes('-----END CERTIFICATE-----');
-    const hasKeyHeader = (key.includes('-----BEGIN PRIVATE KEY-----') && key.includes('-----END PRIVATE KEY-----')) ||
+    const hasKeyHeader = (key.includes('-----BEGIN PRIVATE KEY-----') && key.includes('-----END PRIVATE KEY-----')) ??
                          (key.includes('-----BEGIN RSA PRIVATE KEY-----') && key.includes('-----END RSA PRIVATE KEY-----'));
 
     return hasCertHeader && hasKeyHeader;
@@ -111,8 +111,7 @@ function generateCertificate() {
       console.log(`   Subject: ${subject}`);
       console.log(`   Valid for: ${CERT_DAYS} days`);
 
-      // Use spawn with arguments array to avoid shell injection
-      // Set explicit safe PATH environment variable with only fixed, unwriteable directories
+
       const openssl = spawn('openssl', [
         'req',
         '-x509',
@@ -124,7 +123,6 @@ function generateCertificate() {
         '-subj', subject,
       ], {
         env: {
-          ...process.env,
           PATH: SAFE_PATH,
         },
         stdio: ['pipe', 'pipe', 'pipe'],
