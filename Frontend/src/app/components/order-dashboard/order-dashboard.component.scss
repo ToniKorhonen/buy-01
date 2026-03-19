@@ -82,8 +82,8 @@
   cursor: pointer; font-size: 13px; font-weight: 600;
   transition: all 0.2s; white-space: nowrap;
 
-  &.btn-primary { background: #007bff; color: white; &:hover:not(:disabled) { background: #0056b3; } }
-  &.btn-success { background: #28a745; color: white; &:hover:not(:disabled) { background: #1e7e34; } }
+  &.btn-primary { background: #026DDE; color: white; &:hover:not(:disabled) { background: #0056b3; } }
+  &.btn-success { background: #25883c; color: white; &:hover:not(:disabled) { background: #1e7e34; } }
   &.btn-danger { background: #dc3545; color: white; &:hover:not(:disabled) { background: #a71d2a; } }
   &.btn-ghost { background: transparent; color: #888; border: 1px solid #ddd; &:hover:not(:disabled) { background: #f5f5f5; } }
   &:disabled { opacity: 0.6; cursor: not-allowed; }
