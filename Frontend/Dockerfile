@@ -25,15 +25,16 @@ WORKDIR /app
 COPY --chown=root:root package*.json ./
 COPY --chown=root:root --from=build /app/dist/Frontend ./dist/Frontend
 COPY --chown=root:root server.mjs ./
-COPY --chown=root:root certs ./certs
+COPY --chown=root:root cert-generator.mjs ./
 
 # Install dependencies and harden file permissions
+# Create certs directory with proper permissions (will be populated by cert-generator at runtime)
 RUN npm ci --only=production --ignore-scripts && \
     npm cache clean --force && \
     chmod -R 555 dist/ && \
-    chmod 444 server.mjs package*.json package-lock.json && \
-    chmod 444 /app/certs/cert.pem && \
-    chmod 400 /app/certs/key.pem && \
+    chmod 444 server.mjs cert-generator.mjs package*.json package-lock.json && \
+    mkdir -p /app/certs && \
+    chmod 755 /app/certs && \
     find node_modules -type d -exec chmod 555 {} \; && \
     find node_modules -type f -exec chmod 444 {} \; && \
     chown -R appuser:appgroup /app
@@ -45,4 +46,4 @@ EXPOSE 4200 4443
 ENV NODE_ENV=production
 HEALTHCHECK --interval=30s --timeout=3s --start-period=20s --retries=3 \
   CMD node -e "require('https').get('https://localhost:4443', {rejectUnauthorized: false}, (res) => process.exit(res.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))"
-CMD ["node", "server.mjs"]
+CMD ["sh", "-c", "node cert-generator.mjs && node server.mjs"]

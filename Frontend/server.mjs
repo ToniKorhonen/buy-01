@@ -15,10 +15,26 @@ const HTTPS_PORT = 4443;
 const REDIRECT_HTTPS_ORIGIN = `https://localhost:${HTTPS_PORT}`;
 
 // Load SSL certificate
-const sslOptions = {
-  key: fs.readFileSync(path.join(__dirname, 'certs', 'key.pem')),
-  cert: fs.readFileSync(path.join(__dirname, 'certs', 'cert.pem'))
-};
+const sslOptions = (() => {
+  try {
+    const keyPath = path.join(__dirname, 'certs', 'key.pem');
+    const certPath = path.join(__dirname, 'certs', 'cert.pem');
+
+    if (!fs.existsSync(keyPath) || !fs.existsSync(certPath)) {
+      throw new Error(`SSL certificates not found at ${keyPath} or ${certPath}`);
+    }
+
+    return {
+      key: fs.readFileSync(keyPath),
+      cert: fs.readFileSync(certPath)
+    };
+  } catch (err) {
+    console.error('❌ FATAL: Failed to load SSL certificates');
+    console.error(`   Error: ${err.message}`);
+    console.error('   Make sure cert-generator.mjs has run successfully');
+    process.exit(1);
+  }
+})();
 
 // Disable X-Powered-By header to prevent information leakage
 app.disable('x-powered-by');
