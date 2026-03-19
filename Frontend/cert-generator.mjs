@@ -24,7 +24,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { execSync } from 'node:child_process';
+import { spawn } from 'node:child_process';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -69,45 +69,71 @@ function certificatesExist() {
  * Generate self-signed certificate
  */
 function generateCertificate() {
-  try {
-    // Ensure certs directory exists
-    if (!fs.existsSync(CERTS_DIR)) {
-      fs.mkdirSync(CERTS_DIR, { mode: 0o755, recursive: true });
-      console.log(`📁 Created certificates directory: ${CERTS_DIR}`);
+  return new Promise((resolve, reject) => {
+    try {
+      // Ensure certs directory exists
+      if (!fs.existsSync(CERTS_DIR)) {
+        fs.mkdirSync(CERTS_DIR, { mode: 0o755, recursive: true });
+        console.log(`📁 Created certificates directory: ${CERTS_DIR}`);
+      }
+
+      const subject = `/C=${CERT_COUNTRY}/ST=${CERT_STATE}/L=${CERT_LOCALITY}/O=${CERT_ORG}/CN=${CERT_COMMON_NAME}`;
+
+      console.log('🔐 Generating self-signed SSL/TLS certificate...');
+      console.log(`   Subject: ${subject}`);
+      console.log(`   Valid for: ${CERT_DAYS} days`);
+
+      // Use spawn with arguments array to avoid shell injection
+      const openssl = spawn('openssl', [
+        'req',
+        '-x509',
+        '-newkey', 'rsa:2048',
+        '-keyout', KEY_FILE,
+        '-out', CERT_FILE,
+        '-days', String(CERT_DAYS),
+        '-nodes',
+        '-subj', subject,
+      ]);
+
+      let errorOutput = '';
+
+      openssl.stderr.on('data', (data) => {
+        errorOutput += data.toString();
+      });
+
+      openssl.on('close', (code) => {
+        if (code !== 0) {
+          reject(new Error(`OpenSSL failed with code ${code}: ${errorOutput}`));
+          return;
+        }
+
+        try {
+          // Set proper file permissions
+          fs.chmodSync(KEY_FILE, 0o400);  // Read-only for owner (more restrictive for private key)
+          fs.chmodSync(CERT_FILE, 0o440); // Read-only for owner and group (restrict world access)
+
+          console.log(`✅ Certificate generated successfully!`);
+          console.log(`   Key: ${KEY_FILE} (0400)`);
+          console.log(`   Cert: ${CERT_FILE} (0440)`);
+          resolve();
+        } catch (err) {
+          reject(err);
+        }
+      });
+
+      openssl.on('error', (err) => {
+        reject(err);
+      });
+    } catch (err) {
+      reject(err);
     }
-
-    const subject = `/C=${CERT_COUNTRY}/ST=${CERT_STATE}/L=${CERT_LOCALITY}/O=${CERT_ORG}/CN=${CERT_COMMON_NAME}`;
-
-    console.log('🔐 Generating self-signed SSL/TLS certificate...');
-    console.log(`   Subject: ${subject}`);
-    console.log(`   Valid for: ${CERT_DAYS} days`);
-
-    // Generate private key and self-signed certificate using OpenSSL
-    const opensslCommand = `openssl req -x509 -newkey rsa:2048 -keyout "${KEY_FILE}" -out "${CERT_FILE}" -days ${CERT_DAYS} -nodes -subj "${subject}" 2>/dev/null`;
-
-    execSync(opensslCommand, {
-      stdio: ['pipe', 'pipe', 'pipe'],
-      shell: true,
-    });
-
-    // Set proper file permissions
-    fs.chmodSync(KEY_FILE, 0o400);  // Read-only for owner (more restrictive for private key)
-    fs.chmodSync(CERT_FILE, 0o440); // Read-only for owner and group (restrict world access)
-
-    console.log(`✅ Certificate generated successfully!`);
-    console.log(`   Key: ${KEY_FILE} (0400)`);
-    console.log(`   Cert: ${CERT_FILE} (0440)`);
-  } catch (err) {
-    console.error(`❌ Error generating certificate: ${err.message}`);
-    console.error('   Make sure OpenSSL is installed on your system');
-    process.exit(1);
-  }
+  });
 }
 
 /**
  * Main function
  */
-function main() {
+async function main() {
   console.log('🔑 Certificate Manager Starting...');
 
   if (certificatesExist()) {
@@ -119,8 +145,14 @@ function main() {
   }
 
   console.log('⚠️  Certificates not found or invalid');
-  generateCertificate();
-  console.log('');
+  try {
+    await generateCertificate();
+    console.log('');
+  } catch (err) {
+    console.error(`❌ Error generating certificate: ${err.message}`);
+    console.error('   Make sure OpenSSL is installed on your system');
+    process.exit(1);
+  }
 }
 
 main();
