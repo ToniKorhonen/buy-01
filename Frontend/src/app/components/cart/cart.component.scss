@@ -64,10 +64,10 @@
 
       .qty-btn {
         width: 32px; height: 32px; border-radius: 50%;
-        border: 2px solid #007bff; background: white; color: #007bff;
+        border: 2px solid #007bff; background: white; color: #026DDE;
         font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center;
         transition: all 0.2s;
-        &:hover:not(:disabled) { background: #007bff; color: white; }
+        &:hover:not(:disabled) { background: #026DDE; color: white; }
         &:disabled { opacity: 0.4; cursor: not-allowed; }
       }
 
@@ -147,7 +147,7 @@
   cursor: pointer; font-size: 14px; font-weight: 600;
   transition: all 0.2s; text-decoration: none; display: inline-block;
 
-  &.btn-primary { background: #007bff; color: white; &:hover:not(:disabled) { background: #0056b3; } }
+  &.btn-primary { background: #026DDE; color: white; &:hover:not(:disabled) { background: #0056b3; } }
   &.btn-secondary { background: #6c757d; color: white; &:hover:not(:disabled) { background: #545b62; } }
   &.btn-danger { background: #dc3545; color: white; &:hover:not(:disabled) { background: #a71d2a; } }
   &.btn-warning { background: #ffc107; color: #212529; &:hover:not(:disabled) { background: #e0a800; } }
