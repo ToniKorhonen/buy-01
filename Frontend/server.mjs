@@ -182,11 +182,18 @@ if (isProduction) {
   console.log('🔧 Running in DEVELOPMENT mode - proxying to Angular dev server');
 
   console.log('Starting Angular dev server...');
+  const SAFE_PATH = '/usr/local/bin:/usr/bin:/bin';
+
   ngServe = spawn('npm', ['run', 'ng-serve'], {
     cwd: __dirname,
     stdio: 'inherit',
-    shell: true
+    shell: true,
+    env: {
+      ...process.env,
+      PATH: SAFE_PATH,
+    },
   });
+
 
   ngServe.on('error', (error) => {
     console.error('Failed to start Angular dev server:', error);
