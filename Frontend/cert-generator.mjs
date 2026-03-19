@@ -124,6 +124,9 @@ function generateCertificate() {
       ], {
         env: {
           PATH: SAFE_PATH,
+          // Include minimal required env vars for openssl to function
+          HOME: process.env.HOME || '/root',
+          TMPDIR: process.env.TMPDIR || '/tmp',
         },
         stdio: ['pipe', 'pipe', 'pipe'],
       });

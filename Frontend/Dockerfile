@@ -15,7 +15,7 @@ FROM node:20-alpine
 # Create non-root user and group, install runtime packages in one layer
 RUN addgroup -g 1001 appgroup && \
     adduser -D -u 1001 -G appgroup appuser && \
-    apk add --no-cache curl wget && \
+    apk add --no-cache curl wget openssl && \
     rm -rf /var/cache/apk/* && \
     mkdir -p /app/certs
 

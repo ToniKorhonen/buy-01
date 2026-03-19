@@ -199,16 +199,22 @@ if (isProduction) {
   console.log('🔧 Running in DEVELOPMENT mode - proxying to Angular dev server');
 
   console.log('Starting Angular dev server...');
-  const SAFE_PATH = '/usr/local/bin:/usr/bin:/bin';
+
+  // Whitelist only safe environment variables needed for npm and Angular dev server
+  const safeEnv = {
+    PATH: process.env.PATH || '/usr/local/bin:/usr/bin:/bin',
+    NODE_ENV: 'development',
+    HOME: process.env.HOME || '/root',
+    TMPDIR: process.env.TMPDIR || '/tmp',
+    USER: process.env.USER || 'app',
+    LANG: process.env.LANG || 'en_US.UTF-8',
+  };
 
   ngServe = spawn('npm', ['run', 'ng-serve'], {
     cwd: __dirname,
     stdio: 'inherit',
     shell: true,
-    env: {
-      ...process.env,
-      PATH: SAFE_PATH,
-    },
+    env: safeEnv,
   });
 
 
