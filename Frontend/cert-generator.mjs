@@ -92,11 +92,11 @@ function generateCertificate() {
 
     // Set proper file permissions
     fs.chmodSync(KEY_FILE, 0o400);  // Read-only for owner (more restrictive for private key)
-    fs.chmodSync(CERT_FILE, 0o444); // Read-only for all (public cert)
+    fs.chmodSync(CERT_FILE, 0o440); // Read-only for owner and group (restrict world access)
 
     console.log(`✅ Certificate generated successfully!`);
     console.log(`   Key: ${KEY_FILE} (0400)`);
-    console.log(`   Cert: ${CERT_FILE} (0444)`);
+    console.log(`   Cert: ${CERT_FILE} (0440)`);
   } catch (err) {
     console.error(`❌ Error generating certificate: ${err.message}`);
     console.error('   Make sure OpenSSL is installed on your system');

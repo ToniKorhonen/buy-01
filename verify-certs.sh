@@ -9,6 +9,9 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CONTAINER_NAME="buy01-frontend-verify"
 IMAGE_NAME="buy01-frontend:verify-latest"
 
+# Assign command line argument to local variable
+COMMAND="${1:-help}"
+
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -17,50 +20,62 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 print_header() {
+    local message="$1"
     echo -e "\n${BLUE}═══════════════════════════════════════════════════════════${NC}"
-    echo -e "${BLUE}$1${NC}"
+    echo -e "${BLUE}${message}${NC}"
     echo -e "${BLUE}═══════════════════════════════════════════════════════════${NC}\n"
+    return 0
 }
 
 print_success() {
-    echo -e "${GREEN}✓ $1${NC}"
+    local message="$1"
+    echo -e "${GREEN}✓ ${message}${NC}"
+    return 0
 }
 
 print_error() {
-    echo -e "${RED}✗ $1${NC}"
+    local message="$1"
+    echo -e "${RED}✗ ${message}${NC}"
+    return 0
 }
 
 print_warning() {
-    echo -e "${YELLOW}⚠ $1${NC}"
+    local message="$1"
+    echo -e "${YELLOW}⚠ ${message}${NC}"
+    return 0
 }
 
 print_info() {
-    echo -e "${BLUE}ℹ $1${NC}"
+    local message="$1"
+    echo -e "${BLUE}ℹ ${message}${NC}"
+    return 0
 }
 
 cleanup() {
     print_info "Cleaning up..."
     docker rm -f "$CONTAINER_NAME" 2>/dev/null || true
     print_success "Cleanup complete"
+    return 0
 }
 
 verify_build() {
     print_header "Building Frontend Docker Image"
 
-    if [ ! -f "$SCRIPT_DIR/Frontend/Dockerfile" ]; then
+    if [[ ! -f "$SCRIPT_DIR/Frontend/Dockerfile" ]]; then
         print_error "Dockerfile not found at $SCRIPT_DIR/Frontend/Dockerfile"
-        exit 1
+        return 1
     fi
 
-    cd "$SCRIPT_DIR"
+    cd "$SCRIPT_DIR" || return 1
 
     print_info "Building image: $IMAGE_NAME"
     if docker build -t "$IMAGE_NAME" -f Frontend/Dockerfile Frontend/; then
         print_success "Docker image built successfully"
         docker image ls | grep "buy01-frontend:verify-latest"
+        return 0
     else
         print_error "Docker build failed"
-        exit 1
+        return 1
     fi
 }
 
@@ -77,7 +92,7 @@ verify_runtime() {
         print_success "Container started"
     else
         print_error "Failed to start container"
-        exit 1
+        return 1
     fi
 
     # Wait for startup
@@ -92,7 +107,7 @@ verify_runtime() {
         print_error "Certificate file not found!"
         docker logs "$CONTAINER_NAME" | tail -20
         cleanup
-        exit 1
+        return 1
     fi
 
     if docker exec "$CONTAINER_NAME" test -f /app/certs/key.pem; then
@@ -101,7 +116,7 @@ verify_runtime() {
         print_error "Private key file not found!"
         docker logs "$CONTAINER_NAME" | tail -20
         cleanup
-        exit 1
+        return 1
     fi
 
     # Check certificate details
@@ -120,6 +135,7 @@ verify_runtime() {
     # Check container logs
     print_header "Container Startup Logs"
     docker logs "$CONTAINER_NAME" | head -30
+    return 0
 }
 
 verify_https() {
@@ -127,7 +143,7 @@ verify_https() {
 
     if ! docker exec "$CONTAINER_NAME" test -f /app/certs/cert.pem; then
         print_error "Container not running or certs not generated"
-        exit 1
+        return 1
     fi
 
     print_info "Testing HTTPS on port 4443..."
@@ -149,6 +165,8 @@ verify_https() {
     else
         print_info "curl not available for host-level test"
     fi
+
+    return 0
 }
 
 verify_healthcheck() {
@@ -160,26 +178,30 @@ verify_healthcheck() {
     else
         print_warning "Healthcheck command failed (may be timing issue)"
     fi
+
+    return 0
 }
 
 run_all_tests() {
     print_header "Running Full Certificate Verification Suite"
 
-    verify_build
-    verify_runtime
-    verify_https
-    verify_healthcheck
+    verify_build || return 1
+    verify_runtime || return 1
+    verify_https || return 1
+    verify_healthcheck || return 1
 
     print_header "Verification Complete"
     print_success "All tests passed! ✓"
     print_info "Container is running as: $CONTAINER_NAME"
     print_info "You can inspect it with: docker exec $CONTAINER_NAME sh"
     print_info "View logs with: docker logs $CONTAINER_NAME"
+
+    return 0
 }
 
 show_usage() {
-    cat << EOF
-Usage: $0 [COMMAND]
+    cat << 'EOF'
+Usage: ./verify-certs.sh [COMMAND]
 
 Commands:
   build       - Build the Docker image with updated Dockerfile
@@ -189,39 +211,45 @@ Commands:
   help        - Show this help message
 
 Examples:
-  $0 test           # Run full verification
-  $0 build          # Just build the image
-  $0 run            # Just test runtime behavior
+  ./verify-certs.sh test           # Run full verification
+  ./verify-certs.sh build          # Just build the image
+  ./verify-certs.sh run            # Just test runtime behavior
 
 Environment Variables:
   CONTAINER_NAME    - Override container name (default: buy01-frontend-verify)
   IMAGE_NAME        - Override image name (default: buy01-frontend:verify-latest)
 
 EOF
+    return 0
 }
 
-# Main script
-case "${1:-help}" in
+# Main script logic
+case "$COMMAND" in
     build)
         verify_build
+        exit $?
         ;;
     run)
-        verify_runtime
-        verify_https
-        verify_healthcheck
+        verify_runtime || exit 1
+        verify_https || exit 1
+        verify_healthcheck || exit 1
+        exit 0
         ;;
     test)
         cleanup || true
         run_all_tests
+        exit $?
         ;;
     clean)
         cleanup
+        exit $?
         ;;
     help)
         show_usage
+        exit 0
         ;;
     *)
-        print_error "Unknown command: $1"
+        print_error "Unknown command: $COMMAND"
         show_usage
         exit 1
         ;;
@@ -229,7 +257,7 @@ esac
 
 # Show final status
 print_info "Verification script completed"
-if [ "${1:-help}" != "clean" ]; then
+if [[ "$COMMAND" != "clean" ]]; then
     print_info "Container still running. Run '$0 clean' to remove it."
 fi
 
