@@ -77,7 +77,7 @@ const applySecurityHeaders = (headers) => {
   delete headers['content-security-policy'];
   delete headers['Content-Security-Policy'];
 
-  if (existingCSP?.includes("default-src 'none'")) {
+  if (existingCSP && existingCSP.includes("default-src 'none'")) {
     console.log('  → Applying restrictive CSP with frame-ancestors and form-action');
     headers['content-security-policy'] = CSP_RESTRICTIVE;
   } else {

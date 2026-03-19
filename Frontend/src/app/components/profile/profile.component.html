@@ -147,8 +147,7 @@
         }
       </div>
 
-      <!-- User Statistics Section -->
-      @if (user?.role === 'CLIENT') {
+      @if (user && user.role === 'CLIENT') {
         <div class="statistics-section">
           <h3>📊 My Purchase Statistics</h3>
           <div class="stats-grid">

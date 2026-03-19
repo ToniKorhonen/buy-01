@@ -33,13 +33,41 @@ const CERTS_DIR = path.join(__dirname, 'certs');
 const CERT_FILE = path.join(CERTS_DIR, 'cert.pem');
 const KEY_FILE = path.join(CERTS_DIR, 'key.pem');
 
-// Certificate configuration from environment or defaults
-const CERT_COUNTRY = process.env.CERT_COUNTRY || 'US';
-const CERT_STATE = process.env.CERT_STATE || 'State';
-const CERT_LOCALITY = process.env.CERT_LOCALITY || 'Locality';
-const CERT_ORG = process.env.CERT_ORG || 'Organization';
-const CERT_COMMON_NAME = process.env.CERT_COMMON_NAME || 'localhost';
-const CERT_DAYS = process.env.CERT_DAYS || 365;
+// Safe PATH environment with only fixed, unwriteable system directories
+const SAFE_PATH = '/usr/bin:/bin:/usr/sbin:/sbin';
+
+/**
+ * Validate and sanitize certificate subject parameter
+ */
+function validateSubjectParam(value, maxLength = 64) {
+  if (typeof value !== 'string' || value.length === 0 || value.length > maxLength) {
+    return null;
+  }
+  // Only allow alphanumeric, spaces, hyphens, and periods
+  if (!/^[a-zA-Z0-9\s\-.]*$/.test(value)) {
+    return null;
+  }
+  return value;
+}
+
+/**
+ * Validate numeric certificate days parameter
+ */
+function validateCertDays(value) {
+  const days = parseInt(value, 10);
+  if (!Number.isInteger(days) || days < 1 || days > 3650) {
+    return 365; // Default safe value
+  }
+  return days;
+}
+
+// Certificate configuration from environment or defaults (with validation)
+const CERT_COUNTRY = validateSubjectParam(process.env.CERT_COUNTRY, 2) || 'US';
+const CERT_STATE = validateSubjectParam(process.env.CERT_STATE) || 'State';
+const CERT_LOCALITY = validateSubjectParam(process.env.CERT_LOCALITY) || 'Locality';
+const CERT_ORG = validateSubjectParam(process.env.CERT_ORG) || 'Organization';
+const CERT_COMMON_NAME = validateSubjectParam(process.env.CERT_COMMON_NAME) || 'localhost';
+const CERT_DAYS = validateCertDays(process.env.CERT_DAYS);
 
 /**
  * Check if certificate files exist and are valid
@@ -55,8 +83,8 @@ function certificatesExist() {
 
     // Basic validation: check for PEM headers
     const hasCertHeader = cert.includes('-----BEGIN CERTIFICATE-----') && cert.includes('-----END CERTIFICATE-----');
-    const hasKeyHeader = key.includes('-----BEGIN PRIVATE KEY-----') && key.includes('-----END PRIVATE KEY-----') ||
-                         key.includes('-----BEGIN RSA PRIVATE KEY-----') && key.includes('-----END RSA PRIVATE KEY-----');
+    const hasKeyHeader = (key.includes('-----BEGIN PRIVATE KEY-----') && key.includes('-----END PRIVATE KEY-----')) ||
+                         (key.includes('-----BEGIN RSA PRIVATE KEY-----') && key.includes('-----END RSA PRIVATE KEY-----'));
 
     return hasCertHeader && hasKeyHeader;
   } catch (err) {
@@ -84,6 +112,7 @@ function generateCertificate() {
       console.log(`   Valid for: ${CERT_DAYS} days`);
 
       // Use spawn with arguments array to avoid shell injection
+      // Set explicit safe PATH environment variable with only fixed, unwriteable directories
       const openssl = spawn('openssl', [
         'req',
         '-x509',
@@ -93,7 +122,13 @@ function generateCertificate() {
         '-days', String(CERT_DAYS),
         '-nodes',
         '-subj', subject,
-      ]);
+      ], {
+        env: {
+          ...process.env,
+          PATH: SAFE_PATH,
+        },
+        stdio: ['pipe', 'pipe', 'pipe'],
+      });
 
       let errorOutput = '';
 
@@ -131,19 +166,16 @@ function generateCertificate() {
 }
 
 /**
- * Main function
+ * Main execution
  */
-async function main() {
-  console.log('🔑 Certificate Manager Starting...');
+console.log('🔑 Certificate Manager Starting...');
 
-  if (certificatesExist()) {
-    console.log('✅ Valid certificates already exist at:');
-    console.log(`   Key: ${KEY_FILE}`);
-    console.log(`   Cert: ${CERT_FILE}`);
-    console.log('   Skipping certificate generation\n');
-    return;
-  }
-
+if (certificatesExist()) {
+  console.log('✅ Valid certificates already exist at:');
+  console.log(`   Key: ${KEY_FILE}`);
+  console.log(`   Cert: ${CERT_FILE}`);
+  console.log('   Skipping certificate generation\n');
+} else {
   console.log('⚠️  Certificates not found or invalid');
   try {
     await generateCertificate();
@@ -155,5 +187,4 @@ async function main() {
   }
 }
 
-main();
 
