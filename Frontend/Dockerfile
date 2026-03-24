@@ -2,7 +2,7 @@
 FROM node:20-alpine AS build
 WORKDIR /app
 COPY package*.json ./
-RUN npm ci --ignore-scripts && npm cache clean --force
+RUN npm install --legacy-peer-deps --ignore-scripts && npm cache clean --force
 # Only copy necessary source files, not entire context
 COPY angular.json tsconfig*.json ./
 COPY public ./public
@@ -29,7 +29,7 @@ COPY --chown=root:root cert-generator.mjs ./
 
 # Install dependencies and harden file permissions
 # Create certs directory with proper permissions (will be populated by cert-generator at runtime)
-RUN npm ci --only=production --ignore-scripts && \
+RUN npm install --only=production --legacy-peer-deps --ignore-scripts && \
     npm cache clean --force && \
     chmod -R 555 dist/ && \
     chmod 444 server.mjs cert-generator.mjs package*.json package-lock.json && \

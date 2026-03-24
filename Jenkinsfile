@@ -285,11 +285,8 @@ echo MEDIA_DB_NAME=media_db
                             script {
                                 if (isUnix()) {
                                     sh '''
-                                        # Clean up old node_modules if they exist
-                                        rm -rf node_modules package-lock.json || true
-                                        
-                                        # Install dependencies with legacy peer deps to avoid conflicts
-                                        npm install --legacy-peer-deps || npm install --force
+                                        # Use npm install with legacy-peer-deps to handle dependency conflicts
+                                        npm install --legacy-peer-deps
                                         
                                         # Build frontend
                                         npm run build -- --configuration=production
@@ -297,13 +294,8 @@ echo MEDIA_DB_NAME=media_db
                                 } else {
                                     bat '''
                                         @echo off
-                                        REM Clean up old node_modules if they exist
-                                        if exist node_modules rmdir /s /q node_modules 2>nul || echo Skipped node_modules cleanup
-                                        if exist package-lock.json del /f package-lock.json 2>nul || echo Skipped package-lock.json cleanup
-                                        
-                                        REM Install dependencies with legacy peer deps to avoid conflicts
+                                        REM Use npm install with legacy-peer-deps
                                         npm install --legacy-peer-deps
-                                        if errorlevel 1 npm install --force
                                         
                                         REM Build frontend
                                         npm run build -- --configuration=production
@@ -324,17 +316,16 @@ echo MEDIA_DB_NAME=media_db
                             script {
                                 if (isUnix()) {
                                     sh '''
-                                        # Ensure dependencies are installed
-                                        npm install --legacy-peer-deps || npm install --force
+                                        # Use npm install with legacy-peer-deps for consistency
+                                        npm install --legacy-peer-deps
                                         
                                         # Run tests with coverage for SonarCloud
                                         npm run test:coverage || echo "⚠️  Frontend tests completed with issues"
                                     '''
                                 } else {
                                     bat '''
-                                        REM Ensure dependencies are installed
+                                        REM Use npm install with legacy-peer-deps
                                         npm install --legacy-peer-deps
-                                        if errorlevel 1 npm install --force
                                         
                                         REM Run tests with coverage for SonarCloud
                                         npm run test:coverage || echo "Warning: Frontend tests completed with issues"
@@ -665,6 +656,7 @@ echo MEDIA_DB_NAME=media_db
                                 export JAVA_HOME
 
                                 sonar-scanner \
+                                    -Dsonar.scanner.skipJre=true \
                                     -Dsonar.organization=${SONAR_ORGANIZATION} \
                                     -Dsonar.host.url=https://sonarcloud.io \
                                     -Dsonar.projectKey=${SONAR_PROJECT_KEY} \
