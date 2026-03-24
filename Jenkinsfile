@@ -477,12 +477,12 @@ echo MEDIA_DB_NAME=media_db
                                 if (isUnix()) {
                                     sh '''
                                         export JWT_SECRET="${JWT_SECRET}"
-                                        ./mvnw test
+                                        ./mvnw clean test jacoco:report
                                     '''
                                 } else {
                                     bat '''
                                         set JWT_SECRET=%JWT_SECRET%
-                                        mvnw.cmd test
+                                        mvnw.cmd clean test jacoco:report
                                     '''
                                 }
                             }
@@ -620,11 +620,10 @@ echo MEDIA_DB_NAME=media_db
                         withSonarQubeEnv('SonarCloud') {
                             if (isUnix()) {
                                 sh '''
-                                # Install sonar-scanner if not available
-                                if ! command -v sonar-scanner &> /dev/null; then
-                                    echo "Installing sonar-scanner..."
-                                    npm install -g sonarqube-scanner
-                                fi
+                                # Install or update sonar-scanner
+                                echo "Ensuring sonar-scanner is installed..."
+                                npm install -g sonarqube-scanner --force 2>&1 || \
+                                (echo "Note: sonar-scanner may already be installed"; command -v sonar-scanner && echo "✓ sonar-scanner is available")
 
                                 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
                                 echo "📊 SonarCloud Analysis Scope:"
@@ -636,14 +635,19 @@ echo MEDIA_DB_NAME=media_db
 
                                 MAVEN_REPO="$HOME/.m2/repository"
 
-                                # Run sonar-scanner — no || suppressor so a non-zero exit fails the stage
+                                # Run sonar-scanner with comprehensive Java configuration
                                 sonar-scanner \
                                     -Dsonar.organization=${SONAR_ORGANIZATION} \
                                     -Dsonar.host.url=https://sonarcloud.io \
                                     -Dsonar.projectKey=${SONAR_PROJECT_KEY} \
-                                    -Dsonar.java.binaries="Backend/*/target/classes" \
+                                    -Dsonar.sources="Backend/user-service/src/main/java,Backend/product-service/src/main/java,Backend/media-service/src/main/java,Backend/api-gateway/src/main/java,Backend/order-service/src/main/java,Frontend/src" \
+                                    -Dsonar.tests="Backend/user-service/src/test/java,Backend/product-service/src/test/java,Backend/media-service/src/test/java,Backend/api-gateway/src/test/java,Backend/order-service/src/test/java" \
+                                    -Dsonar.java.binaries="Backend/user-service/target/classes,Backend/product-service/target/classes,Backend/media-service/target/classes,Backend/api-gateway/target/classes,Backend/order-service/target/classes" \
+                                    -Dsonar.java.test.binaries="Backend/user-service/target/test-classes,Backend/product-service/target/test-classes,Backend/media-service/target/test-classes,Backend/api-gateway/target/test-classes,Backend/order-service/target/test-classes" \
                                     -Dsonar.java.libraries="Backend/*/target/*.jar,$MAVEN_REPO/**/*.jar" \
-                                    -Dsonar.coverage.jacoco.xmlReportPaths="**/target/site/jacoco/jacoco.xml" \
+                                    -Dsonar.java.source=17 \
+                                    -Dsonar.java.target=17 \
+                                    -Dsonar.coverage.jacoco.xmlReportPaths="Backend/user-service/target/site/jacoco/jacoco.xml,Backend/product-service/target/site/jacoco/jacoco.xml,Backend/media-service/target/site/jacoco/jacoco.xml,Backend/api-gateway/target/site/jacoco/jacoco.xml,Backend/order-service/target/site/jacoco/jacoco.xml" \
                                     -Dsonar.javascript.lcov.reportPaths="Frontend/coverage/lcov.info" \
                                     -Dsonar.verbose=true
 
@@ -653,10 +657,10 @@ echo MEDIA_DB_NAME=media_db
                             } else {
                                 bat '''
                                 @echo off
-                                where sonar-scanner >nul 2>&1
-                                if %ERRORLEVEL% NEQ 0 (
-                                    echo Installing sonar-scanner...
-                                    npm install -g sonarqube-scanner
+                                echo Ensuring sonar-scanner is installed...
+                                npm install -g sonarqube-scanner --force 2>&1 || (
+                                    echo Note: sonar-scanner may already be installed
+                                    where sonar-scanner >nul 2>&1 && echo sonar-scanner is available
                                 )
 
                                 echo ================================================================
@@ -671,9 +675,14 @@ echo MEDIA_DB_NAME=media_db
                                     -Dsonar.organization=%SONAR_ORGANIZATION% ^
                                     -Dsonar.host.url=https://sonarcloud.io ^
                                     -Dsonar.projectKey=%SONAR_PROJECT_KEY% ^
-                                    -Dsonar.java.binaries=Backend/*/target/classes ^
+                                    -Dsonar.sources=Backend/user-service/src/main/java,Backend/product-service/src/main/java,Backend/media-service/src/main/java,Backend/api-gateway/src/main/java,Backend/order-service/src/main/java,Frontend/src ^
+                                    -Dsonar.tests=Backend/user-service/src/test/java,Backend/product-service/src/test/java,Backend/media-service/src/test/java,Backend/api-gateway/src/test/java,Backend/order-service/src/test/java ^
+                                    -Dsonar.java.binaries=Backend/user-service/target/classes,Backend/product-service/target/classes,Backend/media-service/target/classes,Backend/api-gateway/target/classes,Backend/order-service/target/classes ^
+                                    -Dsonar.java.test.binaries=Backend/user-service/target/test-classes,Backend/product-service/target/test-classes,Backend/media-service/target/test-classes,Backend/api-gateway/target/test-classes,Backend/order-service/target/test-classes ^
                                     -Dsonar.java.libraries=Backend/*/target/*.jar ^
-                                    -Dsonar.coverage.jacoco.xmlReportPaths=**/target/site/jacoco/jacoco.xml ^
+                                    -Dsonar.java.source=17 ^
+                                    -Dsonar.java.target=17 ^
+                                    -Dsonar.coverage.jacoco.xmlReportPaths=Backend/user-service/target/site/jacoco/jacoco.xml,Backend/product-service/target/site/jacoco/jacoco.xml,Backend/media-service/target/site/jacoco/jacoco.xml,Backend/api-gateway/target/site/jacoco/jacoco.xml,Backend/order-service/target/site/jacoco/jacoco.xml ^
                                     -Dsonar.javascript.lcov.reportPaths=Frontend/coverage/lcov.info ^
                                     -Dsonar.verbose=true
 
