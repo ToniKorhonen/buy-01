@@ -200,7 +200,7 @@ if (isProduction) {
 
   console.log('Starting Angular dev server...');
 
-  const SAFE_USER = /^[a-zA-Z0-9_\-]+$/.test(process.env.USER ?? '') ? process.env.USER : 'app';
+  const SAFE_USER = /^[a-zA-Z0-9_-]+$/.test(process.env.USER ?? '') ? process.env.USER : 'app';
   const SAFE_LANG = /^[a-zA-Z0-9_.@-]+$/.test(process.env.LANG ?? '') ? process.env.LANG : 'en_US.UTF-8';
 
   const safeEnv = {
