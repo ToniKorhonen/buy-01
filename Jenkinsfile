@@ -285,6 +285,9 @@ echo MEDIA_DB_NAME=media_db
                             script {
                                 if (isUnix()) {
                                     sh '''
+                                        # Clean node_modules and package-lock.json to avoid conflicts
+                                        rm -rf node_modules package-lock.json
+                                        
                                         # Use npm install with legacy-peer-deps to handle dependency conflicts
                                         npm install --legacy-peer-deps
                                         
@@ -294,6 +297,10 @@ echo MEDIA_DB_NAME=media_db
                                 } else {
                                     bat '''
                                         @echo off
+                                        REM Clean node_modules and package-lock.json
+                                        if exist node_modules rmdir /s /q node_modules
+                                        if exist package-lock.json del /f package-lock.json
+                                        
                                         REM Use npm install with legacy-peer-deps
                                         npm install --legacy-peer-deps
                                         
@@ -316,7 +323,8 @@ echo MEDIA_DB_NAME=media_db
                             script {
                                 if (isUnix()) {
                                     sh '''
-                                        # Use npm install with legacy-peer-deps for consistency
+                                        # Clean and reinstall dependencies with legacy-peer-deps
+                                        rm -rf node_modules package-lock.json
                                         npm install --legacy-peer-deps
                                         
                                         # Run tests with coverage for SonarCloud
@@ -324,7 +332,9 @@ echo MEDIA_DB_NAME=media_db
                                     '''
                                 } else {
                                     bat '''
-                                        REM Use npm install with legacy-peer-deps
+                                        REM Clean and reinstall dependencies
+                                        if exist node_modules rmdir /s /q node_modules
+                                        if exist package-lock.json del /f package-lock.json
                                         npm install --legacy-peer-deps
                                         
                                         REM Run tests with coverage for SonarCloud
