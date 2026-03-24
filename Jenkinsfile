@@ -636,6 +636,7 @@ echo MEDIA_DB_NAME=media_db
                                 MAVEN_REPO="$HOME/.m2/repository"
 
                                 # Run sonar-scanner with comprehensive Java configuration
+                                # Skip JRE provisioning to avoid 403 errors
                                 sonar-scanner \
                                     -Dsonar.organization=${SONAR_ORGANIZATION} \
                                     -Dsonar.host.url=https://sonarcloud.io \
@@ -649,7 +650,8 @@ echo MEDIA_DB_NAME=media_db
                                     -Dsonar.java.target=17 \
                                     -Dsonar.coverage.jacoco.xmlReportPaths="Backend/user-service/target/site/jacoco/jacoco.xml,Backend/product-service/target/site/jacoco/jacoco.xml,Backend/media-service/target/site/jacoco/jacoco.xml,Backend/api-gateway/target/site/jacoco/jacoco.xml,Backend/order-service/target/site/jacoco/jacoco.xml" \
                                     -Dsonar.javascript.lcov.reportPaths="Frontend/coverage/lcov.info" \
-                                    -Dsonar.verbose=true
+                                    -Dsonar.verbose=true \
+                                    --skip-jre
 
                                 echo "✅ SonarCloud analysis submitted"
                                 echo "📊 View results at: https://sonarcloud.io/project/overview?id=${SONAR_PROJECT_KEY}"
@@ -684,7 +686,8 @@ echo MEDIA_DB_NAME=media_db
                                     -Dsonar.java.target=17 ^
                                     -Dsonar.coverage.jacoco.xmlReportPaths=Backend/user-service/target/site/jacoco/jacoco.xml,Backend/product-service/target/site/jacoco/jacoco.xml,Backend/media-service/target/site/jacoco/jacoco.xml,Backend/api-gateway/target/site/jacoco/jacoco.xml,Backend/order-service/target/site/jacoco/jacoco.xml ^
                                     -Dsonar.javascript.lcov.reportPaths=Frontend/coverage/lcov.info ^
-                                    -Dsonar.verbose=true
+                                    -Dsonar.verbose=true ^
+                                    --skip-jre
 
                                 echo Success: SonarCloud analysis submitted
                             '''
