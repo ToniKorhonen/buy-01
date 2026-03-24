@@ -285,12 +285,27 @@ echo MEDIA_DB_NAME=media_db
                             script {
                                 if (isUnix()) {
                                     sh '''
-                                        npm ci
+                                        # Clean up old node_modules if they exist
+                                        rm -rf node_modules package-lock.json || true
+                                        
+                                        # Install dependencies with legacy peer deps to avoid conflicts
+                                        npm install --legacy-peer-deps || npm install --force
+                                        
+                                        # Build frontend
                                         npm run build -- --configuration=production
                                     '''
                                 } else {
                                     bat '''
-                                        npm ci
+                                        @echo off
+                                        REM Clean up old node_modules if they exist
+                                        if exist node_modules rmdir /s /q node_modules 2>nul || echo Skipped node_modules cleanup
+                                        if exist package-lock.json del /f package-lock.json 2>nul || echo Skipped package-lock.json cleanup
+                                        
+                                        REM Install dependencies with legacy peer deps to avoid conflicts
+                                        npm install --legacy-peer-deps
+                                        if errorlevel 1 npm install --force
+                                        
+                                        REM Build frontend
                                         npm run build -- --configuration=production
                                     '''
                                 }
@@ -309,11 +324,18 @@ echo MEDIA_DB_NAME=media_db
                             script {
                                 if (isUnix()) {
                                     sh '''
+                                        # Ensure dependencies are installed
+                                        npm install --legacy-peer-deps || npm install --force
+                                        
                                         # Run tests with coverage for SonarCloud
                                         npm run test:coverage || echo "⚠️  Frontend tests completed with issues"
                                     '''
                                 } else {
                                     bat '''
+                                        REM Ensure dependencies are installed
+                                        npm install --legacy-peer-deps
+                                        if errorlevel 1 npm install --force
+                                        
                                         REM Run tests with coverage for SonarCloud
                                         npm run test:coverage || echo "Warning: Frontend tests completed with issues"
                                     '''
@@ -611,6 +633,8 @@ echo MEDIA_DB_NAME=media_db
                 SONAR_SCANNER_OPTS = '-Xmx512m'
                 SONAR_ORGANIZATION = 'tonikorhonen'
                 SONAR_PROJECT_KEY = 'ToniKorhonen_buy-01'
+                // Disable JRE provisioning to avoid 403 errors
+                SONAR_SCANNER_SKIP_JRE = 'true'
             }
             steps {
                 echo '📊 Analyzing entire monorepo (Frontend + Backend) with SonarCloud...'
@@ -636,7 +660,10 @@ echo MEDIA_DB_NAME=media_db
                                 MAVEN_REPO="$HOME/.m2/repository"
 
                                 # Run sonar-scanner with comprehensive Java configuration
-                                # Skip JRE provisioning to avoid 403 errors
+                                # Using system Java to avoid JRE provisioning 403 errors
+                                JAVA_HOME=$(which java | xargs readlink -f | sed 's:/bin/java::')
+                                export JAVA_HOME
+
                                 sonar-scanner \
                                     -Dsonar.organization=${SONAR_ORGANIZATION} \
                                     -Dsonar.host.url=https://sonarcloud.io \
@@ -650,8 +677,7 @@ echo MEDIA_DB_NAME=media_db
                                     -Dsonar.java.target=17 \
                                     -Dsonar.coverage.jacoco.xmlReportPaths="Backend/user-service/target/site/jacoco/jacoco.xml,Backend/product-service/target/site/jacoco/jacoco.xml,Backend/media-service/target/site/jacoco/jacoco.xml,Backend/api-gateway/target/site/jacoco/jacoco.xml,Backend/order-service/target/site/jacoco/jacoco.xml" \
                                     -Dsonar.javascript.lcov.reportPaths="Frontend/coverage/lcov.info" \
-                                    -Dsonar.verbose=true \
-                                    --skip-jre
+                                    -Dsonar.verbose=true
 
                                 echo "✅ SonarCloud analysis submitted"
                                 echo "📊 View results at: https://sonarcloud.io/project/overview?id=${SONAR_PROJECT_KEY}"
@@ -686,8 +712,7 @@ echo MEDIA_DB_NAME=media_db
                                     -Dsonar.java.target=17 ^
                                     -Dsonar.coverage.jacoco.xmlReportPaths=Backend/user-service/target/site/jacoco/jacoco.xml,Backend/product-service/target/site/jacoco/jacoco.xml,Backend/media-service/target/site/jacoco/jacoco.xml,Backend/api-gateway/target/site/jacoco/jacoco.xml,Backend/order-service/target/site/jacoco/jacoco.xml ^
                                     -Dsonar.javascript.lcov.reportPaths=Frontend/coverage/lcov.info ^
-                                    -Dsonar.verbose=true ^
-                                    --skip-jre
+                                    -Dsonar.verbose=true
 
                                 echo Success: SonarCloud analysis submitted
                             '''
