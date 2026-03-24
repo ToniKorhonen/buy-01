@@ -49,12 +49,5 @@ describe('App', () => {
     expect(compiled).toBeTruthy();
   });
 
-  /**
-   * INTENTIONALLY BREAKABLE TEST FOR AUDIT DEMO
-   * Uncomment this test to demonstrate Jenkins pipeline failure on test failure
-   * This will cause the frontend tests to fail and the pipeline to halt
-   */
-  // it('should fail intentionally for audit demo', () => {
-  //   fail('This test is intentionally failing to demonstrate Jenkins test failure detection');
-  // });
+
 });
