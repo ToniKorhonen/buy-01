@@ -200,14 +200,16 @@ if (isProduction) {
 
   console.log('Starting Angular dev server...');
 
-  // Whitelist only safe environment variables needed for npm and Angular dev server
+  const SAFE_USER = /^[a-zA-Z0-9_\-]+$/.test(process.env.USER ?? '') ? process.env.USER : 'app';
+  const SAFE_LANG = /^[a-zA-Z0-9_.@-]+$/.test(process.env.LANG ?? '') ? process.env.LANG : 'en_US.UTF-8';
+
   const safeEnv = {
-    PATH: process.env.PATH || '/usr/local/bin:/usr/bin:/bin',
+    PATH: '/usr/local/bin:/usr/bin:/bin',   // hardcoded — never trust env PATH
     NODE_ENV: 'development',
-    HOME: process.env.HOME || '/root',
-    TMPDIR: process.env.TMPDIR || '/tmp',
-    USER: process.env.USER || 'app',
-    LANG: process.env.LANG || 'en_US.UTF-8',
+    HOME: '/root',                           // hardcoded — prevents config hijack
+    TMPDIR: '/tmp',                          // hardcoded — prevents temp dir hijack
+    USER: SAFE_USER,                         // validated scalar, no path risk
+    LANG: SAFE_LANG,                         // validated scalar, no path risk
   };
 
   ngServe = spawn('npm', ['run', 'ng-serve'], {

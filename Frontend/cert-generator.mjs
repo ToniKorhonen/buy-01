@@ -20,7 +20,6 @@
  * - CERT_COMMON_NAME (default: localhost)
  * - CERT_DAYS (default: 365)
  */
-
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -35,6 +34,12 @@ const KEY_FILE = path.join(CERTS_DIR, 'key.pem');
 
 // Safe PATH environment with only fixed, unwriteable system directories
 const SAFE_PATH = '/usr/bin:/bin:/usr/sbin:/sbin';
+
+// Hardcoded safe directory paths — never sourced from environment variables
+// to prevent path injection via attacker-controlled HOME or TMPDIR values
+const SAFE_HOME = '/root';
+const SAFE_TMPDIR = '/tmp';
+const SAFE_OPENSSL_CONF = '/etc/ssl/openssl.cnf';
 
 /**
  * Validate and sanitize certificate subject parameter
@@ -76,15 +81,17 @@ function certificatesExist() {
   if (!fs.existsSync(CERT_FILE) || !fs.existsSync(KEY_FILE)) {
     return false;
   }
-
   try {
     const cert = fs.readFileSync(CERT_FILE, 'utf8');
     const key = fs.readFileSync(KEY_FILE, 'utf8');
 
     // Basic validation: check for PEM headers
-    const hasCertHeader = cert.includes('-----BEGIN CERTIFICATE-----') && cert.includes('-----END CERTIFICATE-----');
-    const hasKeyHeader = (key.includes('-----BEGIN PRIVATE KEY-----') && key.includes('-----END PRIVATE KEY-----')) ??
-                         (key.includes('-----BEGIN RSA PRIVATE KEY-----') && key.includes('-----END RSA PRIVATE KEY-----'));
+    const hasCertHeader =
+      cert.includes('-----BEGIN CERTIFICATE-----') &&
+      cert.includes('-----END CERTIFICATE-----');
+    const hasKeyHeader =
+      (key.includes('-----BEGIN PRIVATE KEY-----') && key.includes('-----END PRIVATE KEY-----')) ??
+      (key.includes('-----BEGIN RSA PRIVATE KEY-----') && key.includes('-----END RSA PRIVATE KEY-----'));
 
     return hasCertHeader && hasKeyHeader;
   } catch (err) {
@@ -111,7 +118,6 @@ function generateCertificate() {
       console.log(`   Subject: ${subject}`);
       console.log(`   Valid for: ${CERT_DAYS} days`);
 
-
       const openssl = spawn('openssl', [
         'req',
         '-x509',
@@ -124,9 +130,11 @@ function generateCertificate() {
       ], {
         env: {
           PATH: SAFE_PATH,
-          // Include minimal required env vars for openssl to function
-          HOME: process.env.HOME || '/root',
-          TMPDIR: process.env.TMPDIR || '/tmp',
+          // Hardcoded safe paths — not sourced from process.env to prevent
+          // path injection attacks via attacker-controlled environment variables
+          HOME: SAFE_HOME,
+          TMPDIR: SAFE_TMPDIR,
+          OPENSSL_CONF: SAFE_OPENSSL_CONF,
         },
         stdio: ['pipe', 'pipe', 'pipe'],
       });
@@ -142,7 +150,6 @@ function generateCertificate() {
           reject(new Error(`OpenSSL failed with code ${code}: ${errorOutput}`));
           return;
         }
-
         try {
           // Set proper file permissions
           fs.chmodSync(KEY_FILE, 0o400);  // Read-only for owner (more restrictive for private key)
@@ -187,5 +194,3 @@ if (certificatesExist()) {
     process.exit(1);
   }
 }
-
-

@@ -16,24 +16,29 @@ pipeline {
     // Parameterized builds - BONUS REQUIREMENT
     parameters {
         choice(
-            name: 'DEPLOY_ENV',
-            choices: ['auto', 'dev', 'prod'],
-            description: 'Override deployment environment (auto = based on branch)'
+                name: 'DEPLOY_ENV',
+                choices: ['auto', 'dev', 'prod'],
+                description: 'Override deployment environment (auto = based on branch)'
         )
         booleanParam(
-            name: 'SKIP_TESTS',
-            defaultValue: false,
-            description: 'Skip test execution (not recommended for production)'
+                name: 'SKIP_TESTS',
+                defaultValue: false,
+                description: 'Skip test execution (not recommended for production)'
         )
         booleanParam(
-            name: 'CLEAN_BUILD',
-            defaultValue: false,
-            description: 'Force clean build (remove all Docker caches)'
+                name: 'CLEAN_BUILD',
+                defaultValue: false,
+                description: 'Force clean build (remove all Docker caches)'
+        )
+        booleanParam(
+                name: 'ENFORCE_QUALITY_GATE',
+                defaultValue: false,
+                description: 'Fail the build if SonarCloud Quality Gate does not pass (enable once coverage is sufficient)'
         )
         string(
-            name: 'EMAIL_RECIPIENTS',
-            defaultValue: 'team@example.com',
-            description: 'Comma-separated email addresses for build notifications'
+                name: 'EMAIL_RECIPIENTS',
+                defaultValue: 'team@example.com',
+                description: 'Comma-separated email addresses for build notifications'
         )
     }
 
@@ -60,13 +65,13 @@ pipeline {
                         } else {
                             // Windows: Use PowerShell with explicit output encoding
                             buildTimestamp = powershell(
-                                script: '[Console]::OutputEncoding = [System.Text.Encoding]::UTF8; Get-Date -Format "yyyyMMdd-HHmmss"',
-                                returnStdout: true
+                                    script: '[Console]::OutputEncoding = [System.Text.Encoding]::UTF8; Get-Date -Format "yyyyMMdd-HHmmss"',
+                                    returnStdout: true
                             ).trim()
 
                             gitCommitShort = powershell(
-                                script: '[Console]::OutputEncoding = [System.Text.Encoding]::UTF8; git rev-parse --short HEAD',
-                                returnStdout: true
+                                    script: '[Console]::OutputEncoding = [System.Text.Encoding]::UTF8; git rev-parse --short HEAD',
+                                    returnStdout: true
                             ).trim()
                         }
                     } catch (Exception e) {
@@ -110,7 +115,7 @@ pipeline {
                         // For deployment branches (main/dev): use Jenkins credentials
                         echo '📦 Creating .env with Jenkins credentials for deployment...'
                         withCredentials([
-                            string(credentialsId: 'JWT_SECRET', variable: 'JWT_SECRET')
+                                string(credentialsId: 'JWT_SECRET', variable: 'JWT_SECRET')
                         ]) {
                             // Use shell/bat to write file securely without exposing secret in logs
                             if (isUnix()) {
@@ -333,13 +338,13 @@ echo MEDIA_DB_NAME=media_db
                             script {
                                 try {
                                     publishHTML([
-                                        allowMissing: true,
-                                        alwaysLinkToLastBuild: true,
-                                        keepAll: true,
-                                        reportDir: 'Frontend/coverage',
-                                        reportFiles: 'index.html',
-                                        reportName: 'Frontend Coverage',
-                                        reportTitles: 'Frontend Code Coverage'
+                                            allowMissing: true,
+                                            alwaysLinkToLastBuild: true,
+                                            keepAll: true,
+                                            reportDir: 'Frontend/coverage',
+                                            reportFiles: 'index.html',
+                                            reportName: 'Frontend Coverage',
+                                            reportTitles: 'Frontend Code Coverage'
                                     ])
                                     echo '✅ Frontend coverage report published'
                                 } catch (Exception e) {
@@ -503,10 +508,9 @@ echo MEDIA_DB_NAME=media_db
 
                     // Publish JaCoCo coverage reports using recordCoverage
                     try {
-                        // Use recordCoverage step for JaCoCo reports
                         recordCoverage(
-                            tools: [[parser: 'JACOCO', pattern: '**/target/site/jacoco/jacoco.xml']],
-                            sourceCodeRetention: 'EVERY_BUILD'
+                                tools: [[parser: 'JACOCO', pattern: '**/target/site/jacoco/jacoco.xml']],
+                                sourceCodeRetention: 'EVERY_BUILD'
                         )
                         echo '✅ Coverage reports published'
                     } catch (Exception e) {
@@ -517,13 +521,13 @@ echo MEDIA_DB_NAME=media_db
                     // Archive HTML coverage reports for each service
                     try {
                         publishHTML([
-                            allowMissing: true,
-                            alwaysLinkToLastBuild: true,
-                            keepAll: true,
-                            reportDir: 'Backend/user-service/target/site/jacoco',
-                            reportFiles: 'index.html',
-                            reportName: 'User Service Coverage',
-                            reportTitles: 'User Service Code Coverage'
+                                allowMissing: true,
+                                alwaysLinkToLastBuild: true,
+                                keepAll: true,
+                                reportDir: 'Backend/user-service/target/site/jacoco',
+                                reportFiles: 'index.html',
+                                reportName: 'User Service Coverage',
+                                reportTitles: 'User Service Code Coverage'
                         ])
                         echo '✅ User Service coverage report published'
                     } catch (Exception e) {
@@ -533,13 +537,13 @@ echo MEDIA_DB_NAME=media_db
 
                     try {
                         publishHTML([
-                            allowMissing: true,
-                            alwaysLinkToLastBuild: true,
-                            keepAll: true,
-                            reportDir: 'Backend/product-service/target/site/jacoco',
-                            reportFiles: 'index.html',
-                            reportName: 'Product Service Coverage',
-                            reportTitles: 'Product Service Code Coverage'
+                                allowMissing: true,
+                                alwaysLinkToLastBuild: true,
+                                keepAll: true,
+                                reportDir: 'Backend/product-service/target/site/jacoco',
+                                reportFiles: 'index.html',
+                                reportName: 'Product Service Coverage',
+                                reportTitles: 'Product Service Code Coverage'
                         ])
                         echo '✅ Product Service coverage report published'
                     } catch (Exception e) {
@@ -548,13 +552,13 @@ echo MEDIA_DB_NAME=media_db
 
                     try {
                         publishHTML([
-                            allowMissing: true,
-                            alwaysLinkToLastBuild: true,
-                            keepAll: true,
-                            reportDir: 'Backend/api-gateway/target/site/jacoco',
-                            reportFiles: 'index.html',
-                            reportName: 'API Gateway Coverage',
-                            reportTitles: 'API Gateway Code Coverage'
+                                allowMissing: true,
+                                alwaysLinkToLastBuild: true,
+                                keepAll: true,
+                                reportDir: 'Backend/api-gateway/target/site/jacoco',
+                                reportFiles: 'index.html',
+                                reportName: 'API Gateway Coverage',
+                                reportTitles: 'API Gateway Code Coverage'
                         ])
                         echo '✅ API Gateway coverage report published'
                     } catch (Exception e) {
@@ -563,13 +567,13 @@ echo MEDIA_DB_NAME=media_db
 
                     try {
                         publishHTML([
-                            allowMissing: true,
-                            alwaysLinkToLastBuild: true,
-                            keepAll: true,
-                            reportDir: 'Backend/media-service/target/site/jacoco',
-                            reportFiles: 'index.html',
-                            reportName: 'Media Service Coverage',
-                            reportTitles: 'Media Service Code Coverage'
+                                allowMissing: true,
+                                alwaysLinkToLastBuild: true,
+                                keepAll: true,
+                                reportDir: 'Backend/media-service/target/site/jacoco',
+                                reportFiles: 'index.html',
+                                reportName: 'Media Service Coverage',
+                                reportTitles: 'Media Service Code Coverage'
                         ])
                         echo '✅ Media Service coverage report published'
                     } catch (Exception e) {
@@ -578,13 +582,13 @@ echo MEDIA_DB_NAME=media_db
 
                     try {
                         publishHTML([
-                            allowMissing: true,
-                            alwaysLinkToLastBuild: true,
-                            keepAll: true,
-                            reportDir: 'Backend/order-service/target/site/jacoco',
-                            reportFiles: 'index.html',
-                            reportName: 'Order Service Coverage',
-                            reportTitles: 'Order Service Code Coverage'
+                                allowMissing: true,
+                                alwaysLinkToLastBuild: true,
+                                keepAll: true,
+                                reportDir: 'Backend/order-service/target/site/jacoco',
+                                reportFiles: 'index.html',
+                                reportName: 'Order Service Coverage',
+                                reportTitles: 'Order Service Code Coverage'
                         ])
                         echo '✅ Order Service coverage report published'
                     } catch (Exception e) {
@@ -595,128 +599,108 @@ echo MEDIA_DB_NAME=media_db
         }
 
         // AUDIT REQUIREMENT: Code Quality Analysis with SonarCloud
-        // NOTE: This stage analyzes both Frontend (TypeScript/Angular) and Backend (Java/Spring Boot)
-        // It does NOT block the pipeline - analysis runs but Quality Gate failures won't fail the build
+        // Quality Gate enforcement is controlled by the ENFORCE_QUALITY_GATE parameter.
+        // Set to true once coverage is sufficient — default is false during development.
         stage('SonarCloud Analysis') {
             when {
                 expression {
-                    // Only run SonarCloud on deployment branches to save analysis quota
                     return env.SHOULD_DEPLOY == 'true' || params.DEPLOY_ENV != 'auto'
                 }
             }
             environment {
-                // SonarCloud uses SONAR_TOKEN from Jenkins credentials
                 SONAR_SCANNER_OPTS = '-Xmx512m'
                 SONAR_ORGANIZATION = 'tonikorhonen'
                 SONAR_PROJECT_KEY = 'ToniKorhonen_buy-01'
             }
             steps {
                 echo '📊 Analyzing entire monorepo (Frontend + Backend) with SonarCloud...'
-                echo 'ℹ️  Note: SonarCloud results will NOT block the pipeline - analysis is informational only'
+                echo "ℹ️  Quality Gate enforcement: ${params.ENFORCE_QUALITY_GATE ? 'ENABLED — build will fail if gate does not pass' : 'DISABLED — analysis is informational only'}"
                 script {
-                    // Catch SonarCloud configuration errors gracefully - never block the build
                     try {
                         withSonarQubeEnv('SonarCloud') {
                             if (isUnix()) {
                                 sh '''
-                                    # Install sonar-scanner if not available
-                                    if ! command -v sonar-scanner &> /dev/null; then
-                                        echo "Installing sonar-scanner..."
-                                        npm install -g sonarqube-scanner || echo "⚠️  Failed to install sonar-scanner, but it may already be installed"
-                                    else
-                                        echo "✓ sonar-scanner is already installed"
-                                    fi
+                                # Install sonar-scanner if not available
+                                if ! command -v sonar-scanner &> /dev/null; then
+                                    echo "Installing sonar-scanner..."
+                                    npm install -g sonarqube-scanner
+                                fi
 
-                                    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-                                    echo "📊 SonarCloud Analysis Scope:"
-                                    echo "   ✓ Frontend: TypeScript/Angular (src/)"
-                                    echo "   ✓ Backend: Java/Spring Boot (4 microservices)"
-                                    echo "   ✓ Test Coverage: JaCoCo (Backend) + Karma (Frontend)"
-                                    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+                                echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+                                echo "📊 SonarCloud Analysis Scope:"
+                                echo "   ✓ Frontend: TypeScript/Angular (src/)"
+                                echo "   ✓ Backend: Java/Spring Boot (microservices)"
+                                echo "   ✓ Test Coverage: JaCoCo (Backend) + Karma/LCOV (Frontend)"
+                                echo "   ✓ Quality Gate: 60% coverage minimum"
+                                echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
-                                    # Prepare Java libraries paths for better analysis
-                                    USER_SERVICE_LIBS="Backend/user-service/target/classes:Backend/user-service/target/user-0.0.1-SNAPSHOT.jar"
-                                    PRODUCT_SERVICE_LIBS="Backend/product-service/target/classes:Backend/product-service/target/product-0.0.1-SNAPSHOT.jar"
-                                    MEDIA_SERVICE_LIBS="Backend/media-service/target/classes:Backend/media-service/target/media-0.0.1-SNAPSHOT.jar"
-                                    GATEWAY_LIBS="Backend/api-gateway/target/classes:Backend/api-gateway/target/gateway-0.0.1-SNAPSHOT.jar"
+                                MAVEN_REPO="$HOME/.m2/repository"
 
-                                    # Collect all Maven dependencies
-                                    MAVEN_REPO="$HOME/.m2/repository"
+                                # Run sonar-scanner — no || suppressor so a non-zero exit fails the stage
+                                sonar-scanner \
+                                    -Dsonar.organization=${SONAR_ORGANIZATION} \
+                                    -Dsonar.host.url=https://sonarcloud.io \
+                                    -Dsonar.projectKey=${SONAR_PROJECT_KEY} \
+                                    -Dsonar.java.binaries="Backend/*/target/classes" \
+                                    -Dsonar.java.libraries="Backend/*/target/*.jar,$MAVEN_REPO/**/*.jar" \
+                                    -Dsonar.coverage.jacoco.xmlReportPaths="**/target/site/jacoco/jacoco.xml" \
+                                    -Dsonar.javascript.lcov.reportPaths="Frontend/coverage/lcov.info" \
+                                    -Dsonar.verbose=true
 
-                                    # Run sonar-scanner from project root using sonar-project.properties
-                                    # This analyzes all modules defined in sonar-project.properties
-                                    sonar-scanner \
-                                        -Dsonar.organization=${SONAR_ORGANIZATION} \
-                                        -Dsonar.host.url=https://sonarcloud.io \
-                                        -Dsonar.projectKey=${SONAR_PROJECT_KEY} \
-                                        -Dsonar.java.binaries="Backend/*/target/classes" \
-                                        -Dsonar.java.libraries="Backend/*/target/*.jar,$MAVEN_REPO/**/*.jar" \
-                                        -Dsonar.verbose=true || echo "⚠️  SonarCloud analysis completed with issues (non-blocking)"
-
-                                    echo "✅ SonarCloud analysis submitted"
-                                    echo "📊 View results at: https://sonarcloud.io/project/overview?id=${SONAR_PROJECT_KEY}"
-                                '''
+                                echo "✅ SonarCloud analysis submitted"
+                                echo "📊 View results at: https://sonarcloud.io/project/overview?id=${SONAR_PROJECT_KEY}"
+                            '''
                             } else {
                                 bat '''
-                                    @echo off
-                                    where sonar-scanner >nul 2>&1
-                                    if %ERRORLEVEL% NEQ 0 (
-                                        echo Installing sonar-scanner...
-                                        npm install -g sonarqube-scanner
-                                        if %ERRORLEVEL% NEQ 0 (
-                                            echo Warning: Failed to install sonar-scanner, but it may already be installed
-                                        )
-                                    ) else (
-                                        echo Checkmark: sonar-scanner is already installed
-                                    )
+                                @echo off
+                                where sonar-scanner >nul 2>&1
+                                if %ERRORLEVEL% NEQ 0 (
+                                    echo Installing sonar-scanner...
+                                    npm install -g sonarqube-scanner
+                                )
 
-                                    echo ================================================================
-                                    echo SonarCloud Analysis Scope:
-                                    echo    * Frontend: TypeScript/Angular (src/)
-                                    echo    * Backend: Java/Spring Boot (4 microservices)
-                                    echo    * Test Coverage: JaCoCo (Backend) + Karma (Frontend)
-                                    echo ================================================================
+                                echo ================================================================
+                                echo SonarCloud Analysis Scope:
+                                echo    * Frontend: TypeScript/Angular (src/)
+                                echo    * Backend: Java/Spring Boot (microservices)
+                                echo    * Test Coverage: JaCoCo (Backend) + Karma/LCOV (Frontend)
+                                echo    * Quality Gate: 60%% coverage minimum
+                                echo ================================================================
 
-                                    REM Run sonar-scanner from project root using sonar-project.properties
-                                    sonar-scanner ^
-                                        -Dsonar.organization=%SONAR_ORGANIZATION% ^
-                                        -Dsonar.host.url=https://sonarcloud.io ^
-                                        -Dsonar.projectKey=%SONAR_PROJECT_KEY% ^
-                                        -Dsonar.java.binaries=Backend/*/target/classes ^
-                                        -Dsonar.java.libraries=Backend/*/target/*.jar ^
-                                        -Dsonar.verbose=true || echo Warning: SonarCloud analysis completed with issues (non-blocking)
+                                sonar-scanner ^
+                                    -Dsonar.organization=%SONAR_ORGANIZATION% ^
+                                    -Dsonar.host.url=https://sonarcloud.io ^
+                                    -Dsonar.projectKey=%SONAR_PROJECT_KEY% ^
+                                    -Dsonar.java.binaries=Backend/*/target/classes ^
+                                    -Dsonar.java.libraries=Backend/*/target/*.jar ^
+                                    -Dsonar.coverage.jacoco.xmlReportPaths=**/target/site/jacoco/jacoco.xml ^
+                                    -Dsonar.javascript.lcov.reportPaths=Frontend/coverage/lcov.info ^
+                                    -Dsonar.verbose=true
 
-                                    echo Success: SonarCloud analysis submitted
-                                    echo View results at: https://sonarcloud.io/project/overview?id=%SONAR_PROJECT_KEY%
-                                '''
+                                echo Success: SonarCloud analysis submitted
+                            '''
                             }
                         }
-                        echo '✅ SonarCloud analysis completed successfully'
+
+                        echo '✅ SonarCloud analysis submitted — check results at: https://sonarcloud.io/project/overview?id=${SONAR_PROJECT_KEY}'
+
+                        if (params.ENFORCE_QUALITY_GATE) {
+                            echo '⏳ Waiting for SonarCloud Quality Gate result...'
+                            timeout(time: 5, unit: 'MINUTES') {
+                                def qg = waitForQualityGate()
+                                if (qg.status != 'OK') {
+                                    error("❌ SonarCloud Quality Gate FAILED (status: ${qg.status}). " +
+                                            "Check results at: https://sonarcloud.io/project/overview?id=${SONAR_PROJECT_KEY}")
+                                }
+                            }
+                            echo '✅ SonarCloud Quality Gate passed'
+                        } else {
+                            echo 'ℹ️  Quality Gate check skipped — set ENFORCE_QUALITY_GATE=true to enforce it'
+                        }
                     } catch (Exception e) {
                         echo "⚠️  SonarCloud analysis failed: ${e.message}"
-                        echo """
-                        ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-                        📋 SonarCloud Configuration Required
-                        ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-                        To enable SonarCloud analysis, configure it in Jenkins:
-
-                        1. Go to: Jenkins → Manage Jenkins → Configure System
-                        2. Find "SonarQube servers" section
-                        3. Click "Add SonarQube"
-                        4. Configure:
-                           • Name: SonarCloud
-                           • Server URL: https://sonarcloud.io
-                           • Server authentication token: [Add your SonarCloud token]
-
-                        5. Get your token from: https://sonarcloud.io/account/security
-
-                        ℹ️  This failure will NOT block the pipeline - continuing with deployment
-
-                        ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-                        """
-                        // Don't fail the build if SonarCloud is not configured or has issues
-                        unstable('SonarCloud analysis skipped - not configured or failed (non-blocking)')
+                        echo "ℹ️  This is non-blocking — continuing pipeline"
+                        unstable('SonarCloud analysis failed (non-blocking)')
                     }
                 }
             }
@@ -784,8 +768,8 @@ echo MEDIA_DB_NAME=media_db
                     echo '⏸️  Waiting for deployment approval...'
                     timeout(time: 30, unit: 'MINUTES') {
                         input message: 'Deploy to production?',
-                              ok: 'Deploy',
-                              submitter: 'admin'
+                                ok: 'Deploy',
+                                submitter: 'admin'
                     }
                 }
             }
@@ -825,9 +809,9 @@ echo MEDIA_DB_NAME=media_db
                 echo '📦 Archiving test reports and coverage data...'
                 try {
                     archiveArtifacts(
-                        artifacts: '**/target/surefire-reports/*.xml, **/target/site/jacoco/**/*',
-                        allowEmptyArchive: true,
-                        fingerprint: true
+                            artifacts: '**/target/surefire-reports/*.xml, **/target/site/jacoco/**/*',
+                            allowEmptyArchive: true,
+                            fingerprint: true
                     )
                     echo '✅ Test reports and coverage data archived'
                 } catch (Exception e) {
@@ -865,7 +849,6 @@ echo MEDIA_DB_NAME=media_db
                     """
                 }
 
-                // AUDIT REQUIREMENT: Notifications on success
                 echo """
                 ✅ Build Summary:
                 - Status: SUCCESS
@@ -875,10 +858,9 @@ echo MEDIA_DB_NAME=media_db
                 - Duration: ${currentBuild.durationString}
                 """
 
-                // Email notification on success
                 emailext(
-                    subject: "✅ BUILD SUCCESS: ${env.JOB_NAME} #${env.BUILD_NUMBER} [${env.BRANCH_NAME}]",
-                    body: """
+                        subject: "✅ BUILD SUCCESS: ${env.JOB_NAME} #${env.BUILD_NUMBER} [${env.BRANCH_NAME}]",
+                        body: """
                     <html>
                     <body style="font-family: Arial, sans-serif;">
                         <h2 style="color: #28a745;">✅ Build Successful</h2>
@@ -912,9 +894,9 @@ echo MEDIA_DB_NAME=media_db
                     </body>
                     </html>
                     """,
-                    to: "${params.EMAIL_RECIPIENTS}",
-                    mimeType: 'text/html',
-                    attachLog: false
+                        to: "${params.EMAIL_RECIPIENTS}",
+                        mimeType: 'text/html',
+                        attachLog: false
                 )
             }
         }
@@ -923,7 +905,6 @@ echo MEDIA_DB_NAME=media_db
             echo '❌ Pipeline failed!'
             script {
                 def dockerLogs = ''
-                // Show docker logs if available
                 try {
                     if (isUnix()) {
                         dockerLogs = sh(script: 'docker compose logs --tail=50 2>&1 || echo "No docker logs available"', returnStdout: true).trim()
@@ -937,7 +918,6 @@ echo MEDIA_DB_NAME=media_db
                     dockerLogs = "Could not retrieve docker logs: ${e.message}"
                 }
 
-                // AUDIT REQUIREMENT: Notifications on failure
                 echo """
                 ❌ Build Failed:
                 - Branch: ${env.BRANCH_NAME}
@@ -948,10 +928,9 @@ echo MEDIA_DB_NAME=media_db
                 Check console output for details.
                 """
 
-                // Email notification on failure
                 emailext(
-                    subject: "❌ BUILD FAILED: ${env.JOB_NAME} #${env.BUILD_NUMBER} [${env.BRANCH_NAME}]",
-                    body: """
+                        subject: "❌ BUILD FAILED: ${env.JOB_NAME} #${env.BUILD_NUMBER} [${env.BRANCH_NAME}]",
+                        body: """
                     <html>
                     <body style="font-family: Arial, sans-serif;">
                         <h2 style="color: #dc3545;">❌ Build Failed</h2>
@@ -986,6 +965,7 @@ ${dockerLogs.take(5000)}
                             <li>Verify JWT_SECRET credential is configured</li>
                             <li>Ensure Docker daemon is running</li>
                             <li>Check for port conflicts (4200, 4443, 8080, 27017)</li>
+                            <li>If SonarCloud failed: verify webhook at https://&lt;jenkins&gt;/sonarqube-webhook/ and Quality Gate threshold in SonarCloud UI</li>
                         </ul>
 
                         <p style="color: #6c757d; font-size: 12px;">
@@ -994,9 +974,9 @@ ${dockerLogs.take(5000)}
                     </body>
                     </html>
                     """,
-                    to: "${params.EMAIL_RECIPIENTS}",
-                    mimeType: 'text/html',
-                    attachLog: true
+                        to: "${params.EMAIL_RECIPIENTS}",
+                        mimeType: 'text/html',
+                        attachLog: true
                 )
             }
         }
@@ -1012,10 +992,9 @@ ${dockerLogs.take(5000)}
                 - Build: #${env.BUILD_NUMBER}
                 """
 
-                // Email notification on unstable build
                 emailext(
-                    subject: "⚠️ BUILD UNSTABLE: ${env.JOB_NAME} #${env.BUILD_NUMBER} [${env.BRANCH_NAME}]",
-                    body: """
+                        subject: "⚠️ BUILD UNSTABLE: ${env.JOB_NAME} #${env.BUILD_NUMBER} [${env.BRANCH_NAME}]",
+                        body: """
                     <html>
                     <body style="font-family: Arial, sans-serif;">
                         <h2 style="color: #ffc107;">⚠️ Build Unstable</h2>
@@ -1052,9 +1031,9 @@ ${dockerLogs.take(5000)}
                     </body>
                     </html>
                     """,
-                    to: "${params.EMAIL_RECIPIENTS}",
-                    mimeType: 'text/html',
-                    attachLog: false
+                        to: "${params.EMAIL_RECIPIENTS}",
+                        mimeType: 'text/html',
+                        attachLog: false
                 )
             }
         }
@@ -1067,18 +1046,12 @@ ${dockerLogs.take(5000)}
                         sh '''
                             # Clean up .env file (contains secrets)
                             rm -f .env
-
-                            # Clean node_modules to save space (optional)
-                            # rm -rf Frontend/node_modules
                         '''
                     } else {
                         bat '''
                             @echo off
                             REM Clean up .env file (contains secrets)
                             if exist .env del /f .env
-
-                            REM Clean node_modules to save space (optional)
-                            REM if exist Frontend\\node_modules rmdir /s /q Frontend\\node_modules
                         '''
                     }
                 } catch (Exception e) {
@@ -1088,5 +1061,3 @@ ${dockerLogs.take(5000)}
         }
     }
 }
-
-
