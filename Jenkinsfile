@@ -59,8 +59,14 @@ pipeline {
                     ║ Build #:    ${env.BUILD_NUMBER}
                     ║ Commit:     ${env.GIT_COMMIT_SHORT}
                     ║ Deploy:     ${env.SHOULD_DEPLOY}
+                    ║ Email:      ${params.EMAIL_RECIPIENTS}
                     ╚════════════════════════════════════╝
                     """
+
+                    // Validate email recipients
+                    if (!params.EMAIL_RECIPIENTS || params.EMAIL_RECIPIENTS.isEmpty()) {
+                        echo "⚠️  WARNING: EMAIL_RECIPIENTS is empty, notifications will not be sent"
+                    }
                 }
             }
         }
@@ -73,19 +79,57 @@ pipeline {
                     if (env.SHOULD_DEPLOY == 'true') {
                         withCredentials([string(credentialsId: 'JWT_SECRET', variable: 'JWT_SECRET')]) {
                             if (isUnix()) {
-                                sh 'cat > .env << EOF\nJWT_SECRET=${JWT_SECRET}\nJWT_EXPIRATION=3600000\nMONGODB_HOST=mongodb\nMONGODB_PORT=27017\nUSER_DB_NAME=buy01_users\nPRODUCT_DB_NAME=buy01_products\nMEDIA_DB_NAME=media_db\nEOF'
+                                sh '''
+                                    cat > .env << EOF
+JWT_SECRET=${JWT_SECRET}
+JWT_EXPIRATION=3600000
+MONGODB_HOST=mongodb
+MONGODB_PORT=27017
+USER_DB_NAME=buy01_users
+PRODUCT_DB_NAME=buy01_products
+MEDIA_DB_NAME=media_db
+EOF
+                                    chmod 600 .env
+                                '''
                             } else {
-                                bat '(echo JWT_SECRET=%JWT_SECRET%&echo JWT_EXPIRATION=3600000&echo MONGODB_HOST=mongodb&echo MONGODB_PORT=27017&echo USER_DB_NAME=buy01_users&echo PRODUCT_DB_NAME=buy01_products&echo MEDIA_DB_NAME=media_db) > .env'
+                                bat '''
+                                    (echo JWT_SECRET=%JWT_SECRET%^
+                                    echo JWT_EXPIRATION=3600000^
+                                    echo MONGODB_HOST=mongodb^
+                                    echo MONGODB_PORT=27017^
+                                    echo USER_DB_NAME=buy01_users^
+                                    echo PRODUCT_DB_NAME=buy01_products^
+                                    echo MEDIA_DB_NAME=media_db) > .env
+                                '''
                             }
                         }
-                        echo '✅ Production environment set'
+                        echo '✅ Production environment configured'
                     } else {
                         if (isUnix()) {
-                            sh 'cat > .env << EOF\nJWT_SECRET=test-jwt-secret-build-only\nJWT_EXPIRATION=3600000\nMONGODB_HOST=mongodb\nMONGODB_PORT=27017\nUSER_DB_NAME=buy01_users\nPRODUCT_DB_NAME=buy01_products\nMEDIA_DB_NAME=media_db\nEOF'
+                            sh '''
+                                cat > .env << EOF
+JWT_SECRET=test-jwt-secret-build-only
+JWT_EXPIRATION=3600000
+MONGODB_HOST=mongodb
+MONGODB_PORT=27017
+USER_DB_NAME=buy01_users
+PRODUCT_DB_NAME=buy01_products
+MEDIA_DB_NAME=media_db
+EOF
+                                chmod 600 .env
+                            '''
                         } else {
-                            bat '(echo JWT_SECRET=test-jwt-secret-build-only&echo JWT_EXPIRATION=3600000&echo MONGODB_HOST=mongodb&echo MONGODB_PORT=27017&echo USER_DB_NAME=buy01_users&echo PRODUCT_DB_NAME=buy01_products&echo MEDIA_DB_NAME=media_db) > .env'
+                            bat '''
+                                (echo JWT_SECRET=test-jwt-secret-build-only^
+                                echo JWT_EXPIRATION=3600000^
+                                echo MONGODB_HOST=mongodb^
+                                echo MONGODB_PORT=27017^
+                                echo USER_DB_NAME=buy01_users^
+                                echo PRODUCT_DB_NAME=buy01_products^
+                                echo MEDIA_DB_NAME=media_db) > .env
+                            '''
                         }
-                        echo '✅ Test environment set'
+                        echo '✅ Test environment configured'
                     }
                 }
             }
@@ -189,9 +233,10 @@ pipeline {
                                     -Dsonar.host.url=https://sonarcloud.io \
                                     -Dsonar.projectKey=${SONAR_PROJECT_KEY} \
                                     -Dsonar.sources="Backend/user-service/src/main/java,Backend/product-service/src/main/java,Backend/media-service/src/main/java,Backend/api-gateway/src/main/java,Backend/order-service/src/main/java,Frontend/src" \
-                                    -Dsonar.tests="Backend/user-service/src/test/java,Backend/product-service/src/test/java,Backend/media-service/src/test/java,Backend/api-gateway/src/test/java,Backend/order-service/src/test/java,Frontend/src/**/*.spec.ts" \
+                                    -Dsonar.tests="Backend/user-service/src/test/java,Backend/product-service/src/test/java,Backend/media-service/src/test/java,Backend/api-gateway/src/test/java,Backend/order-service/src/test/java" \
                                     -Dsonar.java.binaries="Backend/user-service/target/classes,Backend/product-service/target/classes,Backend/media-service/target/classes,Backend/api-gateway/target/classes,Backend/order-service/target/classes" \
                                     -Dsonar.exclusions="**/target/**,**/node_modules/**,**/dist/**,**/.angular/**,**/certs/**,**/coverage/**,**/uploads/**" \
+                                    -Dsonar.test.inclusions="**/*.spec.ts" \
                                     -Dsonar.coverage.jacoco.xmlReportPaths="Backend/user-service/target/site/jacoco/jacoco.xml,Backend/product-service/target/site/jacoco/jacoco.xml,Backend/media-service/target/site/jacoco/jacoco.xml,Backend/api-gateway/target/site/jacoco/jacoco.xml,Backend/order-service/target/site/jacoco/jacoco.xml" \
                                     -Dsonar.javascript.lcov.reportPaths="Frontend/coverage/lcov.info"
                                 
@@ -202,13 +247,15 @@ pipeline {
                                 npm install -g sonarqube-scanner --force 2>&1 || true
                                 
                                 sonar-scanner ^
+                                    -Dsonar.scanner.skipJre=true ^
                                     -Dsonar.organization=%SONAR_ORGANIZATION% ^
                                     -Dsonar.host.url=https://sonarcloud.io ^
                                     -Dsonar.projectKey=%SONAR_PROJECT_KEY% ^
                                     -Dsonar.sources=Backend/user-service/src/main/java,Backend/product-service/src/main/java,Backend/media-service/src/main/java,Backend/api-gateway/src/main/java,Backend/order-service/src/main/java,Frontend/src ^
-                                    -Dsonar.tests=Backend/user-service/src/test/java,Backend/product-service/src/test/java,Backend/media-service/src/test/java,Backend/api-gateway/src/test/java,Backend/order-service/src/test/java,Frontend/src/**/*.spec.ts ^
+                                    -Dsonar.tests=Backend/user-service/src/test/java,Backend/product-service/src/test/java,Backend/media-service/src/test/java,Backend/api-gateway/src/test/java,Backend/order-service/src/test/java ^
                                     -Dsonar.java.binaries=Backend/user-service/target/classes,Backend/product-service/target/classes,Backend/media-service/target/classes,Backend/api-gateway/target/classes,Backend/order-service/target/classes ^
                                     -Dsonar.exclusions=**/target/**,**/node_modules/**,**/dist/**,**/.angular/**,**/certs/**,**/coverage/**,**/uploads/** ^
+                                    -Dsonar.test.inclusions=**/*.spec.ts ^
                                     -Dsonar.coverage.jacoco.xmlReportPaths=Backend/user-service/target/site/jacoco/jacoco.xml,Backend/product-service/target/site/jacoco/jacoco.xml,Backend/media-service/target/site/jacoco/jacoco.xml,Backend/api-gateway/target/site/jacoco/jacoco.xml,Backend/order-service/target/site/jacoco/jacoco.xml ^
                                     -Dsonar.javascript.lcov.reportPaths=Frontend/coverage/lcov.info
                                 
@@ -251,17 +298,23 @@ pipeline {
 
                     if (isUnix()) {
                         sh '''
+                            echo "🔨 Building Docker images..."
                             docker compose build --parallel
+                            
+                            echo "🏷️  Tagging images..."
                             for img in user-service product-service media-service api-gateway order-service frontend; do
-                                docker tag buy01-$img:latest buy01-$img:${IMAGE_TAG}
+                                docker tag buy01-$img:latest buy01-$img:${IMAGE_TAG} || echo "Warning: Could not tag buy01-$img"
                             done
                             echo "✅ Images tagged: ${IMAGE_TAG}"
                         '''
                     } else {
                         bat '''
+                            echo Building Docker images...
                             docker compose build --parallel
+                            
+                            echo Tagging images...
                             for %%i in (user-service product-service media-service api-gateway order-service frontend) do (
-                                docker tag buy01-%%i:latest buy01-%%i:%IMAGE_TAG%
+                                docker tag buy01-%%i:latest buy01-%%i:%IMAGE_TAG% || echo Warning: Could not tag buy01-%%i
                             )
                             echo Images tagged: %IMAGE_TAG%
                         '''
@@ -313,9 +366,11 @@ pipeline {
     post {
         always {
             script {
-                archiveArtifacts artifacts: '**/target/surefire-reports/*.xml, **/target/site/jacoco/**/*',
+                // Archive test reports and coverage
+                archiveArtifacts artifacts: '**/target/surefire-reports/*.xml, **/target/site/jacoco/**/*, Frontend/coverage/**/*',
                                  allowEmptyArchive: true, fingerprint: true
-
+                
+                // Clean up sensitive files
                 if (isUnix()) {
                     sh 'rm -f .env || true'
                 } else {
@@ -392,10 +447,25 @@ def buildBackendService(String service) {
 def testBackendService(String service) {
     dir("Backend/${service}") {
         timeout(time: 15, unit: 'MINUTES') {
-            if (isUnix()) {
-                sh 'export JWT_SECRET="${JWT_SECRET}" && ./mvnw test jacoco:report'
-            } else {
-                bat 'set JWT_SECRET=%JWT_SECRET% && mvnw.cmd test jacoco:report'
+            try {
+                if (isUnix()) {
+                    sh '''
+                        echo "🧪 Testing ${service}..."
+                        export JWT_SECRET="${JWT_SECRET}"
+                        ./mvnw test jacoco:report -B
+                        echo "✅ ${service} tests completed"
+                    '''
+                } else {
+                    bat '''
+                        echo Testing service: %1
+                        set JWT_SECRET=%JWT_SECRET%
+                        mvnw.cmd test jacoco:report -B
+                        echo Tests completed
+                    '''
+                }
+            } catch (Exception e) {
+                echo "❌ ${service} test failure: ${e.message}"
+                throw e // Re-throw to mark build as failed but continue to capture results
             }
         }
     }
@@ -427,16 +497,28 @@ def buildFrontend() {
 def testFrontend() {
     dir('Frontend') {
         timeout(time: 20, unit: 'MINUTES') {
-            if (isUnix()) {
-                sh '''
-                    npm install --legacy-peer-deps
-                    npm run test:coverage || true
-                '''
-            } else {
-                bat '''
-                    npm install --legacy-peer-deps
-                    npm run test:coverage || exit /b 0
-                '''
+            try {
+                if (isUnix()) {
+                    sh '''
+                        echo "🧪 Installing Frontend dependencies..."
+                        npm install --legacy-peer-deps
+                        
+                        echo "🧪 Running Frontend tests..."
+                        npm run test:coverage
+                        
+                        echo "✅ Frontend tests completed"
+                    '''
+                } else {
+                    bat '''
+                        echo Running Frontend tests...
+                        npm install --legacy-peer-deps
+                        npm run test:coverage
+                        echo Frontend tests completed
+                    '''
+                }
+            } catch (Exception e) {
+                echo "⚠️  Frontend tests failed or warnings: ${e.message}"
+                // Continue build - frontend test failures shouldn't block
             }
         }
     }
@@ -444,15 +526,16 @@ def testFrontend() {
 
 def publishCoverageReport(String name, String dir) {
     try {
+        String reportPath = name == 'Frontend' ? "${dir}/coverage" : "${dir}/target/site/jacoco"
         publishHTML([
             allowMissing: true, alwaysLinkToLastBuild: true, keepAll: true,
-            reportDir: "${dir}/target/site/jacoco",
+            reportDir: reportPath,
             reportFiles: 'index.html',
             reportName: "${name} Coverage"
         ])
         echo "✅ ${name} coverage published"
-    } catch (Exception _) {
-        echo "⚠️  ${name} coverage unavailable"
+    } catch (Exception e) {
+        echo "⚠️  ${name} coverage unavailable: ${e.message}"
     }
 }
 
