@@ -226,21 +226,8 @@ EOF
                                     echo "📥 Installing SonarQube Scanner..."
                                     npm install -g sonarqube-scanner --force 2>&1 || true
                                     
-                                    echo "📂 Setting up Java libraries path..."
-                                    export MAVEN_JAVA_OPTS="-Xmx1024m"
-                                    export JAVA_HOME=$(which java | xargs readlink -f | sed 's:/bin/java::')
-                                    
-                                    echo "🔍 Running SonarCloud analysis with proper configuration..."
-                                    sonar-scanner \
-                                        -Dsonar.projectKey=${SONAR_PROJECT_KEY} \
-                                        -Dsonar.organization=${SONAR_ORGANIZATION} \
-                                        -Dsonar.host.url=https://sonarcloud.io \
-                                        -Dsonar.java.libraries="${HOME}/.m2/repository/**/*.jar" \
-                                        -Dsonar.javascript.lcov.reportPaths="Frontend/coverage/lcov.info" \
-                                        -Dsonar.sources="Backend/user-service/src/main/java,Backend/product-service/src/main/java,Backend/media-service/src/main/java,Backend/api-gateway/src/main/java,Backend/order-service/src/main/java,Frontend/src" \
-                                        -Dsonar.tests="Backend/user-service/src/test/java,Backend/product-service/src/test/java,Backend/media-service/src/test/java,Backend/api-gateway/src/test/java,Backend/order-service/src/test/java" \
-                                        -Dsonar.java.binaries="Backend/user-service/target/classes,Backend/product-service/target/classes,Backend/media-service/target/classes,Backend/api-gateway/target/classes,Backend/order-service/target/classes" \
-                                        -Dsonar.coverage.jacoco.xmlReportPaths="Backend/user-service/target/site/jacoco/jacoco.xml,Backend/product-service/target/site/jacoco/jacoco.xml,Backend/media-service/target/site/jacoco/jacoco.xml,Backend/api-gateway/target/site/jacoco/jacoco.xml,Backend/order-service/target/site/jacoco/jacoco.xml" 2>&1 | tee sonar-analysis.log
+                                    echo "🔍 Running SonarCloud analysis..."
+                                    sonar-scanner 2>&1 | tee sonar-analysis.log
                                     
                                     if grep -q "ERROR" sonar-analysis.log; then
                                         echo "⚠️  SonarCloud analysis completed with warnings"
@@ -254,15 +241,7 @@ EOF
                                     npm install -g sonarqube-scanner --force 2>&1 || echo.
                                     
                                     echo Running SonarCloud analysis...
-                                    sonar-scanner ^
-                                        -Dsonar.projectKey=%SONAR_PROJECT_KEY% ^
-                                        -Dsonar.organization=%SONAR_ORGANIZATION% ^
-                                        -Dsonar.host.url=https://sonarcloud.io ^
-                                        -Dsonar.javascript.lcov.reportPaths=Frontend/coverage/lcov.info ^
-                                        -Dsonar.sources=Backend/user-service/src/main/java,Backend/product-service/src/main/java,Backend/media-service/src/main/java,Backend/api-gateway/src/main/java,Backend/order-service/src/main/java,Frontend/src ^
-                                        -Dsonar.tests=Backend/user-service/src/test/java,Backend/product-service/src/test/java,Backend/media-service/src/test/java,Backend/api-gateway/src/test/java,Backend/order-service/src/test/java ^
-                                        -Dsonar.java.binaries=Backend/user-service/target/classes,Backend/product-service/target/classes,Backend/media-service/target/classes,Backend/api-gateway/target/classes,Backend/order-service/target/classes ^
-                                        -Dsonar.coverage.jacoco.xmlReportPaths=Backend/user-service/target/site/jacoco/jacoco.xml,Backend/product-service/target/site/jacoco/jacoco.xml,Backend/media-service/target/site/jacoco/jacoco.xml,Backend/api-gateway/target/site/jacoco/jacoco.xml,Backend/order-service/target/site/jacoco/jacoco.xml
+                                    sonar-scanner
                                     
                                     echo SonarCloud analysis submitted
                                 '''
@@ -495,6 +474,7 @@ def buildFrontend() {
                 sh '''
                     rm -rf node_modules package-lock.json dist .angular
                     npm install --legacy-peer-deps
+                    npm audit fix --audit-level=moderate || true
                     npm run build -- --configuration=production
                 '''
             } else {
@@ -504,6 +484,7 @@ def buildFrontend() {
                     if exist dist rmdir /s /q dist
                     if exist .angular rmdir /s /q .angular
                     npm install --legacy-peer-deps
+                    npm audit fix --audit-level=moderate
                     npm run build -- --configuration=production
                 '''
             }
