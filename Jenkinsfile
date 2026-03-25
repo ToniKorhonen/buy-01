@@ -220,6 +220,19 @@ EOF
                     echo '📊 Running SonarCloud analysis...'
 
                     try {
+                        // Ensure Maven dependencies are downloaded for better SonarCloud analysis
+                        echo '📥 Downloading Maven dependencies for analysis...'
+                        if (isUnix()) {
+                            sh '''
+                                for service in user-service product-service media-service api-gateway order-service; do
+                                    echo "📦 Downloading dependencies for $service..."
+                                    cd Backend/$service
+                                    ./mvnw dependency:go-offline -q 2>&1 || echo "Note: Some dependencies may require network access"
+                                    cd ../../
+                                done
+                            '''
+                        }
+
                         withSonarQubeEnv('SonarCloud') {
                             if (isUnix()) {
                                 sh '''
