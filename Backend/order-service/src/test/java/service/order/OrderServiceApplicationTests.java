@@ -2,6 +2,7 @@ package service.order;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.TestPropertySource;
 
 /**
  * Order Service Application Integration Tests
@@ -10,6 +11,7 @@ import org.springframework.boot.test.context.SpringBootTest;
  * This is a basic smoke test to ensure the Spring Boot application starts without errors.
  */
 @SpringBootTest
+@TestPropertySource(locations = "classpath:application-test.properties")
 class OrderServiceApplicationTests {
 
 	/**

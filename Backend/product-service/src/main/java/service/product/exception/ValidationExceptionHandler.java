@@ -39,4 +39,13 @@ public class ValidationExceptionHandler {
         response.put("message", ex.getMessage());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
+
+    @ExceptionHandler(ProductNotFoundException.class)
+    public ResponseEntity<Map<String, String>> handleProductNotFound(ProductNotFoundException ex) {
+        log.warn("Product not found: {}", ex.getMessage());
+        Map<String, String> response = new HashMap<>();
+        response.put("status", "error");
+        response.put("message", "Product not found");
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+    }
 }

@@ -62,3 +62,4 @@ public class GlobalErrorWebExceptionHandler extends AbstractErrorWebExceptionHan
                 .body(BodyInserters.fromValue(errorAttributes));
     }
 }
+

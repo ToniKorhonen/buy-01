@@ -1,9 +1,15 @@
 FROM maven:3.9-eclipse-temurin-17-alpine AS build
 WORKDIR /app
+
+# Copy parent POM and shared-commons for dependency resolution
 COPY pom.xml .
-RUN mvn dependency:go-offline -B
-COPY src ./src
-RUN mvn clean package -DskipTests -Dmaven.javadoc.skip=true
+COPY shared-commons ./shared-commons
+COPY order-service ./order-service
+
+# Build shared-commons first, then the specific service
+RUN mvn clean install -DskipTests -Dmaven.javadoc.skip=true -f shared-commons/pom.xml && \
+    mvn clean package -DskipTests -Dmaven.javadoc.skip=true -f order-service/pom.xml
+
 FROM eclipse-temurin:17-jre-alpine
 RUN addgroup -g 1001 appgroup && \
     adduser -D -u 1001 -G appgroup appuser && \
@@ -12,7 +18,7 @@ RUN addgroup -g 1001 appgroup && \
     mkdir -p /app && \
     chown appuser:appgroup /app
 WORKDIR /app
-COPY --chown=root:root --from=build /app/target/*.jar app.jar
+COPY --chown=root:root --from=build /app/order-service/target/*.jar app.jar
 RUN chmod 444 app.jar
 USER appuser
 EXPOSE 8084

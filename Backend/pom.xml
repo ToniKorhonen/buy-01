@@ -26,6 +26,7 @@
     </properties>
 
     <modules>
+        <module>shared-commons</module>
         <module>user-service</module>
         <module>product-service</module>
         <module>media-service</module>

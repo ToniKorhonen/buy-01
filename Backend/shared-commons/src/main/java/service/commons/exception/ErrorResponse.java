@@ -1,8 +1,12 @@
-package service.product.exception;
+package service.commons.exception;
 
 import java.time.LocalDateTime;
 import java.util.Map;
 
+/**
+ * Standard error response record used across all microservices.
+ * Eliminates duplication of error response DTOs.
+ */
 public record ErrorResponse(
         LocalDateTime timestamp,
         int status,

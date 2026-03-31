@@ -23,8 +23,8 @@ services:
           memory: 512M
   user-service:
     build:
-      context: ./Backend/user-service
-      dockerfile: Dockerfile
+      context: ./Backend
+      dockerfile: user-service/Dockerfile
     container_name: buy01-user-service
     restart: unless-stopped
     env_file:
@@ -59,8 +59,8 @@ services:
           memory: 512M
   product-service:
     build:
-      context: ./Backend/product-service
-      dockerfile: Dockerfile
+      context: ./Backend
+      dockerfile: product-service/Dockerfile
     container_name: buy01-product-service
     restart: unless-stopped
     env_file:
@@ -92,8 +92,8 @@ services:
           memory: 512M
   media-service:
     build:
-      context: ./Backend/media-service
-      dockerfile: Dockerfile
+      context: ./Backend
+      dockerfile: media-service/Dockerfile
     container_name: buy01-media-service
     restart: unless-stopped
     env_file:
@@ -126,8 +126,8 @@ services:
           memory: 512M
   order-service:
     build:
-      context: ./Backend/order-service
-      dockerfile: Dockerfile
+      context: ./Backend
+      dockerfile: order-service/Dockerfile
     container_name: buy01-order-service
     restart: unless-stopped
     env_file:
@@ -162,8 +162,8 @@ services:
           memory: 512M
   api-gateway:
     build:
-      context: ./Backend/api-gateway
-      dockerfile: Dockerfile
+      context: ./Backend
+      dockerfile: api-gateway/Dockerfile
     container_name: buy01-api-gateway
     restart: unless-stopped
     env_file:
