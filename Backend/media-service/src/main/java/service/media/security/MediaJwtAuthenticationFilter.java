@@ -8,12 +8,12 @@ import org.springframework.stereotype.Component;
  * Extends the shared JwtAuthenticationFilter from shared-commons.
  */
 @Component
-public class JwtAuthenticationFilter extends service.commons.security.JwtAuthenticationFilter {
+public class MediaJwtAuthenticationFilter extends service.commons.security.JwtAuthenticationFilter {
 
     private final JwtService jwtService;
 
     @Autowired
-    public JwtAuthenticationFilter(JwtService jwtService) {
+    public MediaJwtAuthenticationFilter(JwtService jwtService) {
         this.jwtService = jwtService;
     }
 

@@ -1,19 +1,19 @@
-package service.order.security;
+package service.product.security;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 /**
- * Order Service JWT authentication filter.
+ * Product Service JWT authentication filter.
  * Extends the shared JwtAuthenticationFilter from shared-commons.
  */
 @Component
-public class JwtAuthenticationFilter extends service.commons.security.JwtAuthenticationFilter {
+public class ProductJwtAuthenticationFilter extends service.commons.security.JwtAuthenticationFilter {
 
     private final JwtService jwtService;
 
     @Autowired
-    public JwtAuthenticationFilter(JwtService jwtService) {
+    public ProductJwtAuthenticationFilter(JwtService jwtService) {
         this.jwtService = jwtService;
     }
 
@@ -27,4 +27,3 @@ public class JwtAuthenticationFilter extends service.commons.security.JwtAuthent
         return jwtService.extractRole(token);
     }
 }
-

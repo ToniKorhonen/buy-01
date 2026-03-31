@@ -9,12 +9,12 @@ import org.springframework.stereotype.Component;
  * All filter logic is centralized to eliminate duplication across services.
  */
 @Component
-public class JwtAuthenticationFilter extends service.commons.security.JwtAuthenticationFilter {
+public class UserJwtAuthenticationFilter extends service.commons.security.JwtAuthenticationFilter {
 
     private final JwtService jwtService;
 
     @Autowired
-    public JwtAuthenticationFilter(JwtService jwtService) {
+    public UserJwtAuthenticationFilter(JwtService jwtService) {
         this.jwtService = jwtService;
     }
 
