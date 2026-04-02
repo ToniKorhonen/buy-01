@@ -46,7 +46,7 @@ check_service_health() {
 # Function to rollback on failure
 rollback() {
     echo -e "${RED}🔄 Deployment failed! Rolling back...${NC}"
-    docker compose down
+    docker compose down --remove-orphans -v
     echo -e "${RED}❌ Rollback complete. Please check the logs.${NC}"
     exit 1
     return 1
@@ -55,12 +55,13 @@ rollback() {
 # Trap errors and rollback
 trap 'rollback' ERR
 
-echo "📋 Step 1: Stopping existing containers..."
-docker compose down || true
+echo "📋 Step 1: Stopping and cleaning up existing containers..."
+docker compose down --remove-orphans -v || true
+echo "✅ Old containers and volumes cleaned"
 
 echo ""
 echo "🐳 Step 2: Starting services with Docker Compose..."
-docker compose up -d --build
+docker compose up -d --build --remove-orphans
 
 echo ""
 echo "🏥 Step 3: Running health checks..."

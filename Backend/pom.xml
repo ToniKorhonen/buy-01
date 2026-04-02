@@ -20,19 +20,18 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
         <!-- SonarCloud Configuration -->
-        <sonar.projectKey>ToniKorhonen_buy-01-backend</sonar.projectKey>
+        <sonar.projectKey>ToniKorhonen_buy-01</sonar.projectKey>
         <sonar.organization>tonikorhonen</sonar.organization>
         <sonar.host.url>https://sonarcloud.io</sonar.host.url>
-        <sonar.coverage.jacoco.xmlReportPaths>
-            ${project.basedir}/../target/site/jacoco-aggregate/jacoco.xml
-        </sonar.coverage.jacoco.xmlReportPaths>
     </properties>
 
     <modules>
+        <module>shared-commons</module>
         <module>user-service</module>
         <module>product-service</module>
         <module>media-service</module>
         <module>api-gateway</module>
+        <module>order-service</module>
     </modules>
 
     <build>

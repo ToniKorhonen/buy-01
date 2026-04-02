@@ -1,12 +1,15 @@
 # Multi-stage build for minimal image size
 FROM maven:3.9-eclipse-temurin-17-alpine AS build
 WORKDIR /app
-# Copy only pom.xml first for better layer caching
+
+# Copy parent POM and shared-commons for dependency resolution
 COPY pom.xml .
-RUN mvn dependency:go-offline -B
-# Copy source and build
-COPY src ./src
-RUN mvn clean package -DskipTests -Dmaven.javadoc.skip=true
+COPY shared-commons ./shared-commons
+COPY api-gateway ./api-gateway
+
+# Build shared-commons first, then the specific service
+RUN mvn clean install -DskipTests -Dmaven.javadoc.skip=true -f shared-commons/pom.xml && \
+    mvn clean package -DskipTests -Dmaven.javadoc.skip=true -f api-gateway/pom.xml
 
 # Minimal runtime stage
 FROM eclipse-temurin:17-jre-alpine
@@ -22,7 +25,7 @@ RUN addgroup -g 1001 appgroup && \
 WORKDIR /app
 
 # Copy JAR with root ownership and set read-only permissions
-COPY --chown=root:root --from=build /app/target/*.jar app.jar
+COPY --chown=root:root --from=build /app/api-gateway/target/*.jar app.jar
 RUN chmod 444 app.jar
 
 # Switch to non-root user
