@@ -135,6 +135,20 @@ EOF
             }
         }
 
+        stage('Build Shared Commons') {
+            steps {
+                script {
+                    dir('Backend/shared-commons') {
+                        if (isUnix()) {
+                            sh './mvnw clean install -DskipTests'
+                        } else {
+                            bat 'mvnw.cmd clean install -DskipTests'
+                        }
+                    }
+                }
+            }
+        }
+
         stage('Build') {
             parallel {
                 stage('Backend Services') {
