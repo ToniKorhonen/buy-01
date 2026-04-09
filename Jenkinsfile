@@ -138,8 +138,13 @@ EOF
         stage('Build Shared Commons') {
             steps {
                 script {
-                    echo '🔨 Building shared-commons module first...'
-                    buildBackendService('shared-commons')
+                    dir('Backend/shared-commons') {
+                        if (isUnix()) {
+                            sh './mvnw clean install -DskipTests'
+                        } else {
+                            bat 'mvnw.cmd clean install -DskipTests'
+                        }
+                    }
                 }
             }
         }
