@@ -140,9 +140,9 @@ EOF
                 script {
                     dir('Backend/shared-commons') {
                         if (isUnix()) {
-                            sh './mvnw clean install -DskipTests'
+                            sh '../user-service/mvnw clean install -DskipTests'
                         } else {
-                            bat 'mvnw.cmd clean install -DskipTests'
+                            bat '..\\user-service\\mvnw.cmd clean install -DskipTests'
                         }
                     }
                 }
