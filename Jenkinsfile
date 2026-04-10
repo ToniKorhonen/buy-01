@@ -180,7 +180,7 @@ EOF
                 stage('Backend Tests') {
                     steps {
                         script {
-                            ['user-service', 'product-service', 'media-service', 'api-gateway', 'order-service'].each { service ->
+                            ['shared-commons', 'user-service', 'product-service', 'media-service', 'api-gateway', 'order-service'].each { service ->
                                 testBackendService(service)
                             }
                         }
