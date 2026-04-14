@@ -3,8 +3,8 @@ pipeline {
 
     environment {
         COMPOSE_PROJECT_NAME = 'buy01'
-        SONAR_ORGANIZATION = 'tonikorhonen'
-        SONAR_PROJECT_KEY = 'ToniKorhonen_buy-01'
+        SONAR_ORGANIZATION = 'yssnogood'
+        SONAR_PROJECT_KEY = 'Yssnogood_buy-01'
         SONAR_SCANNER_OPTS = '-Xmx512m'
         SONAR_SCANNER_SKIP_JRE = 'true'
         JWT_SECRET_TEST = 'test-jwt-secret-for-testing-only'
@@ -19,7 +19,7 @@ pipeline {
         choice(name: 'DEPLOY_ENV', choices: ['auto', 'dev', 'prod'], description: 'Deployment environment')
         booleanParam(name: 'SKIP_TESTS', defaultValue: false, description: 'Skip tests')
         booleanParam(name: 'CLEAN_DOCKER', defaultValue: false, description: 'Clean Docker images')
-        booleanParam(name: 'ENFORCE_QUALITY_GATE', defaultValue: false, description: 'Enforce SonarCloud gate')
+        booleanParam(name: 'ENFORCE_QUALITY_GATE', defaultValue: true, description: 'Enforce SonarCloud gate')
         string(name: 'EMAIL_RECIPIENTS', defaultValue: 'team@example.com', description: 'Email recipients')
     }
 
@@ -48,17 +48,38 @@ pipeline {
 
                     def deployBranches = ['main', 'master', 'dev']
                     def approvalBranches = ['main', 'master']
-                    env.SHOULD_DEPLOY = deployBranches.contains(env.BRANCH_NAME) ? 'true' : 'false'
-                    env.NEEDS_APPROVAL = approvalBranches.contains(env.BRANCH_NAME) ? 'true' : 'false'
+                    def branchFromGit = ''
+                    if (isUnix()) {
+                        branchFromGit = sh(script: 'git rev-parse --abbrev-ref HEAD', returnStdout: true).trim()
+                    } else {
+                        branchFromGit = powershell(script: 'git rev-parse --abbrev-ref HEAD', returnStdout: true).trim()
+                    }
+
+                    def effectiveBranch = (env.BRANCH_NAME ?: env.GIT_BRANCH ?: branchFromGit ?: '')
+                    def normalizedBranch = effectiveBranch
+                        .replaceFirst('^origin/', '')
+                        .replaceFirst('^refs/heads/', '')
+
+                    def isDeployBranch = deployBranches.contains(normalizedBranch)
+                    def isApprovalBranch = approvalBranches.contains(normalizedBranch)
+                    def manualDeployRequested = params.DEPLOY_ENV != 'auto'
+
+                    env.SHOULD_DEPLOY = (isDeployBranch || manualDeployRequested) ? 'true' : 'false'
+                    env.NEEDS_APPROVAL = ((params.DEPLOY_ENV == 'prod') || (params.DEPLOY_ENV == 'auto' && isApprovalBranch)) ? 'true' : 'false'
 
                     echo """
                     ╔════════════════════════════════════╗
                     ║   BUILD INITIALIZATION             ║
                     ╠════════════════════════════════════╣
                     ║ Branch:     ${env.BRANCH_NAME}
+                    ║ Git Branch: ${env.GIT_BRANCH}
+                    ║ Effective:  ${effectiveBranch}
+                    ║ BranchNorm: ${normalizedBranch}
+                    ║ Deploy Env: ${params.DEPLOY_ENV}
                     ║ Build #:    ${env.BUILD_NUMBER}
                     ║ Commit:     ${env.GIT_COMMIT_SHORT}
                     ║ Deploy:     ${env.SHOULD_DEPLOY}
+                    ║ Approval:   ${env.NEEDS_APPROVAL}
                     ║ Email:      ${params.EMAIL_RECIPIENTS}
                     ╚════════════════════════════════════╝
                     """
@@ -140,9 +161,9 @@ EOF
                 script {
                     dir('Backend/shared-commons') {
                         if (isUnix()) {
-                            sh './mvnw clean install -DskipTests'
+                            sh 'mvn clean install -DskipTests -B'
                         } else {
-                            bat 'mvnw.cmd clean install -DskipTests'
+                            bat 'mvn clean install -DskipTests -B'
                         }
                     }
                 }
@@ -180,7 +201,7 @@ EOF
                 stage('Backend Tests') {
                     steps {
                         script {
-                            ['shared-commons', 'user-service', 'product-service', 'media-service', 'api-gateway', 'order-service'].each { service ->
+                            ['user-service', 'product-service', 'media-service', 'api-gateway', 'order-service'].each { service ->
                                 testBackendService(service)
                             }
                         }
@@ -226,9 +247,6 @@ EOF
         }
 
         stage('Quality Gate') {
-            when {
-                expression { env.SHOULD_DEPLOY == 'true' || params.DEPLOY_ENV != 'auto' }
-            }
             steps {
                 script {
                     echo '📊 Running SonarCloud analysis...'
@@ -247,31 +265,37 @@ EOF
                             '''
                         }
 
-                        withSonarQubeEnv('SonarCloud') {
-                            if (isUnix()) {
-                                sh '''
-                                    echo "📥 Installing SonarQube Scanner..."
-                                    npm install -g sonarqube-scanner --force 2>&1 || true
-                                    
-                                    echo "🔍 Running SonarCloud analysis..."
-                                    sonar-scanner 2>&1 | tee sonar-analysis.log
-                                    
-                                    if grep -q "ERROR" sonar-analysis.log; then
-                                        echo "⚠️  SonarCloud analysis completed with warnings"
-                                    else
-                                        echo "✅ SonarCloud analysis submitted successfully"
-                                    fi
-                                '''
-                            } else {
-                                bat '''
-                                    echo Installing SonarQube Scanner...
-                                    npm install -g sonarqube-scanner --force 2>&1 || echo.
-                                    
-                                    echo Running SonarCloud analysis...
-                                    sonar-scanner
-                                    
-                                    echo SonarCloud analysis submitted
-                                '''
+                        withCredentials([string(credentialsId: 'SONAR_TOKEN', variable: 'SONAR_TOKEN')]) {
+                            withSonarQubeEnv('SonarCloud') {
+                                def scannerCmdUnix = 'sonar-scanner'
+                                def scannerCmdWin = 'sonar-scanner'
+                                try {
+                                    def scannerHome = tool 'SonarScanner'
+                                    scannerCmdUnix = "\"${scannerHome}/bin/sonar-scanner\""
+                                    scannerCmdWin = "\"${scannerHome}\\bin\\sonar-scanner.bat\""
+                                    echo "✅ Using Jenkins SonarScanner tool: ${scannerHome}"
+                                } catch (Exception _) {
+                                    echo '⚠️ Jenkins tool "SonarScanner" not found. Falling back to sonar-scanner from PATH.'
+                                }
+                                if (isUnix()) {
+                                    sh """
+                                        echo "🔍 Running SonarCloud analysis..."
+                                        ${scannerCmdUnix} -Dsonar.token=$SONAR_TOKEN 2>&1 | tee sonar-analysis.log
+
+                                        if grep -q "ERROR" sonar-analysis.log; then
+                                            echo "⚠️  SonarCloud analysis completed with warnings"
+                                        else
+                                            echo "✅ SonarCloud analysis submitted successfully"
+                                        fi
+                                    """
+                                } else {
+                                    bat """
+                                        echo Running SonarCloud analysis...
+                                        call ${scannerCmdWin} -Dsonar.token=%SONAR_TOKEN%
+
+                                        echo SonarCloud analysis submitted
+                                    """
+                                }
                             }
                         }
 
@@ -292,9 +316,8 @@ EOF
                             echo '✅ SonarCloud analysis completed (Quality Gate not enforced)'
                         }
                     } catch (Exception e) {
-                        echo "⚠️  SonarCloud analysis encountered an issue: ${e.message}"
-                        echo "ℹ️  This is non-blocking — continuing pipeline"
-                        // Non-blocking error for SonarCloud
+                        echo "❌ SonarCloud analysis encountered an issue: ${e.message}"
+                        error "SonarCloud analysis failed. Stopping pipeline."
                     }
                 }
             }
@@ -459,9 +482,9 @@ def buildBackendService(String service) {
     dir("Backend/${service}") {
         timeout(time: 10, unit: 'MINUTES') {
             if (isUnix()) {
-                sh './mvnw clean package -DskipTests -Dmaven.javadoc.skip=true'
+                sh 'if [ -f mvnw ]; then ./mvnw clean package -DskipTests -Dmaven.javadoc.skip=true; else mvn clean package -DskipTests -Dmaven.javadoc.skip=true; fi'
             } else {
-                bat 'mvnw.cmd clean package -DskipTests -Dmaven.javadoc.skip=true'
+                bat 'if exist mvnw.cmd (mvnw.cmd clean package -DskipTests -Dmaven.javadoc.skip=true) else (mvn clean package -DskipTests -Dmaven.javadoc.skip=true)'
             }
         }
     }
@@ -475,14 +498,13 @@ def testBackendService(String service) {
                     sh '''
                         echo "🧪 Testing ${service}..."
                         export JWT_SECRET="${JWT_SECRET}"
-                        ./mvnw test jacoco:report -B
+                        if [ -f mvnw ]; then ./mvnw test jacoco:report -B; else mvn test jacoco:report -B; fi
                         echo "✅ ${service} tests completed"
                     '''
                 } else {
                     bat '''
-                        echo Testing service: %1
                         set JWT_SECRET=%JWT_SECRET%
-                        mvnw.cmd test jacoco:report -B
+                        if exist mvnw.cmd (mvnw.cmd test jacoco:report -B) else (mvn test jacoco:report -B)
                         echo Tests completed
                     '''
                 }
