@@ -48,17 +48,28 @@ pipeline {
 
                     def deployBranches = ['main', 'master', 'dev']
                     def approvalBranches = ['main', 'master']
-                    env.SHOULD_DEPLOY = deployBranches.contains(env.BRANCH_NAME) ? 'true' : 'false'
-                    env.NEEDS_APPROVAL = approvalBranches.contains(env.BRANCH_NAME) ? 'true' : 'false'
+                    def normalizedBranch = (env.BRANCH_NAME ?: '')
+                        .replaceFirst('^origin/', '')
+                        .replaceFirst('^refs/heads/', '')
+
+                    def isDeployBranch = deployBranches.contains(normalizedBranch)
+                    def isApprovalBranch = approvalBranches.contains(normalizedBranch)
+                    def manualDeployRequested = params.DEPLOY_ENV != 'auto'
+
+                    env.SHOULD_DEPLOY = (isDeployBranch || manualDeployRequested) ? 'true' : 'false'
+                    env.NEEDS_APPROVAL = ((params.DEPLOY_ENV == 'prod') || (params.DEPLOY_ENV == 'auto' && isApprovalBranch)) ? 'true' : 'false'
 
                     echo """
                     ╔════════════════════════════════════╗
                     ║   BUILD INITIALIZATION             ║
                     ╠════════════════════════════════════╣
                     ║ Branch:     ${env.BRANCH_NAME}
+                    ║ BranchNorm: ${normalizedBranch}
+                    ║ Deploy Env: ${params.DEPLOY_ENV}
                     ║ Build #:    ${env.BUILD_NUMBER}
                     ║ Commit:     ${env.GIT_COMMIT_SHORT}
                     ║ Deploy:     ${env.SHOULD_DEPLOY}
+                    ║ Approval:   ${env.NEEDS_APPROVAL}
                     ║ Email:      ${params.EMAIL_RECIPIENTS}
                     ╚════════════════════════════════════╝
                     """
