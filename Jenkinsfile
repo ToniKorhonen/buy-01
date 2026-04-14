@@ -246,11 +246,20 @@ EOF
 
                         withCredentials([string(credentialsId: 'SONAR_TOKEN', variable: 'SONAR_TOKEN')]) {
                             withSonarQubeEnv('SonarCloud') {
-                                def scannerHome = tool 'SonarScanner'
+                                def scannerCmdUnix = 'sonar-scanner'
+                                def scannerCmdWin = 'sonar-scanner'
+                                try {
+                                    def scannerHome = tool 'SonarScanner'
+                                    scannerCmdUnix = "\"${scannerHome}/bin/sonar-scanner\""
+                                    scannerCmdWin = "\"${scannerHome}\\bin\\sonar-scanner.bat\""
+                                    echo "✅ Using Jenkins SonarScanner tool: ${scannerHome}"
+                                } catch (Exception _) {
+                                    echo '⚠️ Jenkins tool "SonarScanner" not found. Falling back to sonar-scanner from PATH.'
+                                }
                                 if (isUnix()) {
                                     sh """
                                         echo "🔍 Running SonarCloud analysis..."
-                                        "${scannerHome}/bin/sonar-scanner" -Dsonar.token=$SONAR_TOKEN 2>&1 | tee sonar-analysis.log
+                                        ${scannerCmdUnix} -Dsonar.token=$SONAR_TOKEN 2>&1 | tee sonar-analysis.log
 
                                         if grep -q "ERROR" sonar-analysis.log; then
                                             echo "⚠️  SonarCloud analysis completed with warnings"
@@ -261,7 +270,7 @@ EOF
                                 } else {
                                     bat """
                                         echo Running SonarCloud analysis...
-                                        call "${scannerHome}\\bin\\sonar-scanner.bat" -Dsonar.token=%SONAR_TOKEN%
+                                        call ${scannerCmdWin} -Dsonar.token=%SONAR_TOKEN%
 
                                         echo SonarCloud analysis submitted
                                     """
