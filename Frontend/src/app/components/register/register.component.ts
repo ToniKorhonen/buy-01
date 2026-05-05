@@ -7,6 +7,20 @@ import { UserService } from '../../services/user.service';
 import { MediaService } from '../../services/media.service';
 import { RegisterRequest } from '../../models/user.model';
 
+interface ValidationError {
+  field: string;
+  message: string;
+}
+
+interface PasswordStrength {
+  hasMinLength: boolean;
+  hasUppercase: boolean;
+  hasLowercase: boolean;
+  hasNumber: boolean;
+  hasSpecialChar: boolean;
+  isStrong: boolean;
+}
+
 @Component({
   selector: 'app-register',
   standalone: true,
@@ -27,10 +41,21 @@ export class RegisterComponent implements OnDestroy {
   selectedFile: File | null = null;
   avatarPreview: string | null = null;
   uploadingAvatar = false;
+  fieldErrors: { [key: string]: string } = {};
+  passwordStrength: PasswordStrength = {
+    hasMinLength: false,
+    hasUppercase: false,
+    hasLowercase: false,
+    hasNumber: false,
+    hasSpecialChar: false,
+    isStrong: false
+  };
+  showPasswordRequirements = false;
 
   private readonly MAX_FILE_SIZE = 2 * 1024 * 1024;
   private readonly ALLOWED_TYPES = ['image/png', 'image/jpeg', 'image/jpg', 'image/gif'];
   private readonly CONVERTED_TYPES = ['image/webp', 'image/bmp', 'image/tiff'];
+  private readonly SPECIAL_CHAR_REGEX = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>/?]/;
 
   private redirectTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -38,18 +63,41 @@ export class RegisterComponent implements OnDestroy {
     if (this.redirectTimer) clearTimeout(this.redirectTimer);
   }
 
+  onPasswordInput(): void {
+    this.validatePasswordStrength(this.model.password);
+    this.fieldErrors['password'] = '';
+  }
+
+  private validatePasswordStrength(password: string): void {
+    this.passwordStrength = {
+      hasMinLength: password.length >= 8,
+      hasUppercase: /[A-Z]/.test(password),
+      hasLowercase: /[a-z]/.test(password),
+      hasNumber: /\d/.test(password),
+      hasSpecialChar: this.SPECIAL_CHAR_REGEX.test(password),
+      isStrong: false
+    };
+
+    this.passwordStrength.isStrong =
+      this.passwordStrength.hasMinLength &&
+      this.passwordStrength.hasUppercase &&
+      this.passwordStrength.hasLowercase &&
+      this.passwordStrength.hasNumber &&
+      this.passwordStrength.hasSpecialChar;
+  }
+
   onFileSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
 
     this.warning = '';
-    this.error = '';
+    this.fieldErrors['avatar'] = '';
 
     if (!file) return;
 
     if (file.size > this.MAX_FILE_SIZE) {
       const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
-      this.error = `File size (${sizeMB}MB) exceeds the 2MB limit. Please choose a smaller image.`;
+      this.fieldErrors['avatar'] = `File size (${sizeMB}MB) exceeds the 2MB limit. Please choose a smaller image.`;
       this.clearFileSelection(input);
       return;
     }
@@ -58,7 +106,7 @@ export class RegisterComponent implements OnDestroy {
       if (this.CONVERTED_TYPES.includes(file.type)) {
         this.warning = `⚠️ ${file.type.split('/')[1].toUpperCase()} format will be converted to JPG/PNG.`;
       } else {
-        this.error = `File type "${file.type}" is not supported. Please upload PNG, JPG, or GIF images only.`;
+        this.fieldErrors['avatar'] = `File type "${file.type}" is not supported. Please upload PNG, JPG, or GIF images only.`;
         this.clearFileSelection(input);
         return;
       }
@@ -74,6 +122,7 @@ export class RegisterComponent implements OnDestroy {
     this.loading = true;
     this.message = '';
     this.error = '';
+    this.fieldErrors = {};
 
     const needsAvatarUpload = this.model.role === 'SELLER' && !!this.selectedFile;
 
@@ -121,9 +170,39 @@ export class RegisterComponent implements OnDestroy {
   }
 
   private handleError(err: any, fallback: string): void {
-    this.error = err?.error?.message || fallback;
     this.loading = false;
     this.uploadingAvatar = false;
+
+    // Handle validation errors from backend
+    if (err?.error?.errors && Array.isArray(err.error.errors)) {
+      const validationErrors: ValidationError[] = err.error.errors;
+      validationErrors.forEach((ve: ValidationError) => {
+        this.fieldErrors[ve.field] = ve.message;
+      });
+      this.error = 'Please fix the errors below';
+    } else if (err?.error?.message) {
+      const msg = err.error.message;
+      // Try to categorize the error to a field
+      if (msg.includes('Email') || msg.includes('email')) {
+        this.fieldErrors['email'] = msg;
+      } else if (msg.includes('Password') || msg.includes('password')) {
+        this.fieldErrors['password'] = msg;
+      } else if (msg.includes('Name') || msg.includes('name')) {
+        this.fieldErrors['name'] = msg;
+      } else if (msg.includes('already exists') || msg.includes('already registered')) {
+        this.fieldErrors['email'] = msg;
+        this.error = msg;
+      } else {
+        this.error = msg;
+      }
+    } else if (err?.status === 400) {
+      this.error = 'Invalid input. Please check all fields and try again.';
+    } else if (err?.status === 409) {
+      this.error = 'Email already registered. Please use a different email or try logging in.';
+      this.fieldErrors['email'] = 'Email already registered';
+    } else {
+      this.error = fallback + '. Please try again later.';
+    }
   }
 
   private clearFileSelection(input: HTMLInputElement): void {

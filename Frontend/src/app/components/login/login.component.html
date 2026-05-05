@@ -1,10 +1,23 @@
 <div class="login-container">
   <div class="login-card">
-    <h2>Login</h2>
+    <div class="card-header">
+      <h1>Welcome Back</h1>
+      <p class="subtitle">Sign in to your account</p>
+    </div>
 
     <form (ngSubmit)="submit()" #loginForm="ngForm">
+      <!-- Main Error Alert -->
+      <div class="alert alert-danger" *ngIf="error">
+        <span class="alert-icon">⚠️</span>
+        <span class="alert-message">{{ error }}</span>
+      </div>
+
+      <!-- Email Field -->
       <div class="form-group">
-        <label for="email">Email</label>
+        <label for="email" class="form-label">
+          Email Address
+          <span class="required">*</span>
+        </label>
         <input
           type="email"
           id="email"
@@ -13,11 +26,21 @@
           required
           email
           [disabled]="loading"
-          class="form-control">
+          class="form-control"
+          [class.form-control-error]="fieldErrors['email']"
+          placeholder="Enter your email">
+        <div class="field-error" *ngIf="fieldErrors['email']">
+          <span class="error-icon">✗</span>
+          {{ fieldErrors['email'] }}
+        </div>
       </div>
 
+      <!-- Password Field -->
       <div class="form-group">
-        <label for="password">Password</label>
+        <label for="password" class="form-label">
+          Password
+          <span class="required">*</span>
+        </label>
         <input
           type="password"
           id="password"
@@ -25,21 +48,31 @@
           [(ngModel)]="model.password"
           required
           [disabled]="loading"
-          class="form-control">
+          class="form-control"
+          [class.form-control-error]="fieldErrors['password']"
+          placeholder="Enter your password">
+        <div class="field-error" *ngIf="fieldErrors['password']">
+          <span class="error-icon">✗</span>
+          {{ fieldErrors['password'] }}
+        </div>
       </div>
 
-      <div class="error" *ngIf="error">{{ error }}</div>
-
+      <!-- Submit Button -->
       <button
         type="submit"
         [disabled]="!loginForm.form.valid || loading"
-        class="btn btn-primary">
-        {{ loading ? 'Logging in...' : 'Login' }}
+        class="btn btn-primary btn-lg">
+        <span *ngIf="!loading" class="btn-text">Sign In</span>
+        <span *ngIf="loading" class="btn-text">
+          <span class="spinner"></span> Signing In...
+        </span>
       </button>
     </form>
 
-    <div class="register-link">
-      Don't have an account? <a routerLink="/register">Register here</a>
+    <!-- Register Link -->
+    <div class="footer-link">
+      Don't have an account?
+      <a routerLink="/register" class="link-action">Create one now</a>
     </div>
   </div>
 </div>
