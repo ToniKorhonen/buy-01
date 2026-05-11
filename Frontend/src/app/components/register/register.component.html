@@ -1,22 +1,59 @@
 <div class="register-container">
   <div class="register-card">
-    <h2>Create Account</h2>
+    <div class="card-header">
+      <h1>Create Account</h1>
+      <p class="subtitle">Join our community to buy and sell</p>
+    </div>
 
     <form (ngSubmit)="submit()" #registerForm="ngForm">
+      <!-- Main Error Alert -->
+      <div class="alert alert-danger" *ngIf="error">
+        <span class="alert-icon">⚠️</span>
+        <span class="alert-message">{{ error }}</span>
+      </div>
+
+      <!-- Success Message -->
+      <div class="alert alert-success" *ngIf="message">
+        <span class="alert-icon">✓</span>
+        <span class="alert-message">{{ message }}</span>
+      </div>
+
+      <!-- Warning Message -->
+      <div class="alert alert-warning" *ngIf="warning">
+        <span class="alert-icon">⚠️</span>
+        <span class="alert-message">{{ warning }}</span>
+      </div>
+
+      <!-- Name Field -->
       <div class="form-group">
-        <label for="name">Name</label>
+        <label for="name" class="form-label">
+          Full Name
+          <span class="required">*</span>
+        </label>
         <input
           type="text"
           id="name"
           name="name"
           [(ngModel)]="model.name"
           required
+          minlength="2"
+          maxlength="255"
           [disabled]="loading"
-          class="form-control">
+          class="form-control"
+          [class.form-control-error]="fieldErrors['name']"
+          placeholder="Enter your full name">
+        <div class="field-error" *ngIf="fieldErrors['name']">
+          <span class="error-icon">✗</span>
+          {{ fieldErrors['name'] }}
+        </div>
       </div>
 
+      <!-- Email Field -->
       <div class="form-group">
-        <label for="email">Email</label>
+        <label for="email" class="form-label">
+          Email Address
+          <span class="required">*</span>
+        </label>
         <input
           type="email"
           id="email"
@@ -24,38 +61,97 @@
           [(ngModel)]="model.email"
           required
           email
+          maxlength="255"
           [disabled]="loading"
-          class="form-control">
+          class="form-control"
+          [class.form-control-error]="fieldErrors['email']"
+          placeholder="Enter your email">
+        <div class="field-error" *ngIf="fieldErrors['email']">
+          <span class="error-icon">✗</span>
+          {{ fieldErrors['email'] }}
+        </div>
       </div>
 
+      <!-- Password Field with Requirements -->
       <div class="form-group">
-        <label for="password">Password (minimum 8 characters)</label>
+        <label for="password" class="form-label">
+          Password
+          <span class="required">*</span>
+        </label>
         <input
           type="password"
           id="password"
           name="password"
           [(ngModel)]="model.password"
+          (input)="onPasswordInput()"
+          (focus)="showPasswordRequirements = true"
+          (blur)="showPasswordRequirements = model.password.length > 0"
           required
-          minlength="8"
           [disabled]="loading"
-          class="form-control">
+          class="form-control"
+          [class.form-control-error]="fieldErrors['password']"
+          placeholder="Create a strong password">
+
+        <!-- Password Requirements -->
+        <div class="password-requirements" *ngIf="showPasswordRequirements && model.password">
+          <div class="requirement-item" [class.met]="passwordStrength.hasMinLength">
+            <span class="requirement-icon">{{ passwordStrength.hasMinLength ? '✓' : '✗' }}</span>
+            <span class="requirement-text">At least 8 characters</span>
+          </div>
+          <div class="requirement-item" [class.met]="passwordStrength.hasUppercase">
+            <span class="requirement-icon">{{ passwordStrength.hasUppercase ? '✓' : '✗' }}</span>
+            <span class="requirement-text">One uppercase letter (A-Z)</span>
+          </div>
+          <div class="requirement-item" [class.met]="passwordStrength.hasLowercase">
+            <span class="requirement-icon">{{ passwordStrength.hasLowercase ? '✓' : '✗' }}</span>
+            <span class="requirement-text">One lowercase letter (a-z)</span>
+          </div>
+          <div class="requirement-item" [class.met]="passwordStrength.hasNumber">
+            <span class="requirement-icon">{{ passwordStrength.hasNumber ? '✓' : '✗' }}</span>
+            <span class="requirement-text">One number (0-9)</span>
+          </div>
+          <div class="requirement-item" [class.met]="passwordStrength.hasSpecialChar">
+            <span class="requirement-icon">{{ passwordStrength.hasSpecialChar ? '✓' : '✗' }}</span>
+            <span class="requirement-text">One special character (!, @, #, $, %, ^, &amp;, *)</span>
+          </div>
+
+          <div class="strength-bar">
+            <div class="strength-fill" [ngClass]="
+              passwordStrength.isStrong ? 'strong' :
+              (passwordStrength.hasMinLength && passwordStrength.hasUppercase ? 'medium' : 'weak')
+            "></div>
+          </div>
+        </div>
+
+        <div class="field-error" *ngIf="fieldErrors['password']">
+          <span class="error-icon">✗</span>
+          {{ fieldErrors['password'] }}
+        </div>
       </div>
 
+      <!-- Account Type Field -->
       <div class="form-group">
-        <label for="role">Account Type</label>
+        <label for="role" class="form-label">
+          Account Type
+          <span class="required">*</span>
+        </label>
         <select
           id="role"
           name="role"
           [(ngModel)]="model.role"
           [disabled]="loading"
           class="form-control">
-          <option value="CLIENT">Client</option>
+          <option value="CLIENT">Buyer</option>
           <option value="SELLER">Seller</option>
         </select>
       </div>
 
+      <!-- Avatar Field (for sellers) -->
       <div class="form-group" *ngIf="model.role === 'SELLER'">
-        <label for="avatar">Avatar (Optional)</label>
+        <label for="avatar" class="form-label">
+          Profile Picture
+          <span class="optional">(optional)</span>
+        </label>
         <input
           type="file"
           id="avatar"
@@ -63,28 +159,41 @@
           (change)="onFileSelected($event)"
           accept="image/png,image/jpeg,image/jpg,image/gif"
           [disabled]="loading"
-          class="form-control">
-        <small class="form-text">Maximum file size: 2MB. Accepted formats: PNG, JPG, GIF</small>
+          class="form-control file-input">
+        <small class="form-text">Maximum 2MB. PNG, JPG, or GIF</small>
+
+        <div class="field-error" *ngIf="fieldErrors['avatar']">
+          <span class="error-icon">✗</span>
+          {{ fieldErrors['avatar'] }}
+        </div>
+
         <div class="avatar-preview" *ngIf="avatarPreview">
           <img [src]="avatarPreview" alt="Avatar preview">
         </div>
       </div>
 
-      <div class="warning" *ngIf="warning">{{ warning }}</div>
-      <div class="info" *ngIf="uploadingAvatar">Uploading avatar...</div>
-      <div class="success" *ngIf="message">{{ message }}</div>
-      <div class="error" *ngIf="error">{{ error }}</div>
+      <!-- Upload Status -->
+      <div class="alert alert-info" *ngIf="uploadingAvatar">
+        <span class="alert-icon">⏳</span>
+        <span class="alert-message">Uploading your profile picture...</span>
+      </div>
 
+      <!-- Submit Button -->
       <button
         type="submit"
-        [disabled]="!registerForm.form.valid || loading"
-        class="btn btn-primary">
-        {{ loading ? 'Creating Account...' : 'Register' }}
+        [disabled]="!registerForm.form.valid || loading || (model.role === 'SELLER' && uploadingAvatar)"
+        class="btn btn-primary btn-lg">
+        <span *ngIf="!loading" class="btn-text">Create Account</span>
+        <span *ngIf="loading" class="btn-text">
+          <span class="spinner"></span> Creating Account...
+        </span>
       </button>
     </form>
 
-    <div class="login-link">
-      Already have an account? <a routerLink="/login">Login here</a>
+    <!-- Login Link -->
+    <div class="footer-link">
+      Already have an account?
+      <a routerLink="/login" class="link-action">Sign in here</a>
     </div>
   </div>
 </div>
